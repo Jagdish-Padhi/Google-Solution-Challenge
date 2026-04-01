@@ -41,7 +41,7 @@ sportshield/
 ---
 
 ## ⚙️ Phase 0 — Project Bootstrap & Architecture Agreement
-**Duration:** Day 1 | **Branch:** `setup/bootstrap`
+**Duration:** Day 1 | **Branch:** `chore/bootstrap-setup`
 
 > 🎯 **Goal:** Everyone has a running local environment. No features yet, just wiring.
 
@@ -82,7 +82,7 @@ sportshield/
 ---
 
 ## 🔐 Phase 1 — Authentication & Organization Management
-**Duration:** Days 2–3 | **Branches:** `feat/auth-backend` · `feat/auth-frontend`
+**Duration:** Days 2–3 | **Branches:** `feature/auth-backend` · `feature/auth-frontend`
 
 > 🎯 **Goal:** A sports organization can register, login, and see a blank dashboard.
 
@@ -140,7 +140,7 @@ sportshield/
 ---
 
 ## 📁 Phase 2 — Content Asset Upload & Registration
-**Duration:** Days 4–6 | **Branches:** `feat/asset-upload-backend` · `feat/asset-upload-frontend` · `feat/fingerprint-engine`
+**Duration:** Days 4–6 | **Branches:** `feature/asset-upload-backend` · `feature/asset-upload-frontend` · `feature/fingerprint-engine`
 
 > 🎯 **Goal:** An org can upload a video/image, it gets stored and fingerprinted. This fingerprint becomes the "DNA" of their content.
 
@@ -216,7 +216,7 @@ sportshield/
 ---
 
 ## 🕷️ Phase 3 — Web Scraper & Content Discovery Engine
-**Duration:** Days 7–10 | **Branches:** `feat/scraper-engine` · `feat/scan-job-backend` · `feat/scan-ui`
+**Duration:** Days 7–10 | **Branches:** `feature/scraper-engine` · `feature/scan-job-backend` · `feature/scan-ui`
 
 > 🎯 **Goal:** The system can actively go out and look for content on the internet. This is the "Google for stolen content" part.
 
@@ -303,7 +303,7 @@ Build modular scrapers in `ml-service/scraper/`:
 ---
 
 ## 🔍 Phase 4 — Fingerprint Matching & Violation Detection
-**Duration:** Days 11–14 | **Branches:** `feat/matching-engine` · `feat/violation-backend` · `feat/violation-ui`
+**Duration:** Days 11–14 | **Branches:** `feature/matching-engine` · `feature/violation-backend` · `feature/violation-ui`
 
 > 🎯 **Goal:** The system compares scraped content against registered fingerprints and flags real violations. This is the brain of the product.
 
@@ -407,7 +407,7 @@ Step 6: Save to Violations collection
 ---
 
 ## 🔔 Phase 5 — Real-Time Alerts & Notification System
-**Duration:** Days 15–17 | **Branches:** `feat/alerts-backend` · `feat/alerts-frontend` · `feat/email-notifications`
+**Duration:** Days 15–17 | **Branches:** `feature/alerts-backend` · `feature/alerts-frontend` · `feature/email-notifications`
 
 > 🎯 **Goal:** Organization immediately knows when their content is stolen. Alerts are actionable.
 
@@ -474,7 +474,7 @@ Step 6: Save to Violations collection
 ---
 
 ## 📊 Phase 6 — Analytics Dashboard & Reports
-**Duration:** Days 18–20 | **Branches:** `feat/analytics-backend` · `feat/analytics-frontend` · `feat/pdf-report`
+**Duration:** Days 18–20 | **Branches:** `feature/analytics-backend` · `feature/analytics-frontend` · `feature/pdf-report`
 
 > 🎯 **Goal:** Turn raw violation data into actionable intelligence. This is what makes it a product, not just a tool.
 
@@ -528,7 +528,7 @@ Step 6: Save to Violations collection
 ---
 
 ## 🌐 Phase 7 — Google Integration & Cloud Features
-**Duration:** Days 21–23 | **Branches:** `feat/google-cloud-integration`
+**Duration:** Days 21–23 | **Branches:** `feature/google-cloud-integration`
 
 > 🎯 **Goal:** Leverage Google Cloud for extra credibility and performance. This is the "Solution Challenge" alignment phase.
 
@@ -572,7 +572,7 @@ Step 6: Save to Violations collection
 ---
 
 ## 🎨 Phase 8 — UI Polish, Edge Cases & Demo Prep
-**Duration:** Days 24–26 | **Branches:** `feat/ui-polish` · `feat/demo-data`
+**Duration:** Days 24–26 | **Branches:** `feature/ui-polish` · `feature/demo-data`
 
 > 🎯 **Goal:** App looks polished, handles errors gracefully, and is demo-ready.
 
@@ -626,15 +626,15 @@ FULL DEMO FLOW (run this before every presentation):
 
 ```
 main
-├── Phase 0: setup/bootstrap
-├── Phase 1: feat/auth-backend + feat/auth-frontend
-├── Phase 2: feat/asset-upload-backend + feat/asset-upload-frontend + feat/fingerprint-engine
-├── Phase 3: feat/scraper-engine + feat/scan-job-backend + feat/scan-ui
-├── Phase 4: feat/matching-engine + feat/violation-backend + feat/violation-ui
-├── Phase 5: feat/alerts-backend + feat/alerts-frontend + feat/email-notifications
-├── Phase 6: feat/analytics-backend + feat/analytics-frontend + feat/pdf-report
-├── Phase 7: feat/google-cloud-integration
-└── Phase 8: feat/ui-polish + feat/demo-data
+├── Phase 0: chore/bootstrap-setup
+├── Phase 1: feature/auth-backend + feature/auth-frontend
+├── Phase 2: feature/asset-upload-backend + feature/asset-upload-frontend + feature/fingerprint-engine
+├── Phase 3: feature/scraper-engine + feature/scan-job-backend + feature/scan-ui
+├── Phase 4: feature/matching-engine + feature/violation-backend + feature/violation-ui
+├── Phase 5: feature/alerts-backend + feature/alerts-frontend + feature/email-notifications
+├── Phase 6: feature/analytics-backend + feature/analytics-frontend + feature/pdf-report
+├── Phase 7: feature/google-cloud-integration
+└── Phase 8: feature/ui-polish + feature/demo-data
 ```
 
 **Rules:**
