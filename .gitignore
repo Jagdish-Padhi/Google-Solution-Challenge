@@ -2,49 +2,100 @@
 # Dependencies
 # ===============================
 node_modules/
+.pnpm-store/
+.npm/
+.yarn/
 
 # ===============================
-# Build / Output
+# Build / Output Artifacts
 # ===============================
 dist/
 build/
+out/
+.next/
+.nuxt/
+.svelte-kit/
+.vercel/
+storybook-static/
+*.tsbuildinfo
 
 # ===============================
 # Environment / Secrets
 # ===============================
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+!.env.*.example
 
 # ===============================
-# Logs 
+# Logs / Runtime Files
 # ===============================
 logs/
 *.log
+*.pid
+*.pid.lock
 npm-debug.log*
 yarn-debug.log*
+yarn-error.log*
 pnpm-debug.log*
 
 # ===============================
-# OS generated
+# Python (ML Service)
 # ===============================
-.DS_Store
-Thumbs.db
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.python-version
+.venv/
+venv/
+ENV/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.nox/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+pip-wheel-metadata/
 
 # ===============================
-# Editor / IDE
-# ===============================
-.vscode/
-.idea/
-
-# ===============================
-# Testing / Coverage
+# Test / Coverage
 # ===============================
 coverage/
+coverage-final.json
 
 # ===============================
-# Misc
+# Local Data / Temp / Cache
 # ===============================
 .cache/
 .tmp/
 .temp/
+tmp/
+temp/
+*.tmp
+*.sqlite
+*.sqlite3
+uploads/
+
+# ===============================
+# Jupyter / Notebook
+# ===============================
+.ipynb_checkpoints/
+
+# ===============================
+# Editor / IDE
+# ===============================
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# ===============================
+# OS Generated
+# ===============================
+.DS_Store
+Thumbs.db
+Desktop.ini
