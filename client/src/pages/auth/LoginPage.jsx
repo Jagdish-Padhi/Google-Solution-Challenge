@@ -14,6 +14,18 @@ const initialFormState = {
   password: '',
 };
 
+const securityChecks = [
+  'Access tokens expire automatically every 15 minutes.',
+  'Refresh sessions are rotated and revocable on logout.',
+  'Protected routes require verified organization context.',
+];
+
+const systemStatus = [
+  ['Detection Pipeline', 'Operational'],
+  ['Credential Layer', 'Hardened'],
+  ['Organization Scope', 'Isolated'],
+];
+
 export default function LoginPage() {
   const [formData, setFormData] = useState(initialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,55 +55,88 @@ export default function LoginPage() {
   };
 
   return (
-    <Container className='flex min-h-screen items-center justify-center py-10'>
-      <div className='grid w-full max-w-6xl gap-8 lg:grid-cols-[0.92fr_1.08fr]'>
-        <Card className='border-white/80 bg-white/90 shadow-2xl shadow-slate-900/5' title='Welcome back' subtitle='Sign in to continue monitoring your organization.'>
-          <form className='space-y-4' onSubmit={handleSubmit}>
-            <Input label='Work email' type='email' name='email' value={formData.email} onChange={handleChange} required placeholder='team@example.com' />
-            <Input label='Password' type='password' name='password' value={formData.password} onChange={handleChange} required placeholder='Enter your password' />
+    <Container className='flex min-h-screen items-center justify-center py-10 lg:py-16'>
+      <div className='grid w-full max-w-6xl overflow-hidden rounded-4xl border border-(--app-color-border) backdrop-blur-sm lg:grid-cols-[1.05fr_0.95fr]' style={{ backgroundColor: 'var(--app-color-surface-glass)', boxShadow: 'var(--app-shadow-elevated)' }}>
+        <section className='border-b border-(--app-color-border) p-8 text-white lg:border-b-0 lg:border-r lg:p-10' style={{ background: 'var(--app-gradient-auth-login)' }}>
+          <p className='inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em]'>
+            SportShield Security Access
+          </p>
 
-            <div className='pt-2'>
-              <Button type='submit' className='w-full' loading={isSubmitting} disabled={isSubmitting}>
-                Sign in
-              </Button>
-            </div>
+          <h1 className='mt-5 max-w-lg text-3xl font-semibold leading-tight lg:text-4xl'>
+            Rights monitoring platform for serious organizations.
+          </h1>
 
-            <p className='text-sm text-[var(--app-color-text-muted)]'>
-              Need an account?{' '}
-              <Link to='/register' className='font-semibold text-[var(--app-color-primary)] hover:text-[var(--app-color-primary-hover)]'>
-                Register organization
-              </Link>
-            </p>
-          </form>
-        </Card>
+          <p className='mt-4 max-w-xl text-sm leading-6 text-white/80 lg:text-base'>
+            Sign in to review violations, scans, and risk signals for your protected sports media. Every session is authenticated, scoped, and auditable.
+          </p>
 
-        <section className='flex flex-col justify-between rounded-[2rem] border border-white/70 bg-[linear-gradient(160deg,_rgba(15,23,42,0.96),_rgba(15,118,110,0.92))] p-8 text-white shadow-2xl shadow-slate-900/10 lg:p-12'>
-          <div className='space-y-6'>
-            <span className='inline-flex rounded-full border border-white/20 bg-white/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.24em]'>
-              Protected access
-            </span>
-            <div className='space-y-4'>
-              <h1 className='max-w-xl text-4xl font-semibold leading-tight lg:text-5xl'>
-                Authenticate once, keep your dashboard session in sync.
-              </h1>
-              <p className='max-w-lg text-sm leading-6 text-white/80 lg:text-base'>
-                This login flow uses a short-lived JWT access token and a rotated refresh token cookie so the dashboard can stay protected without forcing constant re-authentication.
-              </p>
-            </div>
-          </div>
-
-          <div className='grid gap-4 sm:grid-cols-3'>
-            {[
-              ['Access token', 'Bearer'],
-              ['Refresh cookie', 'HttpOnly'],
-              ['Dashboard', 'Private'],
-            ].map(([label, value]) => (
-              <div key={label} className='rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm'>
-                <p className='text-xs uppercase tracking-[0.24em] text-white/65'>{label}</p>
-                <p className='mt-2 text-2xl font-semibold'>{value}</p>
+          <div className='mt-8 space-y-3'>
+            {securityChecks.map((item) => (
+              <div key={item} className='flex items-start gap-3 rounded-xl border border-white/15 bg-white/8 px-4 py-3'>
+                <span className='mt-1 h-2 w-2 rounded-full bg-emerald-300' />
+                <p className='text-sm text-white/90'>{item}</p>
               </div>
             ))}
           </div>
+
+          <div className='mt-8 grid gap-3 sm:grid-cols-3'>
+            {systemStatus.map(([label, value]) => (
+              <div key={label} className='rounded-xl border border-white/15 bg-black/15 px-3 py-3'>
+                <p className='text-[11px] uppercase tracking-[0.16em] text-white/65'>{label}</p>
+                <p className='mt-1 text-sm font-semibold text-white'>{value}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className='p-6 sm:p-8 lg:p-10' style={{ backgroundColor: 'var(--app-color-surface-glass)' }}>
+          <Card
+            className='border-(--app-color-border) shadow-lg shadow-slate-900/5'
+            style={{ backgroundColor: 'var(--app-color-surface-panel)' }}
+            title='Organization Sign In'
+            subtitle='Use your organization credentials to access the protected dashboard.'
+          >
+            <form className='space-y-4' onSubmit={handleSubmit}>
+              <Input
+                label='Work email'
+                type='email'
+                name='email'
+                value={formData.email}
+                onChange={handleChange}
+                required
+                placeholder='security@clubname.com'
+              />
+              <Input
+                label='Password'
+                type='password'
+                name='password'
+                value={formData.password}
+                onChange={handleChange}
+                required
+                placeholder='Enter password'
+              />
+
+              <div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface-elevated) px-4 py-3'>
+                <p className='text-xs font-semibold uppercase tracking-[0.14em] text-(--app-color-text-muted)'>Session policy</p>
+                <p className='mt-1 text-sm text-(--app-color-text)'>
+                  Automatic expiry and secure refresh are enabled for every login.
+                </p>
+              </div>
+
+              <div className='pt-2'>
+                <Button type='submit' className='w-full' loading={isSubmitting} disabled={isSubmitting}>
+                  Sign in to dashboard
+                </Button>
+              </div>
+
+              <p className='text-sm text-(--app-color-text-muted)'>
+                Need an organization account?{' '}
+                <Link to='/register' className='font-semibold text-(--app-color-primary) hover:text-(--app-color-primary-hover)'>
+                  Register now
+                </Link>
+              </p>
+            </form>
+          </Card>
         </section>
       </div>
     </Container>

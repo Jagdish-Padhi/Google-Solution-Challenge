@@ -13,20 +13,21 @@ const Card = ({
 	elevated = false,
 	className = '',
 	onClick = null,
+	...props
 }) => {
 	const bgColor = elevated ? 'bg-[var(--app-color-surface-elevated)]' : 'bg-[var(--app-color-surface)]';
 	const border = 'border border-[var(--app-color-border)]';
 	const clickable = onClick ? 'cursor-pointer hover:shadow-md transition-shadow' : '';
 
 	return (
-		<div className={`rounded-xl ${bgColor} ${border} overflow-hidden ${clickable} ${className}`} onClick={onClick}>
+		<div className={`rounded-xl ${bgColor} ${border} overflow-hidden ${clickable} ${className}`} onClick={onClick} {...props}>
 			{/* Header */}
 			{(header || title) && (
-				<div className='border-b border-[var(--app-color-border)] px-6 py-4'>
+				<div className='border-b border-(--app-color-border) px-6 py-4'>
 					{title ? (
 						<div>
-							<h3 className='text-lg font-semibold text-[var(--app-color-text)]'>{title}</h3>
-							{subtitle && <p className='text-sm text-[var(--app-color-text-muted)] mt-1'>{subtitle}</p>}
+							<h3 className='text-lg font-semibold text-(--app-color-text)'>{title}</h3>
+							{subtitle && <p className='text-sm text-(--app-color-text-muted) mt-1'>{subtitle}</p>}
 						</div>
 					) : (
 						header
@@ -38,7 +39,7 @@ const Card = ({
 			<div className='px-6 py-4'>{children}</div>
 
 			{/* Footer */}
-			{footer && <div className='border-t border-[var(--app-color-border)] px-6 py-4 bg-[var(--app-color-surface-elevated)]'>{footer}</div>}
+			{footer && <div className='border-t border-(--app-color-border) px-6 py-4 bg-(--app-color-surface-elevated)'>{footer}</div>}
 		</div>
 	);
 };

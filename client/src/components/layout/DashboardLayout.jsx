@@ -13,8 +13,7 @@ const navigationItems = [
 ];
 
 const shellBackground = {
-	background:
-		'radial-gradient(circle at top left, rgba(37, 99, 235, 0.14), transparent 30%), radial-gradient(circle at bottom right, rgba(15, 118, 110, 0.14), transparent 24%), linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%)',
+	background: 'var(--app-gradient-shell)',
 };
 
 export default function DashboardLayout() {

@@ -16,6 +16,18 @@ const initialFormState = {
 	confirmPassword: '',
 };
 
+const readinessBlocks = [
+	['Asset Fingerprints', 'Prepared'],
+	['Web Discovery', 'Planned'],
+	['Violation Evidence', 'Traceable'],
+];
+
+const onboardingSteps = [
+	'Register your organization profile and ownership identity.',
+	'Access your protected dashboard and team-level metrics.',
+	'Begin asset onboarding and continuous scan monitoring.',
+];
+
 export default function RegisterPage() {
 	const [formData, setFormData] = useState(initialFormState);
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -51,58 +63,109 @@ export default function RegisterPage() {
 	};
 
 	return (
-		<Container className='flex min-h-screen items-center justify-center py-10'>
-			<div className='grid w-full max-w-6xl gap-8 lg:grid-cols-[1.1fr_0.9fr]'>
-				<section className='flex flex-col justify-between rounded-4xl border border-white/70 bg-[linear-gradient(160deg,rgba(15,118,110,0.96),rgba(37,99,235,0.92))] p-8 text-white shadow-2xl shadow-slate-900/10 lg:p-12'>
-					<div className='space-y-6'>
-						<span className='inline-flex rounded-full border border-white/20 bg-white/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.24em]'>
-							SportShield
-						</span>
-						<div className='space-y-4'>
-							<h1 className='max-w-xl text-4xl font-semibold leading-tight lg:text-5xl'>
-								Register your organization and start protecting content.
-							</h1>
-							<p className='max-w-lg text-sm leading-6 text-white/85 lg:text-base'>
-								Phase 1 gives you the authenticated foundation: create an organization, log in securely, and land on a private dashboard with real session handling.
-							</p>
-						</div>
+		<Container className='flex min-h-screen items-center justify-center py-10 lg:py-16'>
+			<div className='grid w-full max-w-6xl overflow-hidden rounded-4xl border border-(--app-color-border) backdrop-blur-sm lg:grid-cols-[1.02fr_0.98fr]' style={{ backgroundColor: 'var(--app-color-surface-glass)', boxShadow: 'var(--app-shadow-elevated)' }}>
+				<section className='border-b border-(--app-color-border) p-8 text-white lg:border-b-0 lg:border-r lg:p-10' style={{ background: 'var(--app-gradient-auth-register)' }}>
+					<p className='inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em]'>
+						Organization Onboarding
+					</p>
+
+					<h1 className='mt-5 max-w-lg text-3xl font-semibold leading-tight lg:text-4xl'>
+						Create your secure rights-protection workspace.
+					</h1>
+
+					<p className='mt-4 max-w-xl text-sm leading-6 text-white/85 lg:text-base'>
+						SportShield helps sports organizations register content, detect unauthorized distribution, and maintain evidence-backed reporting workflows.
+					</p>
+
+					<div className='mt-8 space-y-3'>
+						{onboardingSteps.map((step, index) => (
+							<div key={step} className='flex items-start gap-3 rounded-xl border border-white/15 bg-white/10 px-4 py-3'>
+								<span className='mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/35 text-xs font-semibold'>
+									{index + 1}
+								</span>
+								<p className='text-sm text-white/90'>{step}</p>
+							</div>
+						))}
 					</div>
 
-					<div className='mt-10 grid gap-4 sm:grid-cols-3'>
-						{[
-							['JWT access', '15 min'],
-							['Refresh token', '7 days'],
-							['Protected routes', 'Ready'],
-						].map(([label, value]) => (
-							<div key={label} className='rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm'>
-								<p className='text-xs uppercase tracking-[0.24em] text-white/65'>{label}</p>
-								<p className='mt-2 text-2xl font-semibold'>{value}</p>
+					<div className='mt-8 grid gap-3 sm:grid-cols-3'>
+						{readinessBlocks.map(([label, value]) => (
+							<div key={label} className='rounded-xl border border-white/15 bg-black/15 px-3 py-3'>
+								<p className='text-[11px] uppercase tracking-[0.16em] text-white/65'>{label}</p>
+								<p className='mt-1 text-sm font-semibold text-white'>{value}</p>
 							</div>
 						))}
 					</div>
 				</section>
 
-				<Card className='border-white/80 bg-white/90 shadow-2xl shadow-slate-900/5' title='Create your account' subtitle='Use a work email to register your team organization.'>
-					<form className='space-y-4' onSubmit={handleSubmit}>
-						<Input label='Organization name' name='orgName' value={formData.orgName} onChange={handleChange} required placeholder='Test FC' />
-						<Input label='Work email' type='email' name='email' value={formData.email} onChange={handleChange} required placeholder='team@example.com' />
-						<Input label='Password' type='password' name='password' value={formData.password} onChange={handleChange} required placeholder='Create a strong password' helperText='Minimum 8 characters' />
-						<Input label='Confirm password' type='password' name='confirmPassword' value={formData.confirmPassword} onChange={handleChange} required placeholder='Repeat password' />
+				<section className='p-6 sm:p-8 lg:p-10' style={{ backgroundColor: 'var(--app-color-surface-glass)' }}>
+					<Card
+						className='border-(--app-color-border) bg-white/95 shadow-lg shadow-slate-900/5'
+						style={{ backgroundColor: 'var(--app-color-surface-panel)' }}
+						title='Register Organization'
+						subtitle='Set up credentials for your team security workspace.'
+					>
+						<form className='space-y-4' onSubmit={handleSubmit}>
+							<Input
+								label='Organization name'
+								name='orgName'
+								value={formData.orgName}
+								onChange={handleChange}
+								required
+								placeholder='Example Sports Club'
+							/>
+							<Input
+								label='Work email'
+								type='email'
+								name='email'
+								value={formData.email}
+								onChange={handleChange}
+								required
+								placeholder='rights@clubname.com'
+							/>
+							<Input
+								label='Password'
+								type='password'
+								name='password'
+								value={formData.password}
+								onChange={handleChange}
+								required
+								placeholder='Create a strong password'
+								helperText='Use at least 8 characters.'
+							/>
+							<Input
+								label='Confirm password'
+								type='password'
+								name='confirmPassword'
+								value={formData.confirmPassword}
+								onChange={handleChange}
+								required
+								placeholder='Re-enter your password'
+							/>
 
-						<div className='pt-2'>
-							<Button type='submit' className='w-full' loading={isSubmitting} disabled={isSubmitting}>
-								Register organization
-							</Button>
-						</div>
+							<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface-elevated) px-4 py-3'>
+								<p className='text-xs font-semibold uppercase tracking-[0.14em] text-(--app-color-text-muted)'>Security baseline</p>
+								<p className='mt-1 text-sm text-(--app-color-text)'>
+									New accounts start on protected auth and organization-scoped access control.
+								</p>
+							</div>
 
-						<p className='text-sm text-(--app-color-text-muted)'>
-							Already have an account?{' '}
-							<Link to='/login' className='font-semibold text-(--app-color-primary) hover:text-(--app-color-primary-hover)'>
-								Sign in
-							</Link>
-						</p>
-					</form>
-				</Card>
+							<div className='pt-2'>
+								<Button type='submit' className='w-full' loading={isSubmitting} disabled={isSubmitting}>
+									Create workspace
+								</Button>
+							</div>
+
+							<p className='text-sm text-(--app-color-text-muted)'>
+								Already registered?{' '}
+								<Link to='/login' className='font-semibold text-(--app-color-primary) hover:text-(--app-color-primary-hover)'>
+									Sign in
+								</Link>
+							</p>
+						</form>
+					</Card>
+				</section>
 			</div>
 		</Container>
 	);

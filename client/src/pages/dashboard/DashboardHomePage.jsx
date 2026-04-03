@@ -60,7 +60,7 @@ export default function DashboardHomePage() {
   return (
     <div className='space-y-8'>
       <section className='grid gap-6 lg:grid-cols-[1.1fr_0.9fr]'>
-        <Card className='border-white/80 bg-white/90 shadow-lg shadow-slate-900/5' title={`Welcome back, ${user?.orgName || 'team'}`} subtitle='Phase 1 is live: protected auth, refresh tokens, and a working dashboard shell.'>
+        <Card className='border-(--app-color-border) shadow-lg shadow-slate-900/5' style={{ backgroundColor: 'var(--app-color-surface-panel)' }} title={`Welcome back, ${user?.orgName || 'team'}`} subtitle='Phase 1 is live: protected auth, refresh tokens, and a working dashboard shell.'>
           <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
             {statsCards.map((item) => (
               <StatCard key={item.label} label={item.label} value={isLoading ? '—' : item.value.toString()} subtitle='Current stub value' />
@@ -68,20 +68,20 @@ export default function DashboardHomePage() {
           </div>
         </Card>
 
-        <Card className='border-white/80 bg-white/90 shadow-lg shadow-slate-900/5' title='Session state' subtitle='What the app knows after authentication.'>
-          <div className='space-y-4 text-sm text-[var(--app-color-text-muted)]'>
-            <p><span className='font-semibold text-[var(--app-color-text)]'>Organization:</span> {user?.orgName || 'Not loaded'}</p>
-            <p><span className='font-semibold text-[var(--app-color-text)]'>Email:</span> {user?.email || 'Not loaded'}</p>
-            <p><span className='font-semibold text-[var(--app-color-text)]'>Plan:</span> {user?.plan || 'free'}</p>
+        <Card className='border-(--app-color-border) shadow-lg shadow-slate-900/5' style={{ backgroundColor: 'var(--app-color-surface-panel)' }} title='Session state' subtitle='What the app knows after authentication.'>
+          <div className='space-y-4 text-sm text-(--app-color-text-muted)'>
+            <p><span className='font-semibold text-(--app-color-text)'>Organization:</span> {user?.orgName || 'Not loaded'}</p>
+            <p><span className='font-semibold text-(--app-color-text)'>Email:</span> {user?.email || 'Not loaded'}</p>
+            <p><span className='font-semibold text-(--app-color-text)'>Plan:</span> {user?.plan || 'free'}</p>
           </div>
         </Card>
       </section>
 
-      <Card className='border-white/80 bg-white/90 shadow-lg shadow-slate-900/5' title='Recent activity' subtitle='No content yet, which is exactly expected for Phase 1.'>
+      <Card className='border-(--app-color-border) shadow-lg shadow-slate-900/5' style={{ backgroundColor: 'var(--app-color-surface-panel)' }} title='Recent activity' subtitle='No content yet, which is exactly expected for Phase 1.'>
         {error ? (
           <p className='text-sm text-red-600'>{error}</p>
         ) : isLoading ? (
-          <div className='flex items-center gap-3 text-sm text-[var(--app-color-text-muted)]'>
+          <div className='flex items-center gap-3 text-sm text-(--app-color-text-muted)'>
             <Spinner size='sm' />
             Loading dashboard summary...
           </div>
