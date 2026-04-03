@@ -1,0 +1,28 @@
+:root {
+	--app-font-sans: "Plus Jakarta Sans", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+	--app-color-bg: #f8fafc;
+	--app-color-surface: #ffffff;
+	--app-color-surface-elevated: #f1f5f9;
+	--app-color-text: #0f172a;
+	--app-color-text-muted: #475569;
+	--app-color-border: #cbd5e1;
+	--app-color-primary: #0f766e;
+	--app-color-primary-hover: #115e59;
+	--app-color-primary-soft: #ccfbf1;
+	--app-color-accent: #2563eb;
+	--app-color-canvas-glow: #e2e8f0;
+}
+
+@theme {
+	--font-sans: var(--app-font-sans);
+	--color-background: var(--app-color-bg);
+	--color-surface: var(--app-color-surface);
+	--color-surface-elevated: var(--app-color-surface-elevated);
+	--color-text: var(--app-color-text);
+	--color-text-muted: var(--app-color-text-muted);
+	--color-border: var(--app-color-border);
+	--color-primary: var(--app-color-primary);
+	--color-primary-hover: var(--app-color-primary-hover);
+	--color-primary-soft: var(--app-color-primary-soft);
+	--color-accent: var(--app-color-accent);
+}
