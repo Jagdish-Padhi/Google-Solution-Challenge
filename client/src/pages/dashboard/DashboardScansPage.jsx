@@ -109,7 +109,7 @@ export default function DashboardScansPage() {
 		}, 5000);
 
 		return () => clearInterval(timer);
-	}, [runningCount]);
+	}, [runningCount, loadScans]);
 
 	const handleTogglePlatform = (platform) => {
 		setFormState((current) => {
