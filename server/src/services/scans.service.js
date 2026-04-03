@@ -120,6 +120,34 @@ export async function getScanJobById({ orgId, scanJobId }) {
 	return ScanJob.findOne({ _id: scanJobId, orgId }).lean();
 }
 
+export async function retryScanJob({ orgId, scanJobId }) {
+	const scanJob = await ScanJob.findOne({ _id: scanJobId, orgId });
+
+	if (!scanJob) {
+		const error = new Error('Scan job not found.');
+		error.statusCode = 404;
+		throw error;
+	}
+
+	if (scanJob.status === 'running' || scanJob.status === 'queued') {
+		const error = new Error('Scan job is already queued or running.');
+		error.statusCode = 409;
+		throw error;
+	}
+
+	await ScanResult.deleteMany({ scanJobId: scanJob._id });
+
+	scanJob.status = 'queued';
+	scanJob.resultsCount = 0;
+	scanJob.violationsCount = 0;
+	scanJob.startedAt = null;
+	scanJob.completedAt = null;
+	scanJob.lastError = null;
+	await scanJob.save();
+
+	return scanJob;
+}
+
 export async function listScanResultsByJob({ orgId, scanJobId, page = 1, limit = 20 }) {
 	const scanJob = await ScanJob.findOne({ _id: scanJobId, orgId }).lean();
 
@@ -155,6 +183,25 @@ export async function countRunningScans(orgId) {
 		orgId,
 		status: { $in: ['queued', 'running'] },
 	});
+}
+
+export async function createScheduledScanJobsForOrg(orgId) {
+	const assets = await Asset.find({ orgId, status: 'active' }).select('_id orgId title').lean();
+
+	const jobs = [];
+	for (const asset of assets) {
+		const scanJob = await createScanJob({
+			orgId: asset.orgId,
+			assetId: asset._id,
+			keywords: [asset.title],
+			platforms: ['youtube', 'web'],
+		});
+
+		jobs.push(scanJob);
+		void dispatchScanJob(scanJob._id.toString());
+	}
+
+	return jobs;
 }
 
 export async function getAssetsForScheduledScans() {

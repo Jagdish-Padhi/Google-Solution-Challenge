@@ -45,6 +45,7 @@ export default function DashboardScansPage() {
 	const [assets, setAssets] = useState([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [isRunningScheduled, setIsRunningScheduled] = useState(false);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [error, setError] = useState('');
 	const [formState, setFormState] = useState({
@@ -173,6 +174,32 @@ export default function DashboardScansPage() {
 		}
 	};
 
+	const handleRetry = async (jobId) => {
+		try {
+			await api.post(`/scans/${jobId}/retry`);
+			toast.success('Scan re-queued successfully.');
+			await loadScans();
+		} catch (requestError) {
+			const message = requestError.response?.data?.message || 'Failed to retry scan job.';
+			toast.error(message);
+		}
+	};
+
+	const handleRunScheduledNow = async () => {
+		setIsRunningScheduled(true);
+		try {
+			const response = await api.post('/scans/run-scheduled');
+			const count = response.data?.queuedJobs || 0;
+			toast.success(`Queued ${count} scheduled scan${count === 1 ? '' : 's'}.`);
+			await loadScans();
+		} catch (requestError) {
+			const message = requestError.response?.data?.message || 'Failed to queue scheduled scans.';
+			toast.error(message);
+		} finally {
+			setIsRunningScheduled(false);
+		}
+	};
+
 	return (
 		<div className='space-y-6'>
 			<div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
@@ -180,7 +207,12 @@ export default function DashboardScansPage() {
 					<h2 className='text-2xl font-semibold text-(--app-color-text)'>Scan management</h2>
 					<p className='text-sm text-(--app-color-text-muted)'>Queue scans, monitor progress, and review discovered results.</p>
 				</div>
-				<Button onClick={() => setIsModalOpen(true)}>Start New Scan</Button>
+				<div className='flex items-center gap-2'>
+					<Button variant='secondary' onClick={handleRunScheduledNow} loading={isRunningScheduled} disabled={isRunningScheduled}>
+						Run Scheduled Now
+					</Button>
+					<Button onClick={() => setIsModalOpen(true)}>Start New Scan</Button>
+				</div>
 			</div>
 
 			<section className='grid gap-4 sm:grid-cols-3'>
@@ -232,10 +264,22 @@ export default function DashboardScansPage() {
 									<p>Results: {job.resultsCount || 0}</p>
 									<p>Violations: {job.violationsCount || 0}</p>
 								</div>
+								{job.lastError ? (
+									<p className='mt-2 text-xs text-red-600'>Last error: {job.lastError}</p>
+								) : null}
 								<div className='mt-3'>
 									<Link to={`/dashboard/scans/${job._id}`} className='text-xs font-semibold uppercase tracking-[0.12em] text-(--app-color-primary) hover:underline'>
 										View results
 									</Link>
+									{job.status === 'failed' ? (
+										<button
+											type='button'
+											onClick={() => handleRetry(job._id)}
+											className='ml-4 text-xs font-semibold uppercase tracking-[0.12em] text-red-600 hover:underline'
+										>
+											Retry
+										</button>
+									) : null}
 								</div>
 							</div>
 						))}
