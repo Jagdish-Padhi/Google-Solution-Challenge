@@ -6,6 +6,7 @@ import LandingPage from '../pages/landing/LandingPage.jsx';
 import RegisterPage from '../pages/auth/RegisterPage.jsx';
 import DashboardHomePage from '../pages/dashboard/DashboardHomePage.jsx';
 import DashboardAssetsPage from '../pages/dashboard/DashboardAssetsPage.jsx';
+import DashboardScansPage from '../pages/dashboard/DashboardScansPage.jsx';
 import useAuthStore from '../store/auth.store.js';
 
 function PrivateRoute() {
@@ -33,6 +34,7 @@ export default function AppRoutes() {
 				<Route element={<DashboardLayout />}>
 					<Route path='/dashboard' element={<DashboardHomePage />} />
 					<Route path='/dashboard/assets' element={<DashboardAssetsPage />} />
+					<Route path='/dashboard/scans' element={<DashboardScansPage />} />
 				</Route>
 			</Route>
 			<Route path='*' element={<Navigate to='/' replace />} />

@@ -9,6 +9,7 @@ import useAuthStore from '../../store/auth.store.js';
 const navigationItems = [
 	{ label: 'Overview', path: '/dashboard' },
 	{ label: 'Assets', path: '/dashboard/assets' },
+	{ label: 'Scans', path: '/dashboard/scans' },
 ];
 
 const shellBackground = {
