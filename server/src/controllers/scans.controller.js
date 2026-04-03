@@ -1,0 +1,58 @@
+import {
+	createScanJob,
+	dispatchScanJob,
+	getScanJobById,
+	listScanJobsByOrg,
+} from '../services/scans.service.js';
+import { validateListScansQuery, validateStartScanPayload } from '../validators/scans.validator.js';
+
+export async function startScanController(req, res, next) {
+	try {
+		const { assetId, keywords, platforms } = validateStartScanPayload(req.body);
+
+		const scanJob = await createScanJob({
+			orgId: req.auth.orgId,
+			assetId,
+			keywords,
+			platforms,
+		});
+
+		void dispatchScanJob(scanJob._id.toString());
+
+		return res.status(201).json({
+			message: 'Scan job created successfully.',
+			scanJobId: scanJob._id.toString(),
+			status: scanJob.status,
+		});
+	} catch (error) {
+		return next(error);
+	}
+}
+
+export async function getScanStatusController(req, res, next) {
+	try {
+		const scanJob = await getScanJobById({
+			orgId: req.auth.orgId,
+			scanJobId: req.params.jobId,
+		});
+
+		if (!scanJob) {
+			return res.status(404).json({ message: 'Scan job not found.' });
+		}
+
+		return res.status(200).json({ scanJob });
+	} catch (error) {
+		return next(error);
+	}
+}
+
+export async function listScansController(req, res, next) {
+	try {
+		const { page, limit } = validateListScansQuery(req.query);
+		const result = await listScanJobsByOrg({ orgId: req.auth.orgId, page, limit });
+
+		return res.status(200).json(result);
+	} catch (error) {
+		return next(error);
+	}
+}

@@ -1,10 +1,12 @@
 import { getOrganizationById } from '../services/auth.service.js';
 import { getDashboardAssetStats } from '../services/assets.service.js';
+import { countRunningScans } from '../services/scans.service.js';
 
 export async function getDashboardStatsController(req, res, next) {
 	try {
 		const organization = await getOrganizationById(req.auth.orgId);
 		const assetStats = await getDashboardAssetStats(req.auth.orgId);
+		const runningScans = await countRunningScans(req.auth.orgId);
 
 		if (!organization) {
 			return res.status(404).json({ message: 'Organization not found.' });
@@ -19,7 +21,7 @@ export async function getDashboardStatsController(req, res, next) {
 			},
 			stats: {
 				totalAssets: assetStats.totalAssets,
-				activeScans: assetStats.activeScans,
+				activeScans: runningScans,
 				violations: assetStats.violations,
 				alertsSent: 0,
 			},
