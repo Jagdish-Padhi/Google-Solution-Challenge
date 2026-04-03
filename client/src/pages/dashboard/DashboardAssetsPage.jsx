@@ -62,6 +62,18 @@ export default function DashboardAssetsPage() {
 		loadAssets();
 	}, []);
 
+	useEffect(() => {
+		if (processingCount === 0) {
+			return undefined;
+		}
+
+		const timer = setInterval(() => {
+			loadAssets();
+		}, 8000);
+
+		return () => clearInterval(timer);
+	}, [processingCount]);
+
 	const handleOpenDetail = async (asset) => {
 		setSelectedAsset(asset);
 		setIsDetailModalOpen(true);
@@ -162,6 +174,13 @@ export default function DashboardAssetsPage() {
 				</div>
 
 				<div className='mt-5'>
+					{processingCount > 0 && (
+						<div className='mb-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700'>
+							<Spinner size='sm' />
+							Processing fingerprint for {processingCount} asset{processingCount > 1 ? 's' : ''}...
+						</div>
+					)}
+
 					{error ? (
 						<p className='text-sm text-red-600'>{error}</p>
 					) : isLoading ? (
@@ -180,6 +199,10 @@ export default function DashboardAssetsPage() {
 									style={{ backgroundColor: 'var(--app-color-surface)' }}
 									onClick={() => handleOpenDetail(asset)}
 								>
+									{asset.type === 'image' && asset.gcsUrl ? (
+										<img src={asset.gcsUrl} alt={asset.title} className='mb-4 h-36 w-full rounded-lg object-cover' />
+									) : null}
+
 									<div className='flex items-start justify-between gap-3'>
 										<div>
 											<h3 className='text-base font-semibold text-(--app-color-text)'>{asset.title}</h3>
