@@ -43,7 +43,7 @@ const Alert = ({
 
 	return (
 		<div className={`${styles.bg} ${styles.border} border rounded-lg p-4 flex gap-3 ${className}`}>
-			{Icon && <Icon className={`${styles.text} w-5 h-5 flex-shrink-0 mt-0.5`} />}
+			{Icon && <Icon className={`${styles.text} w-5 h-5 mt-0.5`} style={{ flexShrink: 0 }} />}
 
 			<div className='flex-1 min-w-0'>
 				{title && <h3 className={`${styles.title} font-semibold text-sm mb-1`}>{title}</h3>}
@@ -52,11 +52,7 @@ const Alert = ({
 			</div>
 
 			{dismissible && onClose && (
-				<button
-					onClick={onClose}
-					className={`${styles.text} flex-shrink-0 hover:opacity-75 transition-opacity`}
-					aria-label='Close'
-				>
+				<button onClick={onClose} className={`${styles.text} hover:opacity-75 transition-opacity`} style={{ flexShrink: 0 }} aria-label='Close'>
 					<svg className='w-5 h-5' fill='currentColor' viewBox='0 0 20 20'>
 						<path fillRule='evenodd' d='M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z' clipRule='evenodd' />
 					</svg>
