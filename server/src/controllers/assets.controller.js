@@ -1,5 +1,6 @@
 import {
 	createAsset,
+	enrichAssetFingerprint,
 	getAssetById,
 	listAssetsByOrg,
 	softDeleteAsset,
@@ -27,8 +28,14 @@ export async function uploadAssetController(req, res, next) {
 			publicUrl,
 		});
 
+		// Run fingerprint generation in the background so upload stays responsive.
+		void enrichAssetFingerprint({
+			assetId: asset._id.toString(),
+			sourceUrl: publicUrl,
+		});
+
 		return res.status(201).json({
-			message: 'Asset uploaded successfully.',
+			message: 'Asset uploaded successfully. Fingerprint processing started.',
 			asset,
 		});
 	} catch (error) {

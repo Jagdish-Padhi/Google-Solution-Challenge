@@ -1,5 +1,24 @@
 import Asset from '../models/asset.model.js';
 
+const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://localhost:8000';
+
+async function requestFingerprint(sourceUrl) {
+	const response = await fetch(`${ML_SERVICE_URL}/ml/fingerprint`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify({ sourceUrl }),
+	});
+
+	if (!response.ok) {
+		const errorText = await response.text();
+		throw new Error(`Fingerprint service failed (${response.status}): ${errorText}`);
+	}
+
+	return response.json();
+}
+
 export function inferAssetType(mimeType = '') {
 	if (mimeType.startsWith('image/')) {
 		return 'image';
@@ -21,11 +40,29 @@ export async function createAsset({ orgId, title, file, publicUrl }) {
 		gcsUrl: publicUrl,
 		thumbnailUrl: null,
 		fileSize: file.size,
-		status: 'active',
+		status: 'processing',
 		uploadedAt: new Date(),
 	});
 
 	return asset;
+}
+
+export async function enrichAssetFingerprint({ assetId, sourceUrl }) {
+	try {
+		const fingerprint = await requestFingerprint(sourceUrl);
+
+		await Asset.findByIdAndUpdate(assetId, {
+			fingerprint: {
+				pHash: fingerprint.pHash || null,
+				videoHash: fingerprint.videoHash || null,
+				colorHistogram: fingerprint.colorHistogram || [],
+				frameHashes: fingerprint.frameHashes || [],
+			},
+			status: 'active',
+		});
+	} catch (error) {
+		console.error('[ASSET_FINGERPRINT_ERROR]', error.message);
+	}
 }
 
 export async function listAssetsByOrg({ orgId, page = 1, limit = 12 }) {
