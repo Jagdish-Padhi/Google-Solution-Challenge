@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import multer from 'multer';
+import path from 'node:path';
+import crypto from 'node:crypto';
 
 import {
 	deleteAssetController,
@@ -18,14 +20,25 @@ const acceptedMimeTypes = new Set([
 	'image/png',
 ]);
 
+const storage = multer.diskStorage({
+	destination: 'uploads/',
+	filename: (_req, file, callback) => {
+		const extension = path.extname(file.originalname || '') || '.bin';
+		const uniqueName = `${Date.now()}-${crypto.randomUUID()}${extension.toLowerCase()}`;
+		callback(null, uniqueName);
+	},
+});
+
 const upload = multer({
-	dest: 'uploads/',
+	storage,
 	limits: {
 		fileSize: 200 * 1024 * 1024,
 	},
 	fileFilter: (_req, file, callback) => {
 		if (!acceptedMimeTypes.has(file.mimetype)) {
-			callback(new Error('Unsupported file format. Please upload MP4, MOV, JPEG, or PNG.'));
+			const validationError = new Error('Unsupported file format. Please upload MP4, MOV, JPEG, or PNG.');
+			validationError.statusCode = 400;
+			callback(validationError);
 			return;
 		}
 
