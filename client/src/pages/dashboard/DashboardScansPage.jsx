@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import { Link } from 'react-router-dom';
 
 import { Badge, Button, Card, EmptyState, Modal, Spinner } from '../../components';
 import api from '../../services/api.js';
@@ -57,7 +58,7 @@ export default function DashboardScansPage() {
 		[scanJobs],
 	);
 
-	async function loadAssets() {
+	const loadAssets = useCallback(async () => {
 		try {
 			const response = await api.get('/assets?page=1&limit=100');
 			const items = response.data.items || [];
@@ -69,16 +70,16 @@ export default function DashboardScansPage() {
 		} catch {
 			// Silent fail here; scans page can still render with existing jobs.
 		}
-	}
+	}, [formState.assetId]);
 
-	async function loadScans() {
+	const loadScans = useCallback(async () => {
 		try {
 			const response = await api.get('/scans?page=1&limit=20');
 			setScanJobs(response.data.items || []);
 		} catch {
 			setError('Unable to load scans right now.');
 		}
-	}
+	}, []);
 
 	useEffect(() => {
 		let mounted = true;
@@ -96,7 +97,7 @@ export default function DashboardScansPage() {
 		return () => {
 			mounted = false;
 		};
-	}, []);
+	}, [loadAssets, loadScans]);
 
 	useEffect(() => {
 		if (runningCount === 0) {
@@ -230,6 +231,11 @@ export default function DashboardScansPage() {
 									<p>Platforms: {job.platforms?.join(', ') || '-'}</p>
 									<p>Results: {job.resultsCount || 0}</p>
 									<p>Violations: {job.violationsCount || 0}</p>
+								</div>
+								<div className='mt-3'>
+									<Link to={`/dashboard/scans/${job._id}`} className='text-xs font-semibold uppercase tracking-[0.12em] text-(--app-color-primary) hover:underline'>
+										View results
+									</Link>
 								</div>
 							</div>
 						))}

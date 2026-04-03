@@ -2,6 +2,7 @@ import {
 	createScanJob,
 	dispatchScanJob,
 	getScanJobById,
+	listScanResultsByJob,
 	listScanJobsByOrg,
 } from '../services/scans.service.js';
 import { validateListScansQuery, validateStartScanPayload } from '../validators/scans.validator.js';
@@ -50,6 +51,22 @@ export async function listScansController(req, res, next) {
 	try {
 		const { page, limit } = validateListScansQuery(req.query);
 		const result = await listScanJobsByOrg({ orgId: req.auth.orgId, page, limit });
+
+		return res.status(200).json(result);
+	} catch (error) {
+		return next(error);
+	}
+}
+
+export async function listScanResultsController(req, res, next) {
+	try {
+		const { page, limit } = validateListScansQuery(req.query);
+		const result = await listScanResultsByJob({
+			orgId: req.auth.orgId,
+			scanJobId: req.params.jobId,
+			page,
+			limit,
+		});
 
 		return res.status(200).json(result);
 	} catch (error) {
