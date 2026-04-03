@@ -13,7 +13,7 @@
 	--app-color-canvas-glow: #e2e8f0;
 }
 
-@theme {
+@theme{
 	--font-sans: var(--app-font-sans);
 	--color-background: var(--app-color-bg);
 	--color-surface: var(--app-color-surface);
