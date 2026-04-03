@@ -2,6 +2,7 @@ import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 
 import DashboardLayout from '../components/layout/DashboardLayout.jsx';
 import LoginPage from '../pages/auth/LoginPage.jsx';
+import LandingPage from '../pages/landing/LandingPage.jsx';
 import RegisterPage from '../pages/auth/RegisterPage.jsx';
 import DashboardHomePage from '../pages/dashboard/DashboardHomePage.jsx';
 import useAuthStore from '../store/auth.store.js';
@@ -24,7 +25,7 @@ function PrivateRoute() {
 export default function AppRoutes() {
 	return (
 		<Routes>
-			<Route path='/' element={<Navigate to='/dashboard' replace />} />
+			<Route path='/' element={<LandingPage />} />
 			<Route path='/login' element={<LoginPage />} />
 			<Route path='/register' element={<RegisterPage />} />
 			<Route element={<PrivateRoute />}>
@@ -32,7 +33,7 @@ export default function AppRoutes() {
 					<Route path='/dashboard' element={<DashboardHomePage />} />
 				</Route>
 			</Route>
-			<Route path='*' element={<Navigate to='/dashboard' replace />} />
+			<Route path='*' element={<Navigate to='/' replace />} />
 		</Routes>
 	);
 }
