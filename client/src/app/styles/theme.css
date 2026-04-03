@@ -1,0 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+:root {
+	--app-font-sans: "IBM Plex Sans", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+	--app-font-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+	--app-rgb-primary: 15, 95, 115;
+	--app-rgb-accent: 23, 92, 211;
+	--app-color-bg: #f2f5f9;
+	--app-color-surface: #ffffff;
+	--app-color-surface-elevated: #e8eef4;
+	--app-color-surface-glass: rgba(255, 255, 255, 0.82);
+	--app-color-surface-panel: rgba(255, 255, 255, 0.94);
+	--app-color-text: #0b1422;
+	--app-color-text-muted: #516075;
+	--app-color-border: #c3d0de;
+	--app-color-primary: #0f5f73;
+	--app-color-primary-hover: #0b4a5a;
+	--app-color-primary-soft: #d8ecf2;
+	--app-color-accent: #175cd3;
+	--app-color-canvas-glow: #d8e2ee;
+	--app-color-success: #15803d;
+	--app-color-warning: #b45309;
+	--app-color-danger: #b42318;
+	--app-gradient-shell: radial-gradient(circle at top left, rgba(var(--app-rgb-accent), 0.14), transparent 30%), radial-gradient(circle at bottom right, rgba(var(--app-rgb-primary), 0.12), transparent 24%), linear-gradient(180deg, #f2f5f9 0%, #e8eef4 100%);
+	--app-gradient-auth-login: linear-gradient(160deg, #0c1624 0%, #112638 58%, #11485c 100%);
+	--app-gradient-auth-register: linear-gradient(150deg, #093735 0%, #0f5f73 55%, #175cd3 100%);
+	--app-shadow-elevated: 0 24px 40px rgba(11, 20, 34, 0.12);
+}
+
+@theme{
+	--font-sans: var(--app-font-sans);
+	--font-mono: var(--app-font-mono);
+	--color-background: var(--app-color-bg);
+	--color-surface: var(--app-color-surface);
+	--color-surface-elevated: var(--app-color-surface-elevated);
+	--color-text: var(--app-color-text);
+	--color-text-muted: var(--app-color-text-muted);
+	--color-border: var(--app-color-border);
+	--color-primary: var(--app-color-primary);
+	--color-primary-hover: var(--app-color-primary-hover);
+	--color-primary-soft: var(--app-color-primary-soft);
+	--color-accent: var(--app-color-accent);
+	--color-success: var(--app-color-success);
+	--color-warning: var(--app-color-warning);
+	--color-danger: var(--app-color-danger);
+}

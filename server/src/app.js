@@ -1,23 +1,21 @@
 import cors from 'cors';
-import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
 import express from 'express';
 import helmet from 'helmet';
-
 import { notFoundHandler } from './middlewares/notFound.middleware.js';
 import { errorHandler } from './middlewares/error.middleware.js';
 import routes from './routes/index.js';
 
-dotenv.config();
-
 const app = express();
 
+const corsOptions = {
+	origin: true,
+	credentials: true,
+};
+
 app.use(helmet());
-app.use(
-  cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
-    credentials: true,
-  }),
-);
+app.use(cors(corsOptions));
+app.use(cookieParser());
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
