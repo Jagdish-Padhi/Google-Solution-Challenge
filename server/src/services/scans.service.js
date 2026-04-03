@@ -95,16 +95,25 @@ export async function dispatchScanJob(scanJobId) {
 	}
 }
 
-export async function listScanJobsByOrg({ orgId, page = 1, limit = 10 }) {
+export async function listScanJobsByOrg({ orgId, page = 1, limit = 10, status = '', platform = '' }) {
 	const skip = (page - 1) * limit;
+	const query = { orgId };
+
+	if (status) {
+		query.status = status;
+	}
+
+	if (platform) {
+		query.platforms = platform;
+	}
 
 	const [items, total] = await Promise.all([
-		ScanJob.find({ orgId })
+		ScanJob.find(query)
 			.sort({ createdAt: -1 })
 			.skip(skip)
 			.limit(limit)
 			.lean(),
-		ScanJob.countDocuments({ orgId }),
+		ScanJob.countDocuments(query),
 	]);
 
 	return {
@@ -148,7 +157,7 @@ export async function retryScanJob({ orgId, scanJobId }) {
 	return scanJob;
 }
 
-export async function listScanResultsByJob({ orgId, scanJobId, page = 1, limit = 20 }) {
+export async function listScanResultsByJob({ orgId, scanJobId, page = 1, limit = 20, status = '', platform = '' }) {
 	const scanJob = await ScanJob.findOne({ _id: scanJobId, orgId }).lean();
 
 	if (!scanJob) {
@@ -158,14 +167,23 @@ export async function listScanResultsByJob({ orgId, scanJobId, page = 1, limit =
 	}
 
 	const skip = (page - 1) * limit;
+	const query = { scanJobId, orgId };
+
+	if (status) {
+		query.status = status;
+	}
+
+	if (platform) {
+		query.platform = platform;
+	}
 
 	const [items, total] = await Promise.all([
-		ScanResult.find({ scanJobId, orgId })
+		ScanResult.find(query)
 			.sort({ scrapedAt: -1, createdAt: -1 })
 			.skip(skip)
 			.limit(limit)
 			.lean(),
-		ScanResult.countDocuments({ scanJobId, orgId }),
+		ScanResult.countDocuments(query),
 	]);
 
 	return {

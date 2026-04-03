@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Globe, Radio, Send, Video } from 'lucide-react';
 
-import { Badge, Button, Card, EmptyState, Spinner } from '../../components';
+import { Badge, Button, Card, EmptyState, Pagination, Spinner } from '../../components';
 import api from '../../services/api.js';
+
+const resultPlatformFilters = ['', 'youtube', 'twitter', 'telegram', 'web'];
+const resultStatusFilters = ['', 'pending_match', 'matched', 'no_match'];
 
 function statusVariant(status) {
 	if (status === 'completed') {
@@ -43,27 +46,47 @@ export default function DashboardScanResultsPage() {
 	const [error, setError] = useState('');
 	const [scanJob, setScanJob] = useState(null);
 	const [results, setResults] = useState([]);
+	const [filters, setFilters] = useState({
+		platform: '',
+		status: '',
+	});
+	const [pagination, setPagination] = useState({
+		page: 1,
+		limit: 20,
+		totalPages: 1,
+	});
 
-	async function loadData() {
+	const loadData = useCallback(async () => {
 		try {
 			const [statusResponse, resultsResponse] = await Promise.all([
 				api.get(`/scans/${jobId}/status`),
-				api.get(`/scans/${jobId}/results?page=1&limit=100`),
+				api.get(`/scans/${jobId}/results`, {
+					params: {
+						page: pagination.page,
+						limit: pagination.limit,
+						platform: filters.platform || undefined,
+						status: filters.status || undefined,
+					},
+				}),
 			]);
 
 			setScanJob(statusResponse.data.scanJob || null);
 			setResults(resultsResponse.data.items || []);
+			setPagination((current) => ({
+				...current,
+				totalPages: resultsResponse.data.totalPages || 1,
+			}));
 			setError('');
 		} catch {
 			setError('Unable to load scan details right now.');
 		} finally {
 			setIsLoading(false);
 		}
-	}
+	}, [filters.platform, filters.status, jobId, pagination.limit, pagination.page]);
 
 	useEffect(() => {
 		loadData();
-	}, [jobId]);
+	}, [loadData]);
 
 	useEffect(() => {
 		if (!scanJob || !['queued', 'running'].includes(scanJob.status)) {
@@ -75,7 +98,25 @@ export default function DashboardScanResultsPage() {
 		}, 5000);
 
 		return () => clearInterval(timer);
-	}, [scanJob?.status, jobId]);
+	}, [loadData, scanJob]);
+
+	const handleFilterChange = (name, value) => {
+		setFilters((current) => ({
+			...current,
+			[name]: value,
+		}));
+		setPagination((current) => ({
+			...current,
+			page: 1,
+		}));
+	};
+
+	const handlePageChange = (nextPage) => {
+		setPagination((current) => ({
+			...current,
+			page: Math.min(Math.max(1, nextPage), Math.max(1, current.totalPages)),
+		}));
+	};
 
 	return (
 		<div className='space-y-6'>
@@ -114,6 +155,49 @@ export default function DashboardScanResultsPage() {
 				title='Discovered results'
 				subtitle='Rows update as scans complete.'
 			>
+				<div className='mb-4 grid gap-3 sm:grid-cols-3'>
+					<div>
+						<label className='mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-(--app-color-text-muted)'>Platform</label>
+						<select
+							value={filters.platform}
+							onChange={(event) => handleFilterChange('platform', event.target.value)}
+							className='w-full rounded-lg border border-(--app-color-border) bg-(--app-color-surface) px-3 py-2 text-sm text-(--app-color-text) focus:border-(--app-color-primary) focus:outline-none'
+						>
+							{resultPlatformFilters.map((platform) => (
+								<option key={platform || 'all'} value={platform}>
+									{platform ? platform.charAt(0).toUpperCase() + platform.slice(1) : 'All platforms'}
+								</option>
+							))}
+						</select>
+					</div>
+					<div>
+						<label className='mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-(--app-color-text-muted)'>Match status</label>
+						<select
+							value={filters.status}
+							onChange={(event) => handleFilterChange('status', event.target.value)}
+							className='w-full rounded-lg border border-(--app-color-border) bg-(--app-color-surface) px-3 py-2 text-sm text-(--app-color-text) focus:border-(--app-color-primary) focus:outline-none'
+						>
+							{resultStatusFilters.map((status) => (
+								<option key={status || 'all'} value={status}>
+									{status ? status.replace('_', ' ') : 'All result statuses'}
+								</option>
+							))}
+						</select>
+					</div>
+					<div className='flex items-end'>
+						<Button
+							type='button'
+							variant='secondary'
+							onClick={() => {
+								handleFilterChange('platform', '');
+								handleFilterChange('status', '');
+							}}
+						>
+							Clear filters
+						</Button>
+					</div>
+				</div>
+
 				{!isLoading && results.length === 0 ? (
 					<EmptyState title='No discovered URLs yet' message='Run a scan and results will appear here.' />
 				) : (
@@ -153,6 +237,16 @@ export default function DashboardScanResultsPage() {
 						</table>
 					</div>
 				)}
+				{pagination.totalPages > 1 ? (
+					<Pagination
+						currentPage={pagination.page}
+						totalPages={pagination.totalPages}
+						hasPreviousPage={pagination.page > 1}
+						hasNextPage={pagination.page < pagination.totalPages}
+						onPageChange={handlePageChange}
+						className='mt-4'
+					/>
+				) : null}
 			</Card>
 		</div>
 	);

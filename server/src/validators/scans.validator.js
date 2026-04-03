@@ -37,9 +37,18 @@ export function validateStartScanPayload(payload) {
 export function validateListScansQuery(query) {
 	const parsedPage = Number.parseInt(query.page || '1', 10);
 	const parsedLimit = Number.parseInt(query.limit || '10', 10);
+	const status = typeof query.status === 'string' ? query.status.trim().toLowerCase() : '';
+	const platform = typeof query.platform === 'string' ? query.platform.trim().toLowerCase() : '';
 
 	const page = Number.isNaN(parsedPage) ? 1 : Math.max(1, parsedPage);
 	const limit = Number.isNaN(parsedLimit) ? 10 : Math.min(50, Math.max(1, parsedLimit));
+	const allowedStatuses = new Set(['queued', 'running', 'completed', 'failed']);
+	const allowedPlatforms = new Set(['youtube', 'twitter', 'telegram', 'web']);
 
-	return { page, limit };
+	return {
+		page,
+		limit,
+		status: allowedStatuses.has(status) ? status : '',
+		platform: allowedPlatforms.has(platform) ? platform : '',
+	};
 }

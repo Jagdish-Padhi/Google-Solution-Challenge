@@ -2,38 +2,48 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 
-import { Badge, Button, Card, EmptyState, Modal, Spinner } from '../../components';
+import { Badge, Button, Card, EmptyState, Modal, Pagination, Spinner } from '../../components';
 import api from '../../services/api.js';
 
 const defaultPlatforms = ['youtube', 'web'];
 const supportedPlatforms = ['youtube', 'twitter', 'telegram', 'web'];
+const scanStatusFilters = ['', 'queued', 'running', 'completed', 'failed'];
+const scanPlatformFilters = ['', 'youtube', 'twitter', 'telegram', 'web'];
 
-function statusLabel(status) {
-	if (status === 'running') {
+function statusLabel(job) {
+	if (job.status === 'running') {
 		return 'Scanning';
 	}
 
-	if (status === 'completed') {
+	if (job.status === 'completed' && Number(job.violationsCount || 0) > 0) {
+		return 'Violations Found';
+	}
+
+	if (job.status === 'completed') {
 		return 'Complete';
 	}
 
-	if (status === 'failed') {
+	if (job.status === 'failed') {
 		return 'Failed';
 	}
 
 	return 'Queued';
 }
 
-function statusVariant(status) {
-	if (status === 'running') {
+function statusVariant(job) {
+	if (job.status === 'running') {
 		return 'warning';
 	}
 
-	if (status === 'completed') {
+	if (job.status === 'completed' && Number(job.violationsCount || 0) > 0) {
+		return 'danger';
+	}
+
+	if (job.status === 'completed') {
 		return 'success';
 	}
 
-	if (status === 'failed') {
+	if (job.status === 'failed') {
 		return 'danger';
 	}
 
@@ -48,6 +58,16 @@ export default function DashboardScansPage() {
 	const [isRunningScheduled, setIsRunningScheduled] = useState(false);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [error, setError] = useState('');
+	const [filters, setFilters] = useState({
+		status: '',
+		platform: '',
+	});
+	const [pagination, setPagination] = useState({
+		page: 1,
+		limit: 10,
+		total: 0,
+		totalPages: 1,
+	});
 	const [formState, setFormState] = useState({
 		assetId: '',
 		keywords: '',
@@ -75,12 +95,25 @@ export default function DashboardScansPage() {
 
 	const loadScans = useCallback(async () => {
 		try {
-			const response = await api.get('/scans?page=1&limit=20');
+			const response = await api.get('/scans', {
+				params: {
+					page: pagination.page,
+					limit: pagination.limit,
+					status: filters.status || undefined,
+					platform: filters.platform || undefined,
+				},
+			});
 			setScanJobs(response.data.items || []);
+			setPagination((current) => ({
+				...current,
+				total: response.data.total || 0,
+				totalPages: response.data.totalPages || 1,
+			}));
+			setError('');
 		} catch {
 			setError('Unable to load scans right now.');
 		}
-	}, []);
+	}, [filters.platform, filters.status, pagination.limit, pagination.page]);
 
 	useEffect(() => {
 		let mounted = true;
@@ -200,6 +233,27 @@ export default function DashboardScansPage() {
 		}
 	};
 
+	const handlePageChange = (nextPage) => {
+		setPagination((current) => {
+			const boundedPage = Math.min(Math.max(1, nextPage), Math.max(1, current.totalPages));
+			return {
+				...current,
+				page: boundedPage,
+			};
+		});
+	};
+
+	const handleFilterChange = (name, value) => {
+		setFilters((current) => ({
+			...current,
+			[name]: value,
+		}));
+		setPagination((current) => ({
+			...current,
+			page: 1,
+		}));
+	};
+
 	return (
 		<div className='space-y-6'>
 			<div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
@@ -236,6 +290,49 @@ export default function DashboardScansPage() {
 				title='Scan jobs'
 				subtitle='Statuses auto-refresh every 5 seconds while scanning.'
 			>
+				<div className='mb-4 grid gap-3 sm:grid-cols-3'>
+					<div>
+						<label className='mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-(--app-color-text-muted)'>Status</label>
+						<select
+							value={filters.status}
+							onChange={(event) => handleFilterChange('status', event.target.value)}
+							className='w-full rounded-lg border border-(--app-color-border) bg-(--app-color-surface) px-3 py-2 text-sm text-(--app-color-text) focus:border-(--app-color-primary) focus:outline-none'
+						>
+							{scanStatusFilters.map((status) => (
+								<option key={status || 'all'} value={status}>
+									{status ? status.charAt(0).toUpperCase() + status.slice(1) : 'All statuses'}
+								</option>
+							))}
+						</select>
+					</div>
+					<div>
+						<label className='mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-(--app-color-text-muted)'>Platform</label>
+						<select
+							value={filters.platform}
+							onChange={(event) => handleFilterChange('platform', event.target.value)}
+							className='w-full rounded-lg border border-(--app-color-border) bg-(--app-color-surface) px-3 py-2 text-sm text-(--app-color-text) focus:border-(--app-color-primary) focus:outline-none'
+						>
+							{scanPlatformFilters.map((platform) => (
+								<option key={platform || 'all'} value={platform}>
+									{platform ? platform.charAt(0).toUpperCase() + platform.slice(1) : 'All platforms'}
+								</option>
+							))}
+						</select>
+					</div>
+					<div className='flex items-end'>
+						<Button
+							type='button'
+							variant='secondary'
+							onClick={() => {
+								handleFilterChange('status', '');
+								handleFilterChange('platform', '');
+							}}
+						>
+							Clear filters
+						</Button>
+					</div>
+				</div>
+
 				{error ? (
 					<p className='text-sm text-red-600'>{error}</p>
 				) : isLoading ? (
@@ -254,8 +351,8 @@ export default function DashboardScansPage() {
 										<p className='text-sm font-semibold text-(--app-color-text)'>Scan {job._id.slice(-8)}</p>
 										<p className='text-xs text-(--app-color-text-muted)'>Asset: {job.assetId}</p>
 									</div>
-									<Badge variant={statusVariant(job.status)} size='sm'>
-										{statusLabel(job.status)}
+									<Badge variant={statusVariant(job)} size='sm'>
+										{statusLabel(job)}
 									</Badge>
 								</div>
 
@@ -283,6 +380,16 @@ export default function DashboardScansPage() {
 								</div>
 							</div>
 						))}
+						{pagination.totalPages > 1 ? (
+							<Pagination
+								currentPage={pagination.page}
+								totalPages={pagination.totalPages}
+								hasPreviousPage={pagination.page > 1}
+								hasNextPage={pagination.page < pagination.totalPages}
+								onPageChange={handlePageChange}
+								className='pt-2'
+							/>
+						) : null}
 					</div>
 				)}
 			</Card>

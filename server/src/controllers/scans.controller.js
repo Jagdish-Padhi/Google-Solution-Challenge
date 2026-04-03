@@ -51,8 +51,8 @@ export async function getScanStatusController(req, res, next) {
 
 export async function listScansController(req, res, next) {
 	try {
-		const { page, limit } = validateListScansQuery(req.query);
-		const result = await listScanJobsByOrg({ orgId: req.auth.orgId, page, limit });
+		const { page, limit, status, platform } = validateListScansQuery(req.query);
+		const result = await listScanJobsByOrg({ orgId: req.auth.orgId, page, limit, status, platform });
 
 		return res.status(200).json(result);
 	} catch (error) {
@@ -62,12 +62,14 @@ export async function listScansController(req, res, next) {
 
 export async function listScanResultsController(req, res, next) {
 	try {
-		const { page, limit } = validateListScansQuery(req.query);
+		const { page, limit, status, platform } = validateListScansQuery(req.query);
 		const result = await listScanResultsByJob({
 			orgId: req.auth.orgId,
 			scanJobId: req.params.jobId,
 			page,
 			limit,
+			status,
+			platform,
 		});
 
 		return res.status(200).json(result);
