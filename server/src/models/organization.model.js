@@ -16,18 +16,30 @@ const organizationSchema = new mongoose.Schema(
 		},
 		passwordHash: {
 			type: String,
+			select: false,
 			required: true,
+		},
+		refreshTokenHash: {
+			type: String,
+			select: false,
+			default: null,
 		},
 		plan: {
 			type: String,
 			enum: ['free', 'pro'],
 			default: 'free',
 		},
+		lastLoginAt: {
+			type: Date,
+			default: null,
+		},
 	},
 	{
 		timestamps: true,
 	},
 );
+
+organizationSchema.index({ email: 1 }, { unique: true });
 
 const Organization = mongoose.model('Organization', organizationSchema);
 

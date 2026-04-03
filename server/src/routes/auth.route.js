@@ -1,21 +1,45 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
+
+import {
+	loginController,
+	logoutController,
+	refreshController,
+	registerController,
+} from '../controllers/auth.controller.js';
+import { validateLoginPayload, validateRegisterPayload } from '../validators/auth.validator.js';
 
 const authRouter = Router();
 
-authRouter.post('/register', (_req, res) => {
-	res.status(501).json({ message: 'Register endpoint template - not implemented yet.' });
+const authLimiter = rateLimit({
+	windowMs: 15 * 60 * 1000,
+	limit: 10,
+	standardHeaders: true,
+	legacyHeaders: false,
 });
 
-authRouter.post('/login', (_req, res) => {
-	res.status(501).json({ message: 'Login endpoint template - not implemented yet.' });
+authRouter.post('/register', authLimiter, (req, res, next) => {
+	const validation = validateRegisterPayload(req.body);
+
+	if (!validation.valid) {
+		return res.status(400).json({ message: 'Invalid registration payload.', errors: validation.errors });
+	}
+
+	return registerController(req, res, next);
 });
 
-authRouter.post('/refresh', (_req, res) => {
-	res.status(501).json({ message: 'Refresh endpoint template - not implemented yet.' });
+authRouter.post('/login', authLimiter, (req, res, next) => {
+	const validation = validateLoginPayload(req.body);
+
+	if (!validation.valid) {
+		return res.status(400).json({ message: 'Invalid login payload.', errors: validation.errors });
+	}
+
+	return loginController(req, res, next);
 });
 
-authRouter.post('/logout', (_req, res) => {
-	res.status(501).json({ message: 'Logout endpoint template - not implemented yet.' });
-});
+authRouter.post('/refresh', authLimiter, (req, res, next) => refreshController(req, res, next));
+
+authRouter.post('/logout', authLimiter, (req, res, next) => logoutController(req, res, next));
 
 export default authRouter;

@@ -1,11 +1,6 @@
-import { Router } from 'express';
-
-import { verifyToken } from '../middlewares/verifyToken.js';
 import { getOrganizationById } from '../services/auth.service.js';
 
-const userRouter = Router();
-
-userRouter.get('/me', verifyToken, async (req, res, next) => {
+export async function getDashboardStatsController(req, res, next) {
 	try {
 		const organization = await getOrganizationById(req.auth.orgId);
 
@@ -19,13 +14,15 @@ userRouter.get('/me', verifyToken, async (req, res, next) => {
 				orgName: organization.orgName,
 				email: organization.email,
 				plan: organization.plan,
-				createdAt: organization.createdAt,
-				lastLoginAt: organization.lastLoginAt,
+			},
+			stats: {
+				totalAssets: 0,
+				activeScans: 0,
+				violations: 0,
+				alertsSent: 0,
 			},
 		});
 	} catch (error) {
 		return next(error);
 	}
-});
-
-export default userRouter;
+}
