@@ -1,13 +1,16 @@
 
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth, db } from "./firebase";
-import { toast } from "react-toastify";
+import toast from "react-hot-toast";
 import { setDoc, doc } from "firebase/firestore";
 
 function SignInwithGoogle() {
-  function googleLogin() {
+  async function googleLogin() {
     const provider = new GoogleAuthProvider();
-    signInWithPopup(auth, provider).then(async (result) => {
+    provider.setCustomParameters({ prompt: "select_account" });
+
+    try {
+      const result = await signInWithPopup(auth, provider);
       console.log(result);
       const user = result.user;
       if (result.user) {
@@ -22,7 +25,29 @@ function SignInwithGoogle() {
         });
         window.location.href = "/profile";
       }
-    });
+    } catch (error) {
+      console.error("Google sign-in failed:", error);
+
+      const firebaseCode = error?.code;
+      if (String(firebaseCode).includes("api-key-not-valid")) {
+        toast.error("Firebase API key is invalid. Update VITE_FIREBASE_API_KEY and restart dev server.");
+        return;
+      }
+      if (firebaseCode === "auth/popup-closed-by-user") {
+        toast.error("Google sign-in window was closed before completion.");
+        return;
+      }
+      if (firebaseCode === "auth/popup-blocked") {
+        toast.error("Popup was blocked by browser. Allow popups and try again.");
+        return;
+      }
+      if (firebaseCode === "auth/unauthorized-domain") {
+        toast.error("Current domain is not authorized in Firebase Auth.");
+        return;
+      }
+
+      toast.error("Google sign-in failed. Check console for details.");
+    }
   }
   return (
     <div> 
