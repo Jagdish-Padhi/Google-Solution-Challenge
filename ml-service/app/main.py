@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from fastapi import FastAPI, HTTPException
 
 from fingerprint.fingerprint_service import generate_fingerprint
+from matching.matching_service import match_content
 from scraper.scraper_service import run_scrape_job
 
 app = FastAPI(title="SportShield ML Service", version="1.0.0")
@@ -18,6 +19,11 @@ class ScanRequest(BaseModel):
     assetId: str
     keywords: list[str]
     platforms: list[str]
+
+
+class MatchRequest(BaseModel):
+    scrapedUrl: str
+    referenceFingerprint: dict
 
 
 @app.get("/health")
@@ -61,3 +67,16 @@ def scan(payload: ScanRequest) -> dict:
         }
     except Exception as error:
         raise HTTPException(status_code=500, detail=f"Scan processing failed: {error}") from error
+
+
+@app.post("/ml/match")
+def match(payload: MatchRequest) -> dict:
+    try:
+        return match_content(
+            scraped_url=payload.scrapedUrl,
+            reference_fingerprint=payload.referenceFingerprint,
+        )
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=f"Match processing failed: {error}") from error
