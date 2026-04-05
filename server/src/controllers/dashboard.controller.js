@@ -1,4 +1,5 @@
 import { getOrganizationById } from '../services/auth.service.js';
+import { getUnreadAlertCount } from '../services/alerts.service.js';
 import { getDashboardAssetStats } from '../services/assets.service.js';
 import { countRunningScans } from '../services/scans.service.js';
 import Violation from '../models/violation.model.js';
@@ -11,6 +12,7 @@ export async function getDashboardStatsController(req, res, next) {
 			countRunningScans(req.auth.orgId),
 			Violation.countDocuments({ orgId: req.auth.orgId }),
 		]);
+		const unreadAlerts = await getUnreadAlertCount(req.auth.orgId);
 
 		if (!organization) {
 			return res.status(404).json({ message: 'Organization not found.' });
@@ -27,7 +29,7 @@ export async function getDashboardStatsController(req, res, next) {
 				totalAssets: assetStats.totalAssets,
 				activeScans: runningScans,
 				violations,
-				alertsSent: 0,
+				alertsSent: unreadAlerts,
 			},
 		});
 	} catch (error) {

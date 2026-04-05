@@ -1,4 +1,5 @@
 import Asset from '../models/asset.model.js';
+import { createAlertFromViolation } from './alerts.service.js';
 import ScanJob from '../models/scanJob.model.js';
 import ScanResult from '../models/scanResult.model.js';
 import Violation from '../models/violation.model.js';
@@ -94,7 +95,7 @@ async function runMatchingForScan({ scanJob, results }) {
 
 			if (confidence > 70) {
 				violationsCount += 1;
-				await Violation.create({
+				const violation = await Violation.create({
 					orgId: scanJob.orgId,
 					assetId: scanJob.assetId,
 					scanJobId: scanJob._id,
@@ -110,6 +111,13 @@ async function runMatchingForScan({ scanJob, results }) {
 						frameMatchCount: match.evidenceBundle?.frameMatchCount ?? null,
 					},
 					detectedAt: new Date(),
+				});
+
+				await createAlertFromViolation({
+					orgId: scanJob.orgId,
+					violationId: violation._id,
+					platform: scanResult.platform,
+					matchConfidence: confidence,
 				});
 			}
 		} catch {
