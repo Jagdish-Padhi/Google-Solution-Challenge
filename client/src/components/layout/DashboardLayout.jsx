@@ -10,6 +10,7 @@ const navigationItems = [
 	{ label: 'Overview', path: '/dashboard' },
 	{ label: 'Assets', path: '/dashboard/assets' },
 	{ label: 'Scans', path: '/dashboard/scans' },
+	{ label: 'Violations', path: '/dashboard/violations' },
 ];
 
 const shellBackground = {
