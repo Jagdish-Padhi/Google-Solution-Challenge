@@ -6,6 +6,7 @@ import dashboardRouter from './dashboard.route.js';
 import healthRouter from './health.route.js';
 import scansRouter from './scans.route.js';
 import userRouter from './user.route.js';
+import violationsRouter from './violations.route.js';
 
 const router = Router();
 
@@ -14,6 +15,7 @@ router.use('/auth', authRouter);
 router.use('/assets', assetsRouter);
 router.use('/dashboard', dashboardRouter);
 router.use('/scans', scansRouter);
+router.use('/violations', violationsRouter);
 router.use('/users', userRouter);
 
 export default router;

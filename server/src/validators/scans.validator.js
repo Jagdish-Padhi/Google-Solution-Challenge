@@ -52,3 +52,22 @@ export function validateListScansQuery(query) {
 		platform: allowedPlatforms.has(platform) ? platform : '',
 	};
 }
+
+export function validateListScanResultsQuery(query) {
+	const parsedPage = Number.parseInt(query.page || '1', 10);
+	const parsedLimit = Number.parseInt(query.limit || '20', 10);
+	const status = typeof query.status === 'string' ? query.status.trim().toLowerCase() : '';
+	const platform = typeof query.platform === 'string' ? query.platform.trim().toLowerCase() : '';
+
+	const page = Number.isNaN(parsedPage) ? 1 : Math.max(1, parsedPage);
+	const limit = Number.isNaN(parsedLimit) ? 20 : Math.min(100, Math.max(1, parsedLimit));
+	const allowedStatuses = new Set(['pending_match', 'matched', 'no_match']);
+	const allowedPlatforms = new Set(['youtube', 'twitter', 'telegram', 'web']);
+
+	return {
+		page,
+		limit,
+		status: allowedStatuses.has(status) ? status : '',
+		platform: allowedPlatforms.has(platform) ? platform : '',
+	};
+}

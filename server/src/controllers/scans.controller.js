@@ -7,7 +7,11 @@ import {
 	listScanJobsByOrg,
 	retryScanJob,
 } from '../services/scans.service.js';
-import { validateListScansQuery, validateStartScanPayload } from '../validators/scans.validator.js';
+import {
+	validateListScanResultsQuery,
+	validateListScansQuery,
+	validateStartScanPayload,
+} from '../validators/scans.validator.js';
 
 export async function startScanController(req, res, next) {
 	try {
@@ -62,7 +66,7 @@ export async function listScansController(req, res, next) {
 
 export async function listScanResultsController(req, res, next) {
 	try {
-		const { page, limit, status, platform } = validateListScansQuery(req.query);
+		const { page, limit, status, platform } = validateListScanResultsQuery(req.query);
 		const result = await listScanResultsByJob({
 			orgId: req.auth.orgId,
 			scanJobId: req.params.jobId,

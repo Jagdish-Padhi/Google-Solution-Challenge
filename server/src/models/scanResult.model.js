@@ -49,6 +49,31 @@ const scanResultSchema = new mongoose.Schema(
 			enum: ['pending_match', 'matched', 'no_match'],
 			default: 'pending_match',
 		},
+		matchConfidence: {
+			type: Number,
+			default: 0,
+			min: 0,
+			max: 100,
+		},
+		matchType: {
+			type: String,
+			enum: ['exact', 'near-duplicate', 'partial', null],
+			default: null,
+		},
+		evidenceBundle: {
+			hammingDistance: {
+				type: Number,
+				default: null,
+			},
+			colorSimilarity: {
+				type: Number,
+				default: null,
+			},
+			frameMatchCount: {
+				type: Number,
+				default: null,
+			},
+		},
 	},
 	{ timestamps: true },
 );

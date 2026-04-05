@@ -1,6 +1,7 @@
 import Asset from '../models/asset.model.js';
 import ScanJob from '../models/scanJob.model.js';
 import ScanResult from '../models/scanResult.model.js';
+import Violation from '../models/violation.model.js';
 
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://localhost:8000';
 
@@ -19,6 +20,114 @@ async function requestScan(payload) {
 	}
 
 	return response.json();
+}
+
+async function requestMatch(payload) {
+	const response = await fetch(`${ML_SERVICE_URL}/ml/match`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify(payload),
+	});
+
+	if (!response.ok) {
+		const errorText = await response.text();
+		throw new Error(`ML match request failed (${response.status}): ${errorText}`);
+	}
+
+	return response.json();
+}
+
+async function runMatchingForScan({ scanJob, results }) {
+	const asset = await Asset.findById(scanJob.assetId).lean();
+
+	if (!asset?.fingerprint?.pHash || results.length === 0) {
+		if (results.length > 0) {
+			await ScanResult.updateMany(
+				{ scanJobId: scanJob._id },
+				{
+					$set: {
+						status: 'no_match',
+						matchConfidence: 0,
+						matchType: null,
+					},
+				},
+			);
+		}
+		return 0;
+	}
+
+	let violationsCount = 0;
+
+	for (const scanResult of results) {
+		const compareUrl = scanResult.thumbnailUrl || scanResult.videoUrl || scanResult.sourceUrl;
+
+		if (!compareUrl) {
+			await ScanResult.findByIdAndUpdate(scanResult._id, {
+				status: 'no_match',
+				matchConfidence: 0,
+				matchType: null,
+			});
+			continue;
+		}
+
+		try {
+			const match = await requestMatch({
+				scrapedUrl: compareUrl,
+				referenceFingerprint: asset.fingerprint,
+			});
+
+			const confidence = Number(match.matchConfidence || 0);
+			const matchedStatus = confidence >= 30 ? 'matched' : 'no_match';
+
+			await ScanResult.findByIdAndUpdate(scanResult._id, {
+				status: matchedStatus,
+				matchConfidence: confidence,
+				matchType: match.matchType || null,
+				evidenceBundle: {
+					hammingDistance: match.evidenceBundle?.hammingDistance ?? null,
+					colorSimilarity: match.evidenceBundle?.colorSimilarity ?? null,
+					frameMatchCount: match.evidenceBundle?.frameMatchCount ?? null,
+				},
+			});
+
+			if (confidence > 70) {
+				violationsCount += 1;
+				await Violation.create({
+					orgId: scanJob.orgId,
+					assetId: scanJob.assetId,
+					scanJobId: scanJob._id,
+					sourceUrl: scanResult.sourceUrl,
+					platform: scanResult.platform,
+					screenshotUrl: scanResult.thumbnailUrl || null,
+					matchConfidence: confidence,
+					matchType: match.matchType || 'partial',
+					status: 'open',
+					evidenceBundle: {
+						hammingDistance: match.evidenceBundle?.hammingDistance ?? null,
+						colorSimilarity: match.evidenceBundle?.colorSimilarity ?? null,
+						frameMatchCount: match.evidenceBundle?.frameMatchCount ?? null,
+					},
+					detectedAt: new Date(),
+				});
+			}
+		} catch {
+			await ScanResult.findByIdAndUpdate(scanResult._id, {
+				status: 'no_match',
+				matchConfidence: 0,
+				matchType: null,
+			});
+		}
+	}
+
+	if (violationsCount > 0) {
+		await Asset.findByIdAndUpdate(scanJob.assetId, {
+			$inc: { violationsFound: violationsCount },
+		});
+	}
+
+	return violationsCount;
 }
 
 export async function createScanJob({ orgId, assetId, keywords, platforms }) {
@@ -81,9 +190,12 @@ export async function dispatchScanJob(scanJobId) {
 			);
 		}
 
+		const persistedResults = await ScanResult.find({ scanJobId: scanJob._id }).lean();
+		const violationsCount = await runMatchingForScan({ scanJob, results: persistedResults });
+
 		scanJob.status = 'completed';
 		scanJob.resultsCount = results.length;
-		scanJob.violationsCount = Number(scanResponse.violationsCount || 0);
+		scanJob.violationsCount = violationsCount;
 		scanJob.completedAt = new Date();
 		await scanJob.save();
 	} catch (error) {
