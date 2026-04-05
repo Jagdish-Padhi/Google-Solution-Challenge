@@ -8,6 +8,7 @@ import Container from '../../components/Container';
 import Input from '../../components/Input';
 import api from '../../services/api.js';
 import useAuthStore from '../../store/auth.store.js';
+import SignInwithGoogle from './GoogleSignIn.jsx';
 
 const initialFormState = {
 	orgName: '',
@@ -97,6 +98,7 @@ export default function RegisterPage() {
 							</div>
 						))}
 					</div>
+					<SignInwithGoogle/>
 				</section>
 
 				<section className='p-6 sm:p-8 lg:p-10' style={{ backgroundColor: 'var(--app-color-surface-glass)' }}>
