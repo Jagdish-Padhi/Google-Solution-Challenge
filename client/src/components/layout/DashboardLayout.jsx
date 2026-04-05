@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 
 import Badge from '../Badge';
@@ -10,6 +11,7 @@ const navigationItems = [
 	{ label: 'Overview', path: '/dashboard' },
 	{ label: 'Assets', path: '/dashboard/assets' },
 	{ label: 'Scans', path: '/dashboard/scans' },
+	{ label: 'Alerts', path: '/dashboard/alerts' },
 	{ label: 'Violations', path: '/dashboard/violations' },
 ];
 
@@ -22,6 +24,32 @@ export default function DashboardLayout() {
 	const navigate = useNavigate();
 	const user = useAuthStore((state) => state.user);
 	const clearAuth = useAuthStore((state) => state.clearAuth);
+	const [unreadAlerts, setUnreadAlerts] = useState(0);
+
+	useEffect(() => {
+		let mounted = true;
+
+		async function loadUnreadAlerts() {
+			try {
+				const response = await api.get('/alerts/unread-count');
+				if (mounted) {
+					setUnreadAlerts(Number(response.data?.unreadCount || 0));
+				}
+			} catch {
+				if (mounted) {
+					setUnreadAlerts(0);
+				}
+			}
+		}
+
+		loadUnreadAlerts();
+		const timer = setInterval(loadUnreadAlerts, 30000);
+
+		return () => {
+			mounted = false;
+			clearInterval(timer);
+		};
+	}, []);
 
 	const handleLogout = async () => {
 		try {
@@ -56,7 +84,14 @@ export default function DashboardLayout() {
 									to={item.path}
 									className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${isActive ? 'bg-(--app-color-primary-soft) text-(--app-color-primary)' : 'text-(--app-color-text-muted) hover:text-(--app-color-text)'}`}
 								>
-									{item.label}
+									<span className='flex items-center gap-2'>
+										{item.label}
+										{item.label === 'Alerts' && unreadAlerts > 0 ? (
+											<Badge variant='danger' size='sm' className='min-w-6 justify-center px-2 py-0.5 text-[10px]'>
+												{unreadAlerts > 99 ? '99+' : unreadAlerts}
+											</Badge>
+										) : null}
+									</span>
 								</Link>
 							);
 						})}

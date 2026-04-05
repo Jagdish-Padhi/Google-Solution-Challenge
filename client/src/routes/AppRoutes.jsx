@@ -8,6 +8,7 @@ import DashboardHomePage from '../pages/dashboard/DashboardHomePage.jsx';
 import DashboardAssetsPage from '../pages/dashboard/DashboardAssetsPage.jsx';
 import DashboardScansPage from '../pages/dashboard/DashboardScansPage.jsx';
 import DashboardScanResultsPage from '../pages/dashboard/DashboardScanResultsPage.jsx';
+import DashboardAlertsPage from '../pages/dashboard/DashboardAlertsPage.jsx';
 import DashboardViolationsPage from '../pages/dashboard/DashboardViolationsPage.jsx';
 import useAuthStore from '../store/auth.store.js';
 
@@ -38,6 +39,7 @@ export default function AppRoutes() {
 					<Route path='/dashboard/assets' element={<DashboardAssetsPage />} />
 					<Route path='/dashboard/scans' element={<DashboardScansPage />} />
 					<Route path='/dashboard/scans/:jobId' element={<DashboardScanResultsPage />} />
+					<Route path='/dashboard/alerts' element={<DashboardAlertsPage />} />
 					<Route path='/dashboard/violations' element={<DashboardViolationsPage />} />
 				</Route>
 			</Route>
