@@ -25,7 +25,8 @@
     "mongoose": "^9.0.2",
     "multer": "^2.0.2",
     "node-cron": "^4.2.1",
-    "puppeteer": "^24.8.2"
+    "puppeteer": "^24.8.2",
+    "socket.io": "^4.8.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

@@ -72,6 +72,20 @@ export default function DashboardAlertsPage() {
 		loadAlerts();
 	}, [loadAlerts]);
 
+	useEffect(() => {
+		const handleAlertsChanged = () => {
+			loadAlerts();
+		};
+
+		window.addEventListener('sportshield:alerts:new', handleAlertsChanged);
+		window.addEventListener('sportshield:alerts:updated', handleAlertsChanged);
+
+		return () => {
+			window.removeEventListener('sportshield:alerts:new', handleAlertsChanged);
+			window.removeEventListener('sportshield:alerts:updated', handleAlertsChanged);
+		};
+	}, [loadAlerts]);
+
 	const handleFilterChange = (name, value) => {
 		setFilters((current) => ({
 			...current,

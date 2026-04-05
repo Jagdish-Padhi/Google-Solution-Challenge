@@ -4,6 +4,7 @@ import {
 	markAllAlertsRead,
 	markAlertsRead,
 } from '../services/alerts.service.js';
+import { emitAlertsUpdated } from '../config/socket.js';
 import {
 	validateListAlertsQuery,
 	validateMarkReadPayload,
@@ -43,6 +44,8 @@ export async function markAlertsReadController(req, res, next) {
 			orgId: req.auth.orgId,
 			alertIds,
 		});
+		const unreadCount = await getUnreadAlertCount(req.auth.orgId);
+		emitAlertsUpdated({ orgId: req.auth.orgId, unreadCount });
 
 		return res.status(200).json({
 			message: 'Alerts marked as read.',
@@ -56,6 +59,8 @@ export async function markAlertsReadController(req, res, next) {
 export async function markAllAlertsReadController(req, res, next) {
 	try {
 		const modifiedCount = await markAllAlertsRead({ orgId: req.auth.orgId });
+		const unreadCount = await getUnreadAlertCount(req.auth.orgId);
+		emitAlertsUpdated({ orgId: req.auth.orgId, unreadCount });
 		return res.status(200).json({
 			message: 'All alerts marked as read.',
 			modifiedCount,

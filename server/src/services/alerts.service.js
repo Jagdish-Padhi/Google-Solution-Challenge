@@ -1,4 +1,5 @@
 import Alert from '../models/alert.model.js';
+import { emitAlertsCreated } from '../config/socket.js';
 
 export async function createAlertFromViolation({ orgId, violationId, platform, matchConfidence }) {
 	const alerts = [
@@ -25,10 +26,15 @@ export async function createAlertFromViolation({ orgId, violationId, platform, m
 		});
 	}
 
-	return Alert.insertMany(alerts);
+	const insertedAlerts = await Alert.insertMany(alerts);
+	const unreadCount = await getUnreadAlertCount(orgId);
+	emitAlertsCreated({ orgId, alerts: insertedAlerts, unreadCount });
+
+	return insertedAlerts;
 }
 
 export async function listAlertsByOrg({ orgId, page = 1, limit = 10, severity = '', type = '', read = null }) {
+
 	const skip = (page - 1) * limit;
 	const query = { orgId };
 

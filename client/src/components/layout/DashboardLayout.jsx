@@ -5,6 +5,7 @@ import Badge from '../Badge';
 import Button from '../Button';
 import Container from '../Container';
 import api from '../../services/api.js';
+import { connectRealtime, disconnectRealtime } from '../../services/realtime.js';
 import useAuthStore from '../../store/auth.store.js';
 
 const navigationItems = [
@@ -23,11 +24,13 @@ export default function DashboardLayout() {
 	const location = useLocation();
 	const navigate = useNavigate();
 	const user = useAuthStore((state) => state.user);
+	const accessToken = useAuthStore((state) => state.accessToken);
 	const clearAuth = useAuthStore((state) => state.clearAuth);
 	const [unreadAlerts, setUnreadAlerts] = useState(0);
 
 	useEffect(() => {
 		let mounted = true;
+		let socket;
 
 		async function loadUnreadAlerts() {
 			try {
@@ -45,11 +48,41 @@ export default function DashboardLayout() {
 		loadUnreadAlerts();
 		const timer = setInterval(loadUnreadAlerts, 30000);
 
+		if (accessToken) {
+			socket = connectRealtime(accessToken);
+
+			const updateUnreadCount = (payload) => {
+				if (mounted) {
+					setUnreadAlerts(Number(payload?.unreadCount || 0));
+				}
+			};
+
+			const handleAlertCreated = (payload) => {
+				updateUnreadCount(payload);
+				window.dispatchEvent(new CustomEvent('sportshield:alerts:new', { detail: payload }));
+			};
+
+			const handleAlertsUpdated = (payload) => {
+				updateUnreadCount(payload);
+				window.dispatchEvent(new CustomEvent('sportshield:alerts:updated', { detail: payload }));
+			};
+
+			socket?.on('alerts:unread-count', updateUnreadCount);
+			socket?.on('alerts:new', handleAlertCreated);
+			socket?.on('alerts:updated', handleAlertsUpdated);
+		}
+
 		return () => {
 			mounted = false;
 			clearInterval(timer);
+			if (socket) {
+				socket.off('alerts:unread-count');
+				socket.off('alerts:new');
+				socket.off('alerts:updated');
+				disconnectRealtime();
+			}
 		};
-	}, []);
+	}, [accessToken]);
 
 	const handleLogout = async () => {
 		try {
