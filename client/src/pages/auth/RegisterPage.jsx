@@ -8,6 +8,7 @@ import Container from '../../components/Container';
 import Input from '../../components/Input';
 import api from '../../services/api.js';
 import useAuthStore from '../../store/auth.store.js';
+import SignInWithGoogle from './GoogleSignIn.jsx';
 
 const initialFormState = {
 	orgName: '',
@@ -97,6 +98,21 @@ export default function RegisterPage() {
 							</div>
 						))}
 					</div>
+					<br/>
+					<div className="space-y-4">
+
+						{/* Divider */}
+						<div className="flex items-center gap-3">
+							<div className="h-px flex-1 bg-gray-400"/>
+							<span className="text-xs text-(--app-color-text-muted)" style={{color:"white"}}>or</span>
+							<div className="h-px flex-1 bg-gray-400" />
+						</div>
+                     
+						{/* call the function */}
+                        <SignInWithGoogle/>
+
+					</div>
+					<br/>
 				</section>
 
 				<section className='p-6 sm:p-8 lg:p-10' style={{ backgroundColor: 'var(--app-color-surface-glass)' }}>

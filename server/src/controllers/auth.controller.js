@@ -5,6 +5,9 @@ import {
 	registerOrganization,
 } from '../services/auth.service.js';
 
+import jwt from "jsonwebtoken";
+import admin from "../config/firebaseAdmin.js";
+
 const refreshCookieName = 'sportshield_refresh_token';
 const refreshCookieOptions = {
 	httpOnly: true,
@@ -67,3 +70,33 @@ export async function logoutController(req, res, next) {
 		return next(error);
 	}
 }
+
+export const googleAuthController = async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    const decoded = await admin.auth().verifyIdToken(token);
+
+    const { email, name, uid } = decoded;
+
+    const user = {
+      email,
+      name,
+      uid,
+    };
+
+   const accessToken = jwt.sign(
+   {uid: decoded.uid, email: decoded.email} ,  process.env.JWT_SECRET,
+  { expiresIn: "1h" }
+);
+    return res.json({
+      user,
+      accessToken,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(401).json({
+      message: "Invalid Google token",
+    });
+  }
+};

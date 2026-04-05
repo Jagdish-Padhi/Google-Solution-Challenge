@@ -8,6 +8,7 @@ import Container from '../../components/Container';
 import Input from '../../components/Input';
 import api from '../../services/api.js';
 import useAuthStore from '../../store/auth.store.js';
+import SignInWithGoogle from './GoogleSignIn.jsx';
 
 const initialFormState = {
   email: '',
@@ -136,6 +137,10 @@ export default function LoginPage() {
                 </Link>
               </p>
             </form>
+          
+           {/* call the function */}
+           <SignInWithGoogle />
+           
           </Card>
         </section>
       </div>

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
-
+import { googleAuthController } from '../controllers/auth.controller.js';
 import {
 	loginController,
 	logoutController,
@@ -39,6 +39,8 @@ authRouter.post('/login', authLimiter, (req, res, next) => {
 });
 
 authRouter.post('/refresh', authLimiter, (req, res, next) => refreshController(req, res, next));
+//Google signup Route
+authRouter.post('/google', authLimiter, googleAuthController);
 
 authRouter.post('/logout', authLimiter, (req, res, next) => logoutController(req, res, next));
 

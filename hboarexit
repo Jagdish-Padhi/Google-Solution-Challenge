@@ -1,0 +1,185 @@
+[33mcommit 8df00e2c1a829261cd4c264f420f629c944461f5[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mBugfix[m[33m)[m
+Author: Krish Bhandari <krrishbhandari44@gmail.com>
+Date:   Sun Apr 5 00:11:13 2026 +0530
+
+    fix(server): resolve current login/register bug
+
+[33mcommit f5f8759a76260e6427a786b6364c7855ba6a4174[m[33m ([m[1;31morigin/dev[m[33m, [m[1;32mdev[m[33m)[m
+Author: Jagdish-Padhi <jagdishpadhi9@gmail.com>
+Date:   Fri Apr 3 21:38:30 2026 +0000
+
+    feat(phase3): add scan and result filters with pagination
+
+[33mcommit 7fd7d29828ace85b32859bc6d3b09a311032ff55[m
+Author: Jagdish-Padhi <jagdishpadhi9@gmail.com>
+Date:   Fri Apr 3 21:29:27 2026 +0000
+
+    feat(ml): add phase 3 modular scraper adapters with retry coordinator
+
+[33mcommit 8689e4d50ce4234c544252aedad36382ae1ef689[m
+Author: Jagdish-Padhi <jagdishpadhi9@gmail.com>
+Date:   Fri Apr 3 21:26:11 2026 +0000
+
+    feat(phase3): add scan retry and manual scheduled run controls
+
+[33mcommit b62c9da3665faeadf156972cd8f72a1be06be7e8[m
+Author: Jagdish-Padhi <jagdishpadhi9@gmail.com>
+Date:   Fri Apr 3 21:22:40 2026 +0000
+
+    fix(client): resolve scans page hook dependency warning
+
+[33mcommit e1844dc63ba6418db5e5a654e6ec6dc5ff095ecb[m
+Author: Jagdish-Padhi <jagdishpadhi9@gmail.com>
+Date:   Fri Apr 3 21:22:04 2026 +0000
+
+    feat(phase3): persist scan results and add scan results dashboard
+
+[33mcommit c7e57c18dea1127d44c6be40e9ea504958b17677[m
+Author: Jagdish-Padhi <jagdishpadhi9@gmail.com>
+Date:   Fri Apr 3 21:14:43 2026 +0000
+
+    feat(client): add phase 3 scan management dashboard flow
+
+[33mcommit 5bba437b5c651eec9eb38174f778f0cb99138f17[m
+Author: Jagdish-Padhi <jagdishpadhi9@gmail.com>
+Date:   Fri Apr 3 21:12:41 2026 +0000
+
+    feat(ml): add phase 3 scan endpoint and scraper coordinator
+
+[33mcommit 85883ac9898cbe27709d44546bf4120cb6bd08ef[m
+Author: Jagdish-Padhi <jagdishpadhi9@gmail.com>
+Date:   Fri Apr 3 21:12:05 2026 +0000
+
+    feat(server): add phase 3 scan job orchestration APIs
+
+[33mcommit 256142df3ae0c2b9ea3df8a364cf68ee4a817595[m
+Author: Jagdish-Padhi <jagdishpadhi9@gmail.com>
+Date:   Fri Apr 3 21:10:39 2026 +0000
+
+    fix(bug): preserve file format while uploading
+
+[33mcommit 7a004318c423ccb9634d34bbf75adbe8f728e190[m
+Author: Jagdish-Padhi <jagdishpadhi9@gmail.com>
+Date:   Fri Apr 3 20:53:32 2026 +0000
+
+    feat(client): auto-refresh processing assets and improve library feedback
+
+[33mcommit 3a9fc4ee956034f29a3bd2b536514945d7ca7c87[m
+Author: Jagdish-Padhi <jagdishpadhi9@gmail.com>
+Date:   Fri Apr 3 20:51:48 2026 +0000
+
+    feat(client): add phase 2 dashboard asset upload and library flow
+
+[33mcommit 0b38a9cdf4cbab5638ecae47e364907010e19cf9[m
+Author: Jagdish-Padhi <jagdishpadhi9@gmail.com>
+Date:   Fri Apr 3 20:48:49 2026 +0000
+
+    feat(server): process asset fingerprints asynchronously via ml-service
+
+[33mcommit 2b7d214fccc93c163d584754fed96e22a7f27741[m
+Author: Jagdish-Padhi <jagdishpadhi9@gmail.com>
+Date:   Fri Apr 3 20:47:39 2026 +0000
+
+    feat(ml): add phase 2 fingerprint endpoint and hashing engine
+
+[33mcommit 955f2e3ff02c5a9924e427ed28440fe99b609515[m
+Author: Jagdish-Padhi <jagdishpadhi9@gmail.com>
+Date:   Fri Apr 3 20:44:58 2026 +0000
+
+    feat(server): add phase 2 asset upload and registration APIs
+
+[33mcommit e966b62a00264a5b405cc132a48a1d7aee0a096e[m
+Author: Jagdish-Padhi <jagdishpadhi9@gmail.com>
+Date:   Fri Apr 3 20:30:46 2026 +0000
+
+    feat: add clean landing page
+
+[33mcommit 62139e54705432746ee67e7b24152a2dff40ac0a[m
+Author: Jagdish-Padhi <jagdishpadhi9@gmail.com>
+Date:   Fri Apr 3 19:49:09 2026 +0000
+
+    fix(cors): allow cross endpoint access for testing
+
+[33mcommit 8da4e2e759db1b748b28e0c38d1fe8c9c94e7014[m
+Author: Jagdish-Padhi <jagdishpadhi9@gmail.com>
+Date:   Fri Apr 3 19:38:23 2026 +0000
+
+    refactor: update overall theme and auth pages
+
+[33mcommit 9713626cad326a1c5af94f1f05c9547411f85fac[m
+Author: Jagdish-Padhi <jagdishpadhi9@gmail.com>
+Date:   Fri Apr 3 19:25:16 2026 +0000
+
+    fix: update blocking libraries for express 5
+
+[33mcommit 9579c97432430c7459843ddd50f0035bfb6f7bce[m
+Author: Jagdish-Padhi <jagdishpadhi9@gmail.com>
+Date:   Fri Apr 3 19:06:27 2026 +0000
+
+    feat(server-auth): implement phase 1 auth, token guard, and stats stub
+
+[33mcommit fa258b68a653ec41e26a9db950d027976b7d49ef[m
+Author: Jagdish-Padhi <jagdishpadhi9@gmail.com>
+Date:   Fri Apr 3 19:06:16 2026 +0000
+
+    feat(client-auth): add phase 1 auth UI, store, and protected routes
+
+[33mcommit 244d2922faab9edc89528d0f0216cdff49bbd624[m
+Author: Jagdish-Padhi <jagdishpadhi9@gmail.com>
+Date:   Fri Apr 3 19:06:07 2026 +0000
+
+    chore(components): remove redundant docs and unused auth context scaffold
+
+[33mcommit ed2706fe74161111390e32ff9e7b3f54641486ef[m
+Author: Krish Bhandari <krrishbhandari44@gmail.com>
+Date:   Fri Apr 3 14:08:27 2026 +0530
+
+    Components added
+
+[33mcommit 78e6c8ee5f93fd41b72b65dd64f7b31e608fa462[m
+Author: Jagdish-Padhi <jagdishpadhi9@gmail.com>
+Date:   Fri Apr 3 06:40:50 2026 +0000
+
+    feat: add placeholder files in empty folders
+
+[33mcommit 57503bb7a3f8d780130db0006dc432cf0609d296[m
+Author: Jagdish-Padhi <jagdishpadhi9@gmail.com>
+Date:   Fri Apr 3 02:50:33 2026 +0000
+
+    feat: basic theme setup (templet)
+
+[33mcommit 5acf51207eca45e865c991807994eef033aa8ad8[m
+Author: Jagdish-Padhi <jagdishpadhi9@gmail.com>
+Date:   Fri Apr 3 02:44:46 2026 +0000
+
+    feat: setup tailwind css with vite
+
+[33mcommit 602b43850205741a368699fb5b6a8bb3c20eaad6[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m
+Author: Jagdish-Padhi <jagdishpadhi9@gmail.com>
+Date:   Wed Apr 1 18:37:28 2026 +0000
+
+    docs: update conventions in planning
+
+[33mcommit c6de3e9270c88bedeb5f136209f3e4554792ea6d[m
+Author: Jagdish-Padhi <jagdishpadhi9@gmail.com>
+Date:   Wed Apr 1 15:29:25 2026 +0000
+
+    docs: update guidelines for team
+
+[33mcommit 2c4ece1856186c84184c5129ed550d444dc10661[m
+Author: Jagdish-Padhi <jagdishpadhi9@gmail.com>
+Date:   Wed Apr 1 15:18:37 2026 +0000
+
+    chore(server): update gitignore, remove duplicate user model and keep organization model
+
+[33mcommit eb150be764b10ecde4f5e8685f97d5a916f2782b[m
+Author: Jagdish-Padhi <jagdishpadhi9@gmail.com>
+Date:   Wed Apr 1 15:10:37 2026 +0000
+
+    feat: setup Initial overall stack
+
+[33mcommit f131dbb5426bb982af3cbe8b94b5b15996ec0a75[m
+Author: Jagdish Padhi <jagdishpadhi9@gmail.com>
+Date:   Wed Apr 1 20:19:30 2026 +0530
+
+    Initial commit

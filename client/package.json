@@ -15,11 +15,13 @@
     "@tailwindcss/postcss": "^4.2.2",
     "@tailwindcss/vite": "^4.2.2",
     "axios": "1.14.0",
+    "firebase": "^12.11.0",
     "lucide-react": "^1.7.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-hot-toast": "^2.6.0",
     "react-router-dom": "^7.13.2",
+    "react-toastify": "^11.0.5",
     "zustand": "^5.0.12"
   },
   "devDependencies": {
