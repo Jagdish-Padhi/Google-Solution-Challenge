@@ -9,3 +9,4 @@ videohash
 pymongo
 requests
 beautifulsoup4
+numpy
