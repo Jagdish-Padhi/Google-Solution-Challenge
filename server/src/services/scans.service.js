@@ -1,4 +1,5 @@
 import Asset from '../models/asset.model.js';
+import { enrichAssetFingerprint } from './assets.service.js';
 import { createAlertFromViolation } from './alerts.service.js';
 import ScanJob from '../models/scanJob.model.js';
 import ScanResult from '../models/scanResult.model.js';
@@ -41,7 +42,15 @@ async function requestMatch(payload) {
 }
 
 async function runMatchingForScan({ scanJob, results }) {
-	const asset = await Asset.findById(scanJob.assetId).lean();
+	let asset = await Asset.findById(scanJob.assetId).lean();
+
+	if (asset && !asset?.fingerprint?.pHash && asset.gcsUrl) {
+		await enrichAssetFingerprint({
+			assetId: asset._id.toString(),
+			sourceUrl: asset.gcsUrl,
+		});
+		asset = await Asset.findById(scanJob.assetId).lean();
+	}
 
 	if (!asset?.fingerprint?.pHash || results.length === 0) {
 		if (results.length > 0) {

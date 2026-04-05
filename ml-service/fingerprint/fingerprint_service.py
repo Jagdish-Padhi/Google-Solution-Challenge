@@ -28,9 +28,26 @@ def _download_to_tempfile(source_url: str) -> tuple[str, bool]:
     parsed = urlparse(source_url)
 
     if parsed.scheme in {"http", "https"}:
-        suffix = Path(parsed.path).suffix or ".bin"
         with requests.get(source_url, stream=True, timeout=20) as response:
             response.raise_for_status()
+
+            suffix = Path(parsed.path).suffix.lower()
+            if not suffix or suffix == ".bin":
+                content_type = (response.headers.get("content-type") or "").split(";", 1)[0].strip().lower()
+                content_type_suffixes = {
+                    "image/jpeg": ".jpg",
+                    "image/jpg": ".jpg",
+                    "image/png": ".png",
+                    "image/webp": ".webp",
+                    "image/bmp": ".bmp",
+                    "video/mp4": ".mp4",
+                    "video/quicktime": ".mov",
+                    "video/x-msvideo": ".avi",
+                    "video/x-matroska": ".mkv",
+                    "video/webm": ".webm",
+                }
+                suffix = content_type_suffixes.get(content_type, ".bin")
+
             with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
                 for chunk in response.iter_content(chunk_size=8192):
                     if chunk:
