@@ -2,6 +2,7 @@ import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 
 import {
+	googleLoginController,
 	loginController,
 	logoutController,
 	refreshController,
@@ -36,6 +37,16 @@ authRouter.post('/login', authLimiter, (req, res, next) => {
 	}
 
 	return loginController(req, res, next);
+});
+
+authRouter.post('/google', authLimiter, (req, res, next) => {
+	const idToken = typeof req.body?.idToken === 'string' ? req.body.idToken.trim() : '';
+
+	if (!idToken) {
+		return res.status(400).json({ message: 'Google ID token is required.' });
+	}
+
+	return googleLoginController(req, res, next);
 });
 
 authRouter.post('/refresh', authLimiter, (req, res, next) => refreshController(req, res, next));
