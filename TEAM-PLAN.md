@@ -1,9 +1,39 @@
 # 🛡️ SportShield — Digital Content Protection System
-## MVP Implementation Plan | Google Solution Challenge Hackathon
+## MVP Implementation Plan (Execution-Realistic) | Google Solution Challenge Hackathon
 
 > **Team:** 3× MERN + GenAI/Scraping · 1× MERN + ML (model training)
 > **Branch Strategy:** Feature-wise branches → merge to `main` after each phase
 > **Stack:** MongoDB · Express · React · Node.js · Python (ML microservice) · Google Cloud
+
+---
+
+## 🎯 PS Alignment Snapshot (Updated: Apr 2026)
+
+This plan is now tuned for the actual PS expectation: **identify, track, and flag unauthorized sports media use across the internet in near real-time**, not only run a static demo flow.
+
+### What "realistic platform" means for this project
+- Discovery uses real public internet sources (not only deterministic placeholders)
+- Matching produces explainable confidence and evidence artifacts
+- Alerts are near real-time and actionable
+- Analytics show propagation trends and repeat offenders
+- Google tools are used where they add measurable accuracy, speed, or trust
+
+### Current delivery state (baseline)
+- Phases 0–4: Core pipeline implemented
+- Phase 5: Implemented baseline (in-app + realtime); email/intelligence hardening pending
+- Phase 6: Implemented baseline dashboards/reports; advanced analytics hardening pending
+- Phases 7–8: Planned for Google depth + demo polish
+
+### Google Product Utilization Map (maximize for judging) IMPORTANT
+- Authentication and identity: Firebase Auth or Identity Platform (email/password + Google SSO)
+- Storage and evidence: Google Cloud Storage (assets, screenshots, signed URLs, lifecycle)
+- AI query generation and legal drafts: Gemini API
+- Borderline match verifier: Vision API
+- Multilingual discovery: Cloud Translation API
+- Reliable background jobs: Pub/Sub + Cloud Scheduler
+- ML and API hosting: Cloud Run
+- Analytics at scale: BigQuery (scheduled exports)
+- Reliability and trust: Cloud Logging + Cloud Monitoring dashboards
 
 ---
 
@@ -79,6 +109,14 @@ sportshield/
 4. docker-compose up → all 3 services run together ✓
 ```
 
+### 💡 Realism Upgrade + Google Integration Maximization
+- Add `.env.example` parity checks in CI so missing cloud keys fail fast.
+- Create one shared GCP project and enable required APIs early: Gemini, Vision, Translation, Cloud Run, Pub/Sub, Scheduler, Storage.
+
+### 🚀 If Time Permits (PS-High Value Add-on)
+- Add a simple service-level objective board in-app: scan latency, match latency, alert latency, API uptime.
+- Add one-click environment sanity endpoint that verifies all core integrations (Mongo, GCS, ML, Gemini, Vision) before demo.
+
 ---
 
 ## 🔐 Phase 1 — Authentication & Organization Management
@@ -136,6 +174,14 @@ sportshield/
 4. JWT expires simulation → refresh token rotates silently ✓
 5. Dashboard loads with zeros (no data yet) ✓
 ```
+
+### 💡 Realism Upgrade + Google Integration Maximization
+- Add audit fields (`lastLoginAt`, token rotation logs) for compliance storytelling.
+- Keep your JWT backend flow, but add Firebase Google Sign-In as optional SSO so judges see Google ecosystem usage without auth lock-in.
+
+### 🚀 If Time Permits (PS-High Value Add-on)
+- Add device/session management page (active sessions + revoke) to strengthen enterprise trust.
+- Add risk-based login alerting (new device/IP) as a lightweight security signal.
 
 ---
 
@@ -213,12 +259,22 @@ sportshield/
 6. Dashboard stat "Total Assets" increments ✓
 ```
 
+### 💡 Realism Upgrade + Google Integration Maximization
+- Store immutable evidence metadata at upload: sha256 hash, source filename, mime type, upload timestamp.
+- Use Google Cloud Storage signed URLs and lifecycle rules to enforce privacy + retention behavior.
+
+### 🚀 If Time Permits (PS-High Value Add-on)
+- Generate and persist CLIP embeddings for assets to enable future semantic similarity retrieval.
+- Add duplicate-asset detection at upload time (hash + embedding threshold) to reduce noisy scans.
+
 ---
 
 ## 🕷️ Phase 3 — Web Scraper & Content Discovery Engine
 **Duration:** Days 7–10 | **Branches:** `feature/scraper-engine` · `feature/scan-job-backend` · `feature/scan-ui`
 
 > 🎯 **Goal:** The system can actively go out and look for content on the internet. This is the "Google for stolen content" part.
+
+> ⚠️ **Reality note:** Baseline scan orchestration is in place; some scraper adapters should now be replaced with real source fetchers for authentic internet discovery metrics.
 
 ### M1 — Scraper: Social Media & Web Scanner (Python)
 Build modular scrapers in `ml-service/scraper/`:
@@ -299,6 +355,14 @@ Build modular scrapers in `ml-service/scraper/`:
 5. Scheduled scan (cron) fires correctly (test with 1-min interval) ✓
 6. Scan fails gracefully if network is down → status "failed", error saved ✓
 ```
+
+### 💡 Realism Upgrade + Google Integration Maximization
+- Promote discovery quality metric: `candidate_urls_found`, `valid_media_candidates`, `matchable_candidates`.
+- Use Gemini to generate multilingual adversarial queries from each asset title + context and score which queries produce best hit rate.
+
+### 🚀 If Time Permits (PS-High Value Add-on)
+- Add domain reputation scoring (repeat offenders, takedown response rate, recurrence score) and prioritize scans accordingly.
+- Add adaptive crawler strategy: allocate more crawl budget to platforms/domains with higher historical violation yield.
 
 ---
 
@@ -404,12 +468,23 @@ Step 6: Save to Violations collection
 7. Dashboard violation count updates in real-time ✓
 ```
 
+### 💡 Realism Upgrade + Google Integration Maximization
+- Add verification fallback tier: if confidence is 40–70, run secondary semantic comparison before final classification.
+- Use Google Vision API as tie-breaker for borderline matches and store a transparent reasoning payload in `evidenceBundle`.
+
+### 🚀 If Time Permits (PS-High Value Add-on)
+- Add temporal consistency checks for video (frame sequence similarity across multiple offsets) to reduce spoof matches.
+- Add model calibration pipeline (confidence vs. human verdict) and track precision/recall per platform.
+
 ---
 
 ## 🔔 Phase 5 — Real-Time Alerts & Notification System
 **Duration:** Days 15–17 | **Branches:** `feature/alerts-backend` · `feature/alerts-frontend` · `feature/email-notifications`
 
 > 🎯 **Goal:** Organization immediately knows when their content is stolen. Alerts are actionable.
+
+> ✅ **Baseline delivered:** Realtime socket alerts + alert center are implemented.
+> 🔧 **Remaining to be production-realistic:** email channels, surge intelligence rules, preference governance.
 
 ### M2 — Backend: Alert Engine
 - [ ] Create `Alert` model:
@@ -471,12 +546,23 @@ Step 6: Save to Violations collection
 6. Alert page lists all alerts with severity color coding ✓
 ```
 
+### 💡 Realism Upgrade + Google Integration Maximization
+- Add dedup + cooldown logic so repeated detections from same URL do not spam users.
+- Use Cloud Scheduler + Pub/Sub for robust digest scheduling instead of only app-process cron when preparing production demo.
+
+### 🚀 If Time Permits (PS-High Value Add-on)
+- Add escalation policies: unresolved critical alerts auto-escalate to email + webhook + SLA timer.
+- Add alert fatigue control with smart grouping (same asset/platform/window) and severity rollups.
+
 ---
 
 ## 📊 Phase 6 — Analytics Dashboard & Reports
 **Duration:** Days 18–20 | **Branches:** `feature/analytics-backend` · `feature/analytics-frontend` · `feature/pdf-report`
 
 > 🎯 **Goal:** Turn raw violation data into actionable intelligence. This is what makes it a product, not just a tool.
+
+> ✅ **Baseline delivered:** Analytics views and report generation path are available.
+> 🔧 **Remaining to be enterprise-realistic:** trend confidence, persistence scoring, and outcome tracking (reported vs resolved lead time).
 
 ### M3 — Backend: Analytics API
 - [ ] `GET /api/analytics/overview` — returns:
@@ -525,6 +611,14 @@ Step 6: Save to Violations collection
 5. PDF contains correct org name, dates, and violation counts ✓
 ```
 
+### 💡 Realism Upgrade + Google Integration Maximization
+- Add KPI set judges understand quickly: mean detection time, repeat-offender ratio, false-positive rate, resolution SLA.
+- Use BigQuery export (or scheduled snapshots) for long-range trend analytics and demo-ready aggregated charts.
+
+### 🚀 If Time Permits (PS-High Value Add-on)
+- Add propagation graph analytics (where content spreads first, then amplifies) to show true tracking capability.
+- Add counterfactual analytics: "if no alerting, expected additional spread in 24h" for business impact storytelling.
+
 ---
 
 ## 🌐 Phase 7 — Google Integration & Cloud Features
@@ -568,6 +662,14 @@ Step 6: Save to Violations collection
 4. DMCA notice draft generated with correct violation details ✓
 5. GCS signed URLs expire after set time ✓
 ```
+
+### 💡 Realism Upgrade + Google Integration Maximization
+- Prioritize only high-impact Google integrations for hackathon scope: Vision fallback + Gemini query generation + DMCA drafting.
+- Deploy ML service on Cloud Run and keep clear latency/cost notes in docs to show engineering trade-off maturity.
+
+### 🚀 If Time Permits (PS-High Value Add-on)
+- Add Vertex AI batch evaluation notebook to compare match performance before/after Vision fallback.
+- Add anti-abuse multilingual prompt templates for Gemini query generation and DMCA drafting consistency.
 
 ---
 
@@ -619,6 +721,14 @@ FULL DEMO FLOW (run this before every presentation):
 9. Go to Analytics → charts show real data ✓
 10. Generate PDF report → downloads ✓
 ```
+
+### 💡 Realism Upgrade + Google Integration Maximization
+- Add a "Live Ops" demo mode showing incoming alerts, confidence explainability, and evidence links in one screen.
+- Use Cloud Logging + Cloud Monitoring metrics in the demo narrative to prove reliability and observability.
+
+### 🚀 If Time Permits (PS-High Value Add-on)
+- Add chaos testing mini-suite (simulate scraper failures, queue lag, ML timeout) and show graceful degradation.
+- Add judge-mode scenario replay: run a scripted 3-minute end-to-end story with deterministic seeded outcomes.
 
 ---
 
@@ -684,13 +794,13 @@ main
 
 | Phase | What | Days | Status |
 |-------|------|------|--------|
-| 0 | Bootstrap | 1 | ⬜ |
-| 1 | Auth | 2–3 | ⬜ |
-| 2 | Upload + Fingerprint | 4–6 | ⬜ |
-| 3 | Scraper + Scanner | 7–10 | ⬜ |
-| 4 | Matching + Violations | 11–14 | ⬜ |
-| 5 | Alerts + Notifications | 15–17 | ⬜ |
-| 6 | Analytics + Reports | 18–20 | ⬜ |
+| 0 | Bootstrap | 1 | ✅ Done |
+| 1 | Auth | 2–3 | ✅ Done |
+| 2 | Upload + Fingerprint | 4–6 | ✅ Done |
+| 3 | Scraper + Scanner | 7–10 | 🟨 Baseline done, realism hardening pending |
+| 4 | Matching + Violations | 11–14 | ✅ Done |
+| 5 | Alerts + Notifications | 15–17 | 🟨 Baseline done, email/intelligence pending |
+| 6 | Analytics + Reports | 18–20 | 🟨 Baseline done, advanced analytics pending |
 | 7 | Google Cloud Integration | 21–23 | ⬜ |
 | 8 | Polish + Demo Prep | 24–26 | ⬜ |
 
