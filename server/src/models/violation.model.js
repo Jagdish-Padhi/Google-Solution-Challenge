@@ -24,6 +24,30 @@ const violationSchema = new mongoose.Schema(
 			type: String,
 			required: true,
 		},
+		sourceDomain: {
+			type: String,
+			default: null,
+			index: true,
+		},
+		sourceFirstSeenAt: {
+			type: Date,
+			default: null,
+		},
+		sourceLastSeenAt: {
+			type: Date,
+			default: null,
+		},
+		sourceSeenCount: {
+			type: Number,
+			default: 1,
+			min: 1,
+		},
+		repeatOffenderScore: {
+			type: Number,
+			default: 0,
+			min: 0,
+			max: 100,
+		},
 		platform: {
 			type: String,
 			required: true,
@@ -78,6 +102,7 @@ violationSchema.index({ orgId: 1, createdAt: -1 });
 violationSchema.index({ orgId: 1, status: 1 });
 violationSchema.index({ orgId: 1, platform: 1 });
 violationSchema.index({ orgId: 1, assetId: 1 });
+violationSchema.index({ orgId: 1, sourceDomain: 1, detectedAt: -1 });
 
 const Violation = mongoose.model('Violation', violationSchema);
 

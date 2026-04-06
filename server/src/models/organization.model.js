@@ -33,6 +33,20 @@ const organizationSchema = new mongoose.Schema(
 			type: Date,
 			default: null,
 		},
+		notificationPrefs: {
+			emailOnHighConfidence: {
+				type: Boolean,
+				default: true,
+			},
+			emailDigest: {
+				type: Boolean,
+				default: false,
+			},
+			inAppAlerts: {
+				type: Boolean,
+				default: true,
+			},
+		},
 	},
 	{
 		timestamps: true,
