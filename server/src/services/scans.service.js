@@ -213,10 +213,12 @@ async function runMatchingForScan({ scanJob, results }) {
 					violationId: violation._id,
 					platform: scanResult.platform,
 					matchConfidence: confidence,
+					sourceUrl: scanResult.sourceUrl,
 				});
 			}
 		} catch {
 			await ScanResult.findByIdAndUpdate(scanResult._id, {
+							sourceUrl: scanResult.sourceUrl,
 				status: 'no_match',
 				matchConfidence: 0,
 				matchType: null,

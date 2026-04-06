@@ -1,6 +1,8 @@
 import Alert from '../models/alert.model.js';
 import { emitAlertsCreated } from '../config/socket.js';
+import Organization from '../models/organization.model.js';
 import Violation from '../models/violation.model.js';
+import { sendHighConfidenceViolationEmail } from './notifications.service.js';
 
 const SURGE_WINDOW_MS = 60 * 60 * 1000;
 const SURGE_DEDUP_MS = 30 * 60 * 1000;
@@ -29,7 +31,7 @@ async function shouldTriggerPlatformSurgeAlert({ orgId, platform }) {
 	return recentViolationCount >= 5 && !recentSurgeAlert;
 }
 
-export async function createAlertFromViolation({ orgId, violationId, platform, matchConfidence }) {
+export async function createAlertFromViolation({ orgId, violationId, platform, matchConfidence, sourceUrl }) {
 	const alerts = [
 		{
 			orgId,
@@ -67,6 +69,23 @@ export async function createAlertFromViolation({ orgId, violationId, platform, m
 	}
 
 	const insertedAlerts = await Alert.insertMany(alerts);
+	if (Number(matchConfidence || 0) > 70) {
+		const organization = await Organization.findById(orgId).select('orgName email notificationPrefs').lean();
+		if (organization?.notificationPrefs?.emailOnHighConfidence !== false) {
+			try {
+				await sendHighConfidenceViolationEmail({
+					to: organization?.email,
+					orgName: organization?.orgName || 'Organization',
+					platform,
+					sourceUrl,
+					matchConfidence: Number(matchConfidence || 0),
+				});
+			} catch {
+				// Email failures should not block in-app alert delivery.
+			}
+		}
+	}
+
 	const unreadCount = await getUnreadAlertCount(orgId);
 	emitAlertsCreated({ orgId, alerts: insertedAlerts, unreadCount });
 
