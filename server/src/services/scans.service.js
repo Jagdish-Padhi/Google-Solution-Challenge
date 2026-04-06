@@ -7,6 +7,50 @@ import Violation from '../models/violation.model.js';
 
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://localhost:8000';
 
+function getSourceDomain(sourceUrl) {
+	if (!sourceUrl) {
+		return null;
+	}
+
+	try {
+		return new URL(sourceUrl).hostname.toLowerCase();
+	} catch {
+		return null;
+	}
+}
+
+function scoreDiscoveryQuality(result) {
+	let score = 0;
+
+	if (result.pageTitle) {
+		score += 25;
+	}
+
+	if (result.thumbnailUrl) {
+		score += 25;
+	}
+
+	if (result.videoUrl) {
+		score += 20;
+	}
+
+	if (result.sourceUrl) {
+		score += 20;
+	}
+
+	if (result.platform) {
+		score += 10;
+	}
+
+	return Math.max(0, Math.min(100, score));
+}
+
+function scorePersistence({ domainPriorViolations, urlSeenCount }) {
+	const domainScore = Math.min(40, Number(domainPriorViolations || 0) * 8);
+	const urlScore = Math.min(60, Math.max(0, Number(urlSeenCount || 0) - 1) * 15);
+	return Math.max(0, Math.min(100, domainScore + urlScore));
+}
+
 async function requestScan(payload) {
 	const response = await fetch(`${ML_SERVICE_URL}/ml/scan`, {
 		method: 'POST',
@@ -72,12 +116,15 @@ async function runMatchingForScan({ scanJob, results }) {
 
 	for (const scanResult of results) {
 		const compareUrl = scanResult.thumbnailUrl || scanResult.videoUrl || scanResult.sourceUrl;
+		const sourceDomain = getSourceDomain(scanResult.sourceUrl);
 
 		if (!compareUrl) {
 			await ScanResult.findByIdAndUpdate(scanResult._id, {
 				status: 'no_match',
 				matchConfidence: 0,
 				matchType: null,
+				sourceDomain,
+				discoveryQualityScore: scoreDiscoveryQuality(scanResult),
 			});
 			continue;
 		}
@@ -91,14 +138,48 @@ async function runMatchingForScan({ scanJob, results }) {
 			const confidence = Number(match.matchConfidence || 0);
 			const matchedStatus = confidence >= 30 ? 'matched' : 'no_match';
 
+			const [domainPriorViolations, priorUrlViolation] = await Promise.all([
+				sourceDomain
+					? Violation.countDocuments({
+						orgId: scanJob.orgId,
+						sourceDomain,
+						detectedAt: {
+							$gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+						},
+					})
+					: 0,
+				Violation.findOne({
+					orgId: scanJob.orgId,
+					assetId: scanJob.assetId,
+					sourceUrl: scanResult.sourceUrl,
+				})
+					.sort({ detectedAt: 1 })
+					.lean(),
+			]);
+
+			const urlSeenCount = Math.max(1, Number(priorUrlViolation?.sourceSeenCount || 0) + 1);
+			const sourceFirstSeenAt =
+				priorUrlViolation?.sourceFirstSeenAt || priorUrlViolation?.detectedAt || new Date();
+			const sourceLastSeenAt = new Date();
+			const persistentScore = scorePersistence({ domainPriorViolations, urlSeenCount });
+
 			await ScanResult.findByIdAndUpdate(scanResult._id, {
 				status: matchedStatus,
 				matchConfidence: confidence,
 				matchType: match.matchType || null,
+				sourceDomain,
+				discoveryQualityScore: scoreDiscoveryQuality(scanResult),
 				evidenceBundle: {
 					hammingDistance: match.evidenceBundle?.hammingDistance ?? null,
 					colorSimilarity: match.evidenceBundle?.colorSimilarity ?? null,
 					frameMatchCount: match.evidenceBundle?.frameMatchCount ?? null,
+				},
+				persistenceSignals: {
+					domainPriorViolations,
+					urlSeenCount,
+					persistentScore,
+					firstSeenAt: sourceFirstSeenAt,
+					lastSeenAt: sourceLastSeenAt,
 				},
 			});
 
@@ -109,6 +190,11 @@ async function runMatchingForScan({ scanJob, results }) {
 					assetId: scanJob.assetId,
 					scanJobId: scanJob._id,
 					sourceUrl: scanResult.sourceUrl,
+					sourceDomain,
+					sourceFirstSeenAt,
+					sourceLastSeenAt,
+					sourceSeenCount: urlSeenCount,
+					repeatOffenderScore: persistentScore,
 					platform: scanResult.platform,
 					screenshotUrl: scanResult.thumbnailUrl || null,
 					matchConfidence: confidence,
@@ -134,6 +220,8 @@ async function runMatchingForScan({ scanJob, results }) {
 				status: 'no_match',
 				matchConfidence: 0,
 				matchType: null,
+				sourceDomain,
+				discoveryQualityScore: scoreDiscoveryQuality(scanResult),
 			});
 		}
 	}
@@ -197,10 +285,12 @@ export async function dispatchScanJob(scanJobId) {
 					orgId: scanJob.orgId,
 					assetId: scanJob.assetId,
 					sourceUrl: result.sourceUrl,
+					sourceDomain: getSourceDomain(result.sourceUrl),
 					platform: result.platform,
 					thumbnailUrl: result.thumbnailUrl || null,
 					videoUrl: result.videoUrl || null,
 					pageTitle: result.pageTitle || null,
+					discoveryQualityScore: scoreDiscoveryQuality(result),
 					scrapedAt: result.scrapedAt ? new Date(result.scrapedAt) : new Date(),
 					status: result.status || 'pending_match',
 				})),

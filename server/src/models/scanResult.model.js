@@ -24,9 +24,20 @@ const scanResultSchema = new mongoose.Schema(
 			type: String,
 			required: true,
 		},
+		sourceDomain: {
+			type: String,
+			default: null,
+			index: true,
+		},
 		platform: {
 			type: String,
 			required: true,
+		},
+		discoveryQualityScore: {
+			type: Number,
+			default: 0,
+			min: 0,
+			max: 100,
 		},
 		thumbnailUrl: {
 			type: String,
@@ -71,6 +82,30 @@ const scanResultSchema = new mongoose.Schema(
 			},
 			frameMatchCount: {
 				type: Number,
+				default: null,
+			},
+		},
+		persistenceSignals: {
+			domainPriorViolations: {
+				type: Number,
+				default: 0,
+			},
+			urlSeenCount: {
+				type: Number,
+				default: 0,
+			},
+			persistentScore: {
+				type: Number,
+				default: 0,
+				min: 0,
+				max: 100,
+			},
+			firstSeenAt: {
+				type: Date,
+				default: null,
+			},
+			lastSeenAt: {
+				type: Date,
 				default: null,
 			},
 		},
