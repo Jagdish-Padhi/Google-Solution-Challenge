@@ -1,4 +1,5 @@
 import {
+	loginOrganizationWithGoogle,
 	loginOrganization,
 	logoutOrganization,
 	refreshOrganizationSession,
@@ -38,6 +39,15 @@ export async function registerController(req, res, next) {
 export async function loginController(req, res, next) {
 	try {
 		const authPayload = await loginOrganization(req.body);
+		return sendAuthResponse(res, 200, authPayload);
+	} catch (error) {
+		return next(error);
+	}
+}
+
+export async function googleLoginController(req, res, next) {
+	try {
+		const authPayload = await loginOrganizationWithGoogle(req.body);
 		return sendAuthResponse(res, 200, authPayload);
 	} catch (error) {
 		return next(error);

@@ -60,10 +60,10 @@ export default function DashboardHomePage() {
   return (
     <div className='space-y-8'>
       <section className='grid gap-6 lg:grid-cols-[1.1fr_0.9fr]'>
-        <Card className='border-(--app-color-border) shadow-lg shadow-slate-900/5' style={{ backgroundColor: 'var(--app-color-surface-panel)' }} title={`Welcome back, ${user?.orgName || 'team'}`} subtitle='Phase 1 is live: protected auth, refresh tokens, and a working dashboard shell.'>
+        <Card className='border-(--app-color-border) shadow-lg shadow-slate-900/5' style={{ backgroundColor: 'var(--app-color-surface-panel)' }} title={`Welcome back, ${user?.orgName || 'team'}`} subtitle='Phase 2 foundation is live: upload assets and track fingerprint processing.'>
           <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
             {statsCards.map((item) => (
-              <StatCard key={item.label} label={item.label} value={isLoading ? '—' : item.value.toString()} subtitle='Current stub value' />
+              <StatCard key={item.label} label={item.label} value={isLoading ? '—' : item.value.toString()} subtitle='Live organization value' />
             ))}
           </div>
         </Card>
@@ -77,7 +77,7 @@ export default function DashboardHomePage() {
         </Card>
       </section>
 
-      <Card className='border-(--app-color-border) shadow-lg shadow-slate-900/5' style={{ backgroundColor: 'var(--app-color-surface-panel)' }} title='Recent activity' subtitle='No content yet, which is exactly expected for Phase 1.'>
+      <Card className='border-(--app-color-border) shadow-lg shadow-slate-900/5' style={{ backgroundColor: 'var(--app-color-surface-panel)' }} title='Recent activity' subtitle='Upload your first asset to start the fingerprint pipeline.'>
         {error ? (
           <p className='text-sm text-red-600'>{error}</p>
         ) : isLoading ? (

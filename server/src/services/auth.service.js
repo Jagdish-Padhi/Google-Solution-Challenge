@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 
+import { getFirebaseAdminAuth } from '../config/firebaseAdmin.js';
 import Organization from '../models/organization.model.js';
 
 const ACCESS_TOKEN_TTL = process.env.JWT_ACCESS_EXPIRES_IN || '15m';
@@ -16,6 +17,33 @@ function requireJwtSecret() {
 
 function normalizeEmail(email) {
 	return typeof email === 'string' ? email.trim().toLowerCase() : '';
+}
+
+function getOrganizationNameFromGoogleProfile(decodedToken, email) {
+	const displayName = typeof decodedToken?.name === 'string' ? decodedToken.name.trim() : '';
+
+	if (displayName) {
+		return displayName;
+	}
+
+	const localPart = normalizeEmail(email).split('@')[0] || 'Organization';
+	return localPart.replace(/[._-]+/g, ' ').replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+function decodeFirebaseTokenProjectId(idToken) {
+	try {
+		const [, payloadSegment] = idToken.split('.');
+
+		if (!payloadSegment) {
+			return null;
+		}
+
+		const payloadJson = Buffer.from(payloadSegment, 'base64url').toString('utf8');
+		const payload = JSON.parse(payloadJson);
+		return typeof payload.aud === 'string' ? payload.aud : null;
+	} catch {
+		return null;
+	}
 }
 
 function hashToken(token) {
@@ -72,6 +100,68 @@ function createAuthPayload(organization) {
 
 async function findOrganizationByEmail(email) {
 	return Organization.findOne({ email: normalizeEmail(email) }).select('+passwordHash +refreshTokenHash');
+}
+
+export async function loginOrganizationWithGoogle(payload = {}) {
+	const idToken = typeof payload.idToken === 'string' ? payload.idToken.trim() : '';
+
+	if (!idToken) {
+		const error = new Error('Google ID token is required.');
+		error.statusCode = 400;
+		throw error;
+	}
+
+	let decodedToken;
+	const tokenProjectId = decodeFirebaseTokenProjectId(idToken);
+
+	try {
+		decodedToken = await getFirebaseAdminAuth(tokenProjectId).verifyIdToken(idToken);
+	} catch (verificationError) {
+		const configuredProjectId = process.env.FIREBASE_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT_ID;
+		const mismatchHint =
+			tokenProjectId && configuredProjectId && tokenProjectId !== configuredProjectId
+				? ` Token project: ${tokenProjectId}. Server project: ${configuredProjectId}.`
+				: tokenProjectId
+					? ` Token project: ${tokenProjectId}.`
+					: '';
+		const error = new Error(`Google sign-in token is invalid or expired.${mismatchHint}`);
+		error.statusCode = 401;
+		error.cause = verificationError;
+		throw error;
+	}
+
+	const email = normalizeEmail(decodedToken.email);
+
+	if (!email) {
+		const error = new Error('Google account does not include an email address.');
+		error.statusCode = 400;
+		throw error;
+	}
+
+	if (decodedToken.email_verified === false) {
+		const error = new Error('Google account email is not verified.');
+		error.statusCode = 403;
+		throw error;
+	}
+
+	let organization = await findOrganizationByEmail(email);
+
+	if (!organization) {
+		const passwordHash = await bcrypt.hash(crypto.randomUUID(), 12);
+		organization = await Organization.create({
+			orgName: getOrganizationNameFromGoogleProfile(decodedToken, email),
+			email,
+			passwordHash,
+			plan: 'free',
+		});
+	}
+
+	const authPayload = createAuthPayload(organization);
+	organization.refreshTokenHash = hashToken(authPayload.refreshToken);
+	organization.lastLoginAt = new Date();
+	await organization.save();
+
+	return authPayload;
 }
 
 export async function registerOrganization(payload = {}) {
