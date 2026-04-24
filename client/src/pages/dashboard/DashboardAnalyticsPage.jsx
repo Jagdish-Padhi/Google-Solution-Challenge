@@ -11,6 +11,43 @@ const rangeOptions = [
 	{ value: 'custom', label: 'Custom range' },
 ];
 
+function resolveReportDownloadUrl(fileUrl) {
+	if (!fileUrl) {
+		return '#';
+	}
+
+	if (/^https?:\/\//i.test(fileUrl)) {
+		return fileUrl;
+	}
+
+	const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+	const apiOrigin = new URL(apiBaseUrl).origin;
+
+	return `${apiOrigin}${fileUrl.startsWith('/') ? '' : '/'}${fileUrl}`;
+}
+
+function inferDownloadFileName(report) {
+	if (report?.fileName) {
+		return report.fileName;
+	}
+
+	if (report?.fileUrl) {
+		try {
+			const resolvedUrl = new URL(resolveReportDownloadUrl(report.fileUrl));
+			const pathParts = resolvedUrl.pathname.split('/').filter(Boolean);
+			const lastSegment = pathParts[pathParts.length - 1];
+
+			if (lastSegment) {
+				return lastSegment;
+			}
+		} catch {
+			return 'analytics-report.pdf';
+		}
+	}
+
+	return 'analytics-report.pdf';
+}
+
 function buildChartPoints(items) {
 	if (!items.length) {
 		return '';
@@ -298,6 +335,32 @@ export default function DashboardAnalyticsPage() {
 		}
 	};
 
+	const handleDownloadReport = async (report) => {
+		const downloadUrl = resolveReportDownloadUrl(report?.fileUrl);
+
+		if (!report?._id || downloadUrl === '#') {
+			toast.error('Report file is not available for download.');
+			return;
+		}
+
+		try {
+			const response = await api.get(downloadUrl, {
+				responseType: 'blob',
+			});
+
+			const blobUrl = window.URL.createObjectURL(new Blob([response.data]));
+			const anchor = document.createElement('a');
+			anchor.href = blobUrl;
+			anchor.setAttribute('download', inferDownloadFileName(report));
+			document.body.appendChild(anchor);
+			anchor.click();
+			anchor.remove();
+			window.URL.revokeObjectURL(blobUrl);
+		} catch {
+			toast.error('Unable to download report right now.');
+		}
+	};
+
 	const statCards = overview
 		? [
 				{ label: 'Total violations', value: overview.totalViolations, subtitle: overview.rangeLabel },
@@ -501,14 +564,13 @@ export default function DashboardAnalyticsPage() {
 											<Badge variant='outline' size='sm'>
 												{report.stats?.totalViolations || 0} violations
 											</Badge>
-											<a
-												href={report.fileUrl}
-												target='_blank'
-												rel='noreferrer'
+											<button
+												type='button'
+												onClick={() => handleDownloadReport(report)}
 												className='inline-flex items-center justify-center rounded-lg bg-(--app-color-primary) px-4 py-2 text-sm font-medium text-white transition hover:bg-(--app-color-primary-hover)'
 											>
 												Download PDF
-											</a>
+											</button>
 										</div>
 									</div>
 								))}

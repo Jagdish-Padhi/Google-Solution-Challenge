@@ -1,5 +1,6 @@
 import Asset from '../models/asset.model.js';
 import Violation from '../models/violation.model.js';
+import { Types } from 'mongoose';
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 const RANGE_DAYS = {
@@ -35,6 +36,18 @@ function formatDisplayDate(date) {
 		month: 'short',
 		day: 'numeric',
 	}).format(date);
+}
+
+function normalizeOrgId(orgId) {
+	if (!orgId) {
+		return orgId;
+	}
+
+	if (orgId instanceof Types.ObjectId) {
+		return orgId;
+	}
+
+	return Types.ObjectId.isValid(orgId) ? new Types.ObjectId(orgId) : orgId;
 }
 
 export function resolveAnalyticsRange({ range = '30d', startDate = null, endDate = null } = {}) {
@@ -283,18 +296,19 @@ async function getPreviousWindowViolationCount(orgId, startDate, endDate) {
 
 export async function getAnalyticsOverview({ orgId, range = '30d', startDate = null, endDate = null }) {
 	const resolvedRange = resolveAnalyticsRange({ range, startDate, endDate });
+	const normalizedOrgId = normalizeOrgId(orgId);
 	const [{ totalAssets }, summaryStats, timelineMap, platformBreakdown, topAssets, topDomains, previousWindowCount] =
 		await Promise.all([
 			Asset.aggregate([
-				{ $match: { orgId, status: { $ne: 'deleted' } } },
+				{ $match: { orgId: normalizedOrgId, status: { $ne: 'deleted' } } },
 				{ $group: { _id: null, totalAssets: { $sum: 1 } } },
 			]).then((rows) => ({ totalAssets: rows[0]?.totalAssets || 0 })),
-			getSummaryStats(orgId, resolvedRange.startDate, resolvedRange.endDate),
-			getTimelineMap(orgId, resolvedRange.startDate, resolvedRange.endDate),
-			getPlatformBreakdown(orgId, resolvedRange.startDate, resolvedRange.endDate),
-			getTopAssets(orgId, resolvedRange.startDate, resolvedRange.endDate),
-			getTopDomains(orgId, resolvedRange.startDate, resolvedRange.endDate),
-			getPreviousWindowViolationCount(orgId, resolvedRange.startDate, resolvedRange.endDate),
+			getSummaryStats(normalizedOrgId, resolvedRange.startDate, resolvedRange.endDate),
+			getTimelineMap(normalizedOrgId, resolvedRange.startDate, resolvedRange.endDate),
+			getPlatformBreakdown(normalizedOrgId, resolvedRange.startDate, resolvedRange.endDate),
+			getTopAssets(normalizedOrgId, resolvedRange.startDate, resolvedRange.endDate),
+			getTopDomains(normalizedOrgId, resolvedRange.startDate, resolvedRange.endDate),
+			getPreviousWindowViolationCount(normalizedOrgId, resolvedRange.startDate, resolvedRange.endDate),
 		]);
 
 	const timeline = buildTimelineRows({
@@ -342,7 +356,8 @@ export async function getAnalyticsOverview({ orgId, range = '30d', startDate = n
 
 export async function getAnalyticsTimeline({ orgId, range = '30d', startDate = null, endDate = null }) {
 	const resolvedRange = resolveAnalyticsRange({ range, startDate, endDate });
-	const timelineMap = await getTimelineMap(orgId, resolvedRange.startDate, resolvedRange.endDate);
+	const normalizedOrgId = normalizeOrgId(orgId);
+	const timelineMap = await getTimelineMap(normalizedOrgId, resolvedRange.startDate, resolvedRange.endDate);
 
 	return {
 		range: resolvedRange.range,
@@ -359,7 +374,8 @@ export async function getAnalyticsTimeline({ orgId, range = '30d', startDate = n
 
 export async function getAnalyticsPlatforms({ orgId, range = '30d', startDate = null, endDate = null }) {
 	const resolvedRange = resolveAnalyticsRange({ range, startDate, endDate });
-	const items = await getPlatformBreakdown(orgId, resolvedRange.startDate, resolvedRange.endDate);
+	const normalizedOrgId = normalizeOrgId(orgId);
+	const items = await getPlatformBreakdown(normalizedOrgId, resolvedRange.startDate, resolvedRange.endDate);
 
 	return {
 		range: resolvedRange.range,
@@ -653,14 +669,15 @@ async function getConfidenceCalibration(orgId, startDate, endDate) {
 
 export async function getAnalyticsKPIs({ orgId, range = '30d', startDate = null, endDate = null }) {
 	const resolvedRange = resolveAnalyticsRange({ range, startDate, endDate });
+	const normalizedOrgId = normalizeOrgId(orgId);
 
 	const [detectionTime, repeatOffenderRatio, falsePositiveRate, resolutionSLA, confidenceCalibration] =
 		await Promise.all([
-			getMeanDetectionTime(orgId, resolvedRange.startDate, resolvedRange.endDate),
-			getRepeatOffenderRatio(orgId, resolvedRange.startDate, resolvedRange.endDate),
-			getFalsePositiveRate(orgId, resolvedRange.startDate, resolvedRange.endDate),
-			getResolutionSLA(orgId, resolvedRange.startDate, resolvedRange.endDate),
-			getConfidenceCalibration(orgId, resolvedRange.startDate, resolvedRange.endDate),
+			getMeanDetectionTime(normalizedOrgId, resolvedRange.startDate, resolvedRange.endDate),
+			getRepeatOffenderRatio(normalizedOrgId, resolvedRange.startDate, resolvedRange.endDate),
+			getFalsePositiveRate(normalizedOrgId, resolvedRange.startDate, resolvedRange.endDate),
+			getResolutionSLA(normalizedOrgId, resolvedRange.startDate, resolvedRange.endDate),
+			getConfidenceCalibration(normalizedOrgId, resolvedRange.startDate, resolvedRange.endDate),
 		]);
 
 	return {
@@ -770,8 +787,9 @@ async function getConfidenceBandAnalysis(orgId, startDate, endDate) {
 
 export async function getConfidenceCalibrationAnalysis({ orgId, range = '30d', startDate = null, endDate = null }) {
 	const resolvedRange = resolveAnalyticsRange({ range, startDate, endDate });
+	const normalizedOrgId = normalizeOrgId(orgId);
 
-	const bandAnalysis = await getConfidenceBandAnalysis(orgId, resolvedRange.startDate, resolvedRange.endDate);
+	const bandAnalysis = await getConfidenceBandAnalysis(normalizedOrgId, resolvedRange.startDate, resolvedRange.endDate);
 
 	// Generate overall recommendations
 	const highRiskBands = bandAnalysis.filter((b) => b.falsePositiveRate > 15);
@@ -858,12 +876,13 @@ async function getAssetPropagationGraph(assetId, orgId) {
 
 export async function getPropagationAnalytics({ orgId, range = '30d', startDate = null, endDate = null, limit = 10 }) {
 	const resolvedRange = resolveAnalyticsRange({ range, startDate, endDate });
+	const normalizedOrgId = normalizeOrgId(orgId);
 
 	// Get top assets by violation count in the range
 	const topAssets = await Violation.aggregate([
 		{
 			$match: {
-				orgId,
+				orgId: normalizedOrgId,
 				detectedAt: {
 					$gte: resolvedRange.startDate,
 					$lte: resolvedRange.endDate,
@@ -884,7 +903,7 @@ export async function getPropagationAnalytics({ orgId, range = '30d', startDate 
 	// For each top asset, get its propagation graph
 	const propagationGraphs = await Promise.all(
 		topAssets.map((asset) =>
-			getAssetPropagationGraph(asset._id, orgId).then((graph) =>
+			getAssetPropagationGraph(asset._id, normalizedOrgId).then((graph) =>
 				graph
 					? {
 							...graph,
@@ -899,7 +918,7 @@ export async function getPropagationAnalytics({ orgId, range = '30d', startDate 
 	const [globalMetrics] = await Violation.aggregate([
 		{
 			$match: {
-				orgId,
+				orgId: normalizedOrgId,
 				detectedAt: {
 					$gte: resolvedRange.startDate,
 					$lte: resolvedRange.endDate,

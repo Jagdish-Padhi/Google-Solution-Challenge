@@ -12,6 +12,34 @@ function getPublicReportsUrl(req) {
 	return `${req.protocol}://${req.get('host')}/uploads/reports`;
 }
 
+function normalizeReportFileUrl(fileUrl, req) {
+	if (!fileUrl) {
+		return fileUrl;
+	}
+
+	const backendOrigin = `${req.protocol}://${req.get('host')}`;
+
+	if (/^https?:\/\//i.test(fileUrl)) {
+		try {
+			const parsedUrl = new URL(fileUrl);
+
+			if (parsedUrl.origin === backendOrigin && parsedUrl.pathname.startsWith('/reports/')) {
+				parsedUrl.pathname = parsedUrl.pathname.replace('/reports/', '/uploads/reports/');
+			}
+
+			return parsedUrl.toString();
+		} catch {
+			return fileUrl;
+		}
+	}
+
+	const normalizedPath = fileUrl.startsWith('/reports/')
+		? fileUrl.replace('/reports/', '/uploads/reports/')
+		: fileUrl;
+
+	return `${backendOrigin}${normalizedPath.startsWith('/') ? '' : '/'}${normalizedPath}`;
+}
+
 export async function generateReportController(req, res, next) {
 	try {
 		const { range, startDate, endDate, title } = validateGenerateReportPayload(req.body);
@@ -48,7 +76,15 @@ export async function listReportsController(req, res, next) {
 			limit,
 		});
 
-		return res.status(200).json(result);
+		const items = result.items.map((report) => ({
+			...report,
+			fileUrl: normalizeReportFileUrl(report.fileUrl, req),
+		}));
+
+		return res.status(200).json({
+			...result,
+			items,
+		});
 	} catch (error) {
 		return next(error);
 	}
