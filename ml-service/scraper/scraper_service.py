@@ -1,4 +1,4 @@
-"""Scraper coordinator for platform-specific collectors."""
+"""Scraper coordinator — runs platform scrapers in parallel with Gemini query expansion."""
 
 from __future__ import annotations
 
@@ -6,11 +6,11 @@ import os
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+from scraper.gemini_query_gen import generate_search_queries
 from scraper.telegram_public_scraper import scrape_telegram_public
 from scraper.twitter_scraper import scrape_twitter
 from scraper.web_scraper import scrape_web
 from scraper.youtube_scraper import scrape_youtube
-
 
 SCRAPER_DELAY_SECONDS = float(os.getenv("SCRAPER_DELAY_SECONDS", "1"))
 SCRAPER_MAX_RETRIES = int(os.getenv("SCRAPER_MAX_RETRIES", "3"))
@@ -25,56 +25,87 @@ PLATFORM_HANDLERS = {
 
 def _run_with_retry(handler, keyword: str) -> list[dict]:
     last_error = None
-
     for attempt in range(1, SCRAPER_MAX_RETRIES + 1):
         try:
             results = handler(keyword)
-            # Basic request pacing to reduce block likelihood.
             time.sleep(SCRAPER_DELAY_SECONDS)
             return results
-        except Exception as error:  # pragma: no cover
+        except Exception as error:
             last_error = error
             if attempt < SCRAPER_MAX_RETRIES:
-                backoff_seconds = 2 ** (attempt - 1)
-                time.sleep(backoff_seconds)
-
-    raise RuntimeError(f"Scraper failed after retries: {last_error}")
+                time.sleep(2 ** (attempt - 1))
+    raise RuntimeError(f"Scraper failed after {SCRAPER_MAX_RETRIES} retries: {last_error}")
 
 
-def run_scrape_job(keywords: list[str], platforms: list[str]) -> dict:
-    """Run selected scrapers in parallel and aggregate discovered results."""
+def run_scrape_job(
+    keywords: list[str],
+    platforms: list[str],
+    asset_title: str = "",
+    asset_type: str = "sports media",
+    use_gemini: bool = True,
+) -> dict:
+    """
+    Run selected scrapers in parallel and aggregate discovered results.
 
-    normalized_keywords = [keyword.strip() for keyword in keywords if keyword and keyword.strip()]
-    normalized_platforms = [platform.strip().lower() for platform in platforms if platform and platform.strip()]
+    If use_gemini=True and GEMINI_API_KEY is set, expands keywords using
+    Gemini-generated adversarial queries before scraping.
+    """
+    normalized_keywords = [k.strip() for k in keywords if k and k.strip()]
+    normalized_platforms = [p.strip().lower() for p in platforms if p and p.strip()]
+    valid_platforms = [p for p in normalized_platforms if p in PLATFORM_HANDLERS]
 
-    valid_platforms = [platform for platform in normalized_platforms if platform in PLATFORM_HANDLERS]
+    # --- Gemini query expansion ---
+    gemini_queries: list[str] = []
+    if use_gemini and asset_title:
+        try:
+            gemini_queries = generate_search_queries(asset_title, asset_type)
+            # Remove duplicates already in normalized_keywords
+            gemini_queries = [q for q in gemini_queries if q not in normalized_keywords]
+            print(f"[scraper_service] Gemini expanded keywords: {gemini_queries}")
+        except Exception as e:
+            print(f"[scraper_service] Gemini query gen failed, continuing without: {e}")
 
+    all_keywords = normalized_keywords + gemini_queries
+
+    # --- Parallel scraping ---
     tasks = []
     results = []
     errors = []
 
-    with ThreadPoolExecutor(max_workers=max(1, len(valid_platforms) or 1)) as executor:
+    with ThreadPoolExecutor(max_workers=max(1, len(valid_platforms))) as executor:
         for platform in valid_platforms:
             handler = PLATFORM_HANDLERS[platform]
-            for keyword in normalized_keywords:
-                tasks.append((platform, keyword, executor.submit(_run_with_retry, handler, keyword)))
+            for keyword in all_keywords:
+                tasks.append(
+                    (platform, keyword, executor.submit(_run_with_retry, handler, keyword))
+                )
 
         for platform, keyword, future in tasks:
             try:
                 discovered = future.result()
                 results.extend(discovered)
             except Exception as error:
-                errors.append(
-                    {
-                        "platform": platform,
-                        "keyword": keyword,
-                        "error": str(error),
-                    }
-                )
+                errors.append({"platform": platform, "keyword": keyword, "error": str(error)})
+
+    # Deduplicate by sourceUrl
+    seen_urls: set[str] = set()
+    unique_results = []
+    for r in results:
+        url = r.get("sourceUrl", "")
+        if url and url not in seen_urls:
+            seen_urls.add(url)
+            unique_results.append(r)
 
     return {
         "keywords": normalized_keywords,
+        "geminiKeywords": gemini_queries,
         "platforms": valid_platforms,
-        "results": results,
+        "results": unique_results,
+        "discoveryMetrics": {
+            "candidateUrlsFound": len(results),
+            "uniqueCandidates": len(unique_results),
+            "keywordsUsed": len(all_keywords),
+            "geminiQueriesAdded": len(gemini_queries),
+        },
         "errors": errors,
     }
