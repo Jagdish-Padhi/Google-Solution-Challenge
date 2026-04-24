@@ -10,14 +10,6 @@ const Grid = ({
 	className = '',
 	...props
 }) => {
-	const colsClasses = `
-		grid-cols-${cols.default}
-		sm:grid-cols-${cols.sm}
-		md:grid-cols-${cols.md}
-		lg:grid-cols-${cols.lg}
-		xl:grid-cols-${cols.xl}
-	`;
-
 	return (
 		<div className={`grid ${gap} ${className}`} style={{
 			gridTemplateColumns: `repeat(auto-fill, minmax(${cols.minWidth || '250px'}, 1fr))`
