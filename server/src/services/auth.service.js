@@ -89,6 +89,7 @@ function createAuthPayload(organization) {
 			orgName: organization.orgName,
 			email: organization.email,
 			plan: organization.plan,
+			notificationPrefs: organization.notificationPrefs,
 			createdAt: organization.createdAt,
 			updatedAt: organization.updatedAt,
 			lastLoginAt: organization.lastLoginAt,
@@ -293,4 +294,20 @@ export async function logoutOrganization(refreshToken) {
 
 export async function getOrganizationById(organizationId) {
 	return Organization.findById(organizationId).select('-passwordHash -refreshTokenHash');
+}
+
+export async function updateOrganizationNotificationPrefs({ organizationId, payload = {} }) {
+	const normalizedPrefs = {
+		emailOnHighConfidence: Boolean(payload.emailOnHighConfidence),
+		emailDigest: Boolean(payload.emailDigest),
+		inAppAlerts: payload.inAppAlerts === undefined ? true : Boolean(payload.inAppAlerts),
+	};
+
+	return Organization.findByIdAndUpdate(
+		organizationId,
+		{ notificationPrefs: normalizedPrefs },
+		{ new: true },
+	)
+		.select('-passwordHash -refreshTokenHash')
+		.lean();
 }
