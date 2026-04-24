@@ -115,6 +115,83 @@ function PlatformBars({ items }) {
 	);
 }
 
+function TopDomainsList({ items }) {
+	if (!items.length) {
+		return <EmptyState title='No domains tracked yet' message='Violations from different domains will appear here.' />;
+	}
+
+	return (
+		<div className='space-y-2'>
+			{items.map((item) => (
+				<div key={item.domain} className='flex flex-col gap-2 rounded-lg border border-(--app-color-border) bg-(--app-color-surface) px-4 py-3 sm:flex-row sm:items-center sm:justify-between'>
+					<div className='min-w-0'>
+						<p className='truncate font-medium text-(--app-color-text)'>
+							{item.domain}
+						</p>
+						<p className='text-xs text-(--app-color-text-muted)'>
+							{item.count} violation{item.count !== 1 ? 's' : ''}
+						</p>
+					</div>
+					{item.repeatOffenderScore > 50 && (
+						<div className='flex items-center gap-2 whitespace-nowrap'>
+							<span className='inline-flex items-center rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-800'>
+								Repeat Offender
+							</span>
+							<p className='text-sm text-(--app-color-text-muted)'>Score: {item.repeatOffenderScore}</p>
+						</div>
+					)}
+				</div>
+			))}
+		</div>
+	);
+}
+
+function KPIMetricsGrid({ kpis }) {
+	if (!kpis) {
+		return null;
+	}
+
+	const { detectionTime, repeatOffenderRatio, falsePositiveRate, resolutionSLA } = kpis;
+
+	return (
+		<section className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
+			<Card className='border-(--app-color-border) shadow-sm' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
+				<p className='text-xs uppercase tracking-[0.16em] text-(--app-color-text-muted)'>Avg Detection Time</p>
+				<p className='mt-2 text-3xl font-semibold text-(--app-color-text)'>
+					{detectionTime.meanTimeHours > 24 ? `${Math.round(detectionTime.meanTimeHours / 24)}d` : `${detectionTime.meanTimeHours}h`}
+				</p>
+				<p className='mt-2 text-sm text-(--app-color-text-muted)'>
+					From upload to first detection ({detectionTime.count} assets tracked)
+				</p>
+			</Card>
+
+			<Card className='border-(--app-color-border) shadow-sm' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
+				<p className='text-xs uppercase tracking-[0.16em] text-(--app-color-text-muted)'>Repeat Offenders</p>
+				<p className='mt-2 text-3xl font-semibold text-(--app-color-text)'>{repeatOffenderRatio.ratio}%</p>
+				<p className='mt-2 text-sm text-(--app-color-text-muted)'>
+					{repeatOffenderRatio.repeatOffenderCount} of {repeatOffenderRatio.totalDomains} domains
+				</p>
+			</Card>
+
+			<Card className='border-(--app-color-border) shadow-sm' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
+				<p className='text-xs uppercase tracking-[0.16em] text-(--app-color-text-muted)'>False Positive Rate</p>
+				<p className='mt-2 text-3xl font-semibold text-(--app-color-text)'>{falsePositiveRate.rate}%</p>
+				<p className='mt-2 text-sm text-(--app-color-text-muted)'>
+					{falsePositiveRate.falsePositiveCount} of {falsePositiveRate.totalViolations} violations
+				</p>
+			</Card>
+
+			<Card className='border-(--app-color-border) shadow-sm' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
+				<p className='text-xs uppercase tracking-[0.16em] text-(--app-color-text-muted)'>Resolution SLA (24h)</p>
+				<p className='mt-2 text-3xl font-semibold text-(--app-color-text)'>{resolutionSLA.slaCompliancePercentage}%</p>
+				<p className='mt-2 text-sm text-(--app-color-text-muted)'>
+					Avg time: {resolutionSLA.avgTimeHours}h ({resolutionSLA.totalResolved} resolved)
+				</p>
+			</Card>
+		</section>
+	);
+}
+
 export default function DashboardAnalyticsPage() {
 	const [range, setRange] = useState('30d');
 	const [customDates, setCustomDates] = useState({
@@ -124,6 +201,7 @@ export default function DashboardAnalyticsPage() {
 	const [overview, setOverview] = useState(null);
 	const [timeline, setTimeline] = useState([]);
 	const [platforms, setPlatforms] = useState([]);
+	const [kpis, setKpis] = useState(null);
 	const [reports, setReports] = useState([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [isGeneratingReport, setIsGeneratingReport] = useState(false);
@@ -153,6 +231,7 @@ export default function DashboardAnalyticsPage() {
 				setOverview(null);
 				setTimeline([]);
 				setPlatforms([]);
+				setKpis(null);
 				return;
 			}
 
@@ -160,10 +239,11 @@ export default function DashboardAnalyticsPage() {
 			setError('');
 
 			try {
-				const [overviewResponse, timelineResponse, platformsResponse, reportsResponse] = await Promise.all([
+				const [overviewResponse, timelineResponse, platformsResponse, kpisResponse, reportsResponse] = await Promise.all([
 					api.get('/analytics/overview', { params: queryParams }),
 					api.get('/analytics/timeline', { params: queryParams }),
 					api.get('/analytics/platforms', { params: queryParams }),
+					api.get('/analytics/kpis', { params: queryParams }),
 					api.get('/reports', { params: { page: 1, limit: 5 } }),
 				]);
 
@@ -174,6 +254,7 @@ export default function DashboardAnalyticsPage() {
 				setOverview(overviewResponse.data);
 				setTimeline(timelineResponse.data.items || []);
 				setPlatforms(platformsResponse.data.items || []);
+				setKpis(kpisResponse.data.kpis || null);
 				setReports(reportsResponse.data.items || []);
 			} catch {
 				if (isMounted) {
@@ -312,6 +393,8 @@ export default function DashboardAnalyticsPage() {
 				<EmptyState title='No analytics range selected yet' message='Choose a valid date range to load analytics.' />
 			) : (
 				<>
+					{kpis ? <KPIMetricsGrid kpis={kpis} /> : null}
+
 					<section className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
 						{statCards.map((item) => (
 							<Card key={item.label} className='border-(--app-color-border) shadow-sm' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
