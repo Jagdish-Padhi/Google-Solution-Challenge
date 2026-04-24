@@ -12,6 +12,7 @@ const navigationItems = [
 	{ label: 'Overview', path: '/dashboard' },
 	{ label: 'Assets', path: '/dashboard/assets' },
 	{ label: 'Scans', path: '/dashboard/scans' },
+	{ label: 'Analytics', path: '/dashboard/analytics' },
 	{ label: 'Alerts', path: '/dashboard/alerts' },
 	{ label: 'Violations', path: '/dashboard/violations' },
 ];
