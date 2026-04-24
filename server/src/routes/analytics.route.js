@@ -1,6 +1,7 @@
 import { Router } from 'express';
 
 import {
+	getAnalyticsKPIsController,
 	getAnalyticsOverviewController,
 	getAnalyticsPlatformsController,
 	getAnalyticsTimelineController,
@@ -14,5 +15,6 @@ analyticsRouter.use(verifyToken);
 analyticsRouter.get('/overview', getAnalyticsOverviewController);
 analyticsRouter.get('/timeline', getAnalyticsTimelineController);
 analyticsRouter.get('/platforms', getAnalyticsPlatformsController);
+analyticsRouter.get('/kpis', getAnalyticsKPIsController);
 
 export default analyticsRouter;

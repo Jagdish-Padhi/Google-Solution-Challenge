@@ -1,4 +1,5 @@
 import {
+	getAnalyticsKPIs,
 	getAnalyticsOverview,
 	getAnalyticsPlatforms,
 	getAnalyticsTimeline,
@@ -41,6 +42,22 @@ export async function getAnalyticsPlatformsController(req, res, next) {
 	try {
 		const { range, startDate, endDate } = validateAnalyticsRangeQuery(req.query);
 		const data = await getAnalyticsPlatforms({
+			orgId: req.auth.orgId,
+			range,
+			startDate,
+			endDate,
+		});
+
+		return res.status(200).json(data);
+	} catch (error) {
+		return next(error);
+	}
+}
+
+export async function getAnalyticsKPIsController(req, res, next) {
+	try {
+		const { range, startDate, endDate } = validateAnalyticsRangeQuery(req.query);
+		const data = await getAnalyticsKPIs({
 			orgId: req.auth.orgId,
 			range,
 			startDate,

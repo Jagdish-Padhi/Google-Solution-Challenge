@@ -369,3 +369,311 @@ export async function getAnalyticsPlatforms({ orgId, range = '30d', startDate = 
 		items,
 	};
 }
+
+// KPI Metrics for Phase 6 Hardening
+
+async function getMeanDetectionTime(orgId, startDate, endDate) {
+	// Average time from asset creation to first violation detection
+	const [result] = await Violation.aggregate([
+		{
+			$match: {
+				orgId,
+				detectedAt: {
+					$gte: startDate,
+					$lte: endDate,
+				},
+			},
+		},
+		{
+			$lookup: {
+				from: 'assets',
+				localField: 'assetId',
+				foreignField: '_id',
+				as: 'asset',
+			},
+		},
+		{
+			$project: {
+				timeToDetect: {
+					$subtract: ['$detectedAt', { $arrayElemAt: ['$asset.createdAt', 0] }],
+				},
+			},
+		},
+		{
+			$group: {
+				_id: null,
+				meanTimeMs: { $avg: '$timeToDetect' },
+				count: { $sum: 1 },
+			},
+		},
+	]);
+
+	if (!result || result.count === 0) {
+		return { meanTimeHours: 0, meanTimeMinutes: 0, count: 0 };
+	}
+
+	const meanTimeMs = result.meanTimeMs || 0;
+	const meanTimeHours = Math.round(meanTimeMs / (1000 * 60 * 60) * 10) / 10;
+	const meanTimeMinutes = Math.round((meanTimeMs / (1000 * 60)) * 10) / 10;
+
+	return {
+		meanTimeHours,
+		meanTimeMinutes,
+		count: result.count,
+	};
+}
+
+async function getRepeatOffenderRatio(orgId, startDate, endDate) {
+	// Percentage of repeat offender domains (seen multiple times)
+	const [result] = await Violation.aggregate([
+		{
+			$match: {
+				orgId,
+				detectedAt: {
+					$gte: startDate,
+					$lte: endDate,
+				},
+				sourceDomain: { $ne: null },
+			},
+		},
+		{
+			$group: {
+				_id: '$sourceDomain',
+				seenCount: { $sum: 1 },
+			},
+		},
+		{
+			$group: {
+				_id: null,
+				totalDomains: { $sum: 1 },
+				repeatOffenders: {
+					$sum: {
+						$cond: [{ $gt: ['$seenCount', 1] }, 1, 0],
+					},
+				},
+			},
+		},
+	]);
+
+	if (!result || result.totalDomains === 0) {
+		return { ratio: 0, repeatOffenderCount: 0, totalDomains: 0 };
+	}
+
+	const ratio = Number(((result.repeatOffenders / result.totalDomains) * 100).toFixed(1));
+
+	return {
+		ratio,
+		repeatOffenderCount: result.repeatOffenders,
+		totalDomains: result.totalDomains,
+	};
+}
+
+async function getFalsePositiveRate(orgId, startDate, endDate) {
+	// Percentage of violations marked as false positive
+	const [result] = await Violation.aggregate([
+		{
+			$match: {
+				orgId,
+				detectedAt: {
+					$gte: startDate,
+					$lte: endDate,
+				},
+			},
+		},
+		{
+			$group: {
+				_id: null,
+				totalViolations: { $sum: 1 },
+				falsePositives: {
+					$sum: {
+						$cond: [{ $eq: ['$status', 'false_positive'] }, 1, 0],
+					},
+				},
+			},
+		},
+	]);
+
+	if (!result || result.totalViolations === 0) {
+		return { rate: 0, falsePositiveCount: 0, totalViolations: 0 };
+	}
+
+	const rate = Number(((result.falsePositives / result.totalViolations) * 100).toFixed(1));
+
+	return {
+		rate,
+		falsePositiveCount: result.falsePositives,
+		totalViolations: result.totalViolations,
+	};
+}
+
+async function getResolutionSLA(orgId, startDate, endDate) {
+	// Average time to resolve violations (SLA target: 24 hours)
+	const SLA_TARGET_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+	const [result] = await Violation.aggregate([
+		{
+			$match: {
+				orgId,
+				status: { $in: ['resolved', 'reported'] },
+				resolvedAt: { $ne: null },
+				detectedAt: {
+					$gte: startDate,
+					$lte: endDate,
+				},
+			},
+		},
+		{
+			$project: {
+				resolutionTimeMs: {
+					$subtract: ['$resolvedAt', '$detectedAt'],
+				},
+				metSLA: {
+					$cond: [
+						{
+							$lte: [
+								{ $subtract: ['$resolvedAt', '$detectedAt'] },
+								SLA_TARGET_MS,
+							],
+						},
+						1,
+						0,
+					],
+				},
+			},
+		},
+		{
+			$group: {
+				_id: null,
+				avgResolutionTimeMs: { $avg: '$resolutionTimeMs' },
+				slaMetCount: { $sum: '$metSLA' },
+				totalResolved: { $sum: 1 },
+			},
+		},
+	]);
+
+	if (!result || result.totalResolved === 0) {
+		return {
+			avgTimeHours: 0,
+			slaCompliancePercentage: 0,
+			totalResolved: 0,
+		};
+	}
+
+	const avgTimeHours = Math.round((result.avgResolutionTimeMs / (1000 * 60 * 60)) * 10) / 10;
+	const slaCompliancePercentage = Number(((result.slaMetCount / result.totalResolved) * 100).toFixed(1));
+
+	return {
+		avgTimeHours,
+		slaCompliancePercentage,
+		totalResolved: result.totalResolved,
+	};
+}
+
+async function getConfidenceCalibration(orgId, startDate, endDate) {
+	// Analyze confidence score distribution and accuracy
+	const [result] = await Violation.aggregate([
+		{
+			$match: {
+				orgId,
+				detectedAt: {
+					$gte: startDate,
+					$lte: endDate,
+				},
+			},
+		},
+		{
+			$group: {
+				_id: null,
+				avgConfidence: { $avg: '$matchConfidence' },
+				minConfidence: { $min: '$matchConfidence' },
+				maxConfidence: { $max: '$matchConfidence' },
+				highConfidenceCount: {
+					$sum: {
+						$cond: [{ $gte: ['$matchConfidence', 70] }, 1, 0],
+					},
+				},
+				mediumConfidenceCount: {
+					$sum: {
+						$cond: [
+							{
+								$and: [
+									{ $gte: ['$matchConfidence', 40] },
+									{ $lt: ['$matchConfidence', 70] },
+								],
+							},
+							1,
+							0,
+						],
+					},
+				},
+				lowConfidenceCount: {
+					$sum: {
+						$cond: [{ $lt: ['$matchConfidence', 40] }, 1, 0],
+					},
+				},
+				totalViolations: { $sum: 1 },
+				falsePositiveRate: {
+					$avg: {
+						$cond: [{ $eq: ['$status', 'false_positive'] }, 1, 0],
+					},
+				},
+			},
+		},
+	]);
+
+	if (!result || result.totalViolations === 0) {
+		return {
+			avgConfidence: 0,
+			distribution: { high: 0, medium: 0, low: 0 },
+			falsePositiveRate: 0,
+		};
+	}
+
+	return {
+		avgConfidence: Number(result.avgConfidence.toFixed(1)),
+		minConfidence: result.minConfidence,
+		maxConfidence: result.maxConfidence,
+		distribution: {
+			high: {
+				count: result.highConfidenceCount,
+				percentage: Number(((result.highConfidenceCount / result.totalViolations) * 100).toFixed(1)),
+			},
+			medium: {
+				count: result.mediumConfidenceCount,
+				percentage: Number(((result.mediumConfidenceCount / result.totalViolations) * 100).toFixed(1)),
+			},
+			low: {
+				count: result.lowConfidenceCount,
+				percentage: Number(((result.lowConfidenceCount / result.totalViolations) * 100).toFixed(1)),
+			},
+		},
+		falsePositiveRate: Number((result.falsePositiveRate * 100).toFixed(1)),
+	};
+}
+
+export async function getAnalyticsKPIs({ orgId, range = '30d', startDate = null, endDate = null }) {
+	const resolvedRange = resolveAnalyticsRange({ range, startDate, endDate });
+
+	const [detectionTime, repeatOffenderRatio, falsePositiveRate, resolutionSLA, confidenceCalibration] =
+		await Promise.all([
+			getMeanDetectionTime(orgId, resolvedRange.startDate, resolvedRange.endDate),
+			getRepeatOffenderRatio(orgId, resolvedRange.startDate, resolvedRange.endDate),
+			getFalsePositiveRate(orgId, resolvedRange.startDate, resolvedRange.endDate),
+			getResolutionSLA(orgId, resolvedRange.startDate, resolvedRange.endDate),
+			getConfidenceCalibration(orgId, resolvedRange.startDate, resolvedRange.endDate),
+		]);
+
+	return {
+		range: resolvedRange.range,
+		rangeLabel: resolvedRange.label,
+		startDate: resolvedRange.startDate,
+		endDate: resolvedRange.endDate,
+		kpis: {
+			detectionTime,
+			repeatOffenderRatio,
+			falsePositiveRate,
+			resolutionSLA,
+			confidenceCalibration,
+		},
+	};
+}
