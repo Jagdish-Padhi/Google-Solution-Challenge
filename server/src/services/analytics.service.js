@@ -806,3 +806,143 @@ export async function getConfidenceCalibrationAnalysis({ orgId, range = '30d', s
 		recommendations,
 	};
 }
+
+// Propagation Graph Analytics - Track how violations spread across platforms
+
+async function getAssetPropagationGraph(assetId, orgId) {
+	// Get all violations for this asset, ordered by detection time
+	// Show first platform, then subsequent platforms and timeline
+	const violations = await Violation.find({
+		assetId,
+		orgId,
+	})
+		.select('platform detectedAt sourceDomain matchConfidence status')
+		.sort({ detectedAt: 1 });
+
+	if (violations.length === 0) {
+		return null;
+	}
+
+	const firstDetection = violations[0];
+	const platformTimeline = [];
+	const platformSet = new Set();
+
+	violations.forEach((v) => {
+		const key = v.platform;
+
+		if (!platformSet.has(key)) {
+			const timeFromFirstMs = v.detectedAt.getTime() - firstDetection.detectedAt.getTime();
+			const timeFromFirstHours = Math.round(timeFromFirstMs / (1000 * 60 * 60) * 10) / 10;
+
+			platformTimeline.push({
+				platform: v.platform,
+				firstSeenAt: v.detectedAt,
+				timeFromFirstDetectionHours: timeFromFirstHours,
+				count: violations.filter((x) => x.platform === key).length,
+			});
+
+			platformSet.add(key);
+		}
+	});
+
+	return {
+		assetId: assetId.toString(),
+		firstDetectionAt: firstDetection.detectedAt,
+		firstDetectionPlatform: firstDetection.platform,
+		totalPlatformsAffected: platformSet.size,
+		timeSpanHours: Math.round((violations[violations.length - 1].detectedAt.getTime() - firstDetection.detectedAt.getTime()) / (1000 * 60 * 60) * 10) / 10,
+		platformTimeline: platformTimeline.sort((a, b) => a.timeFromFirstDetectionHours - b.timeFromFirstDetectionHours),
+		totalViolationsDetected: violations.length,
+	};
+}
+
+export async function getPropagationAnalytics({ orgId, range = '30d', startDate = null, endDate = null, limit = 10 }) {
+	const resolvedRange = resolveAnalyticsRange({ range, startDate, endDate });
+
+	// Get top assets by violation count in the range
+	const topAssets = await Violation.aggregate([
+		{
+			$match: {
+				orgId,
+				detectedAt: {
+					$gte: resolvedRange.startDate,
+					$lte: resolvedRange.endDate,
+				},
+			},
+		},
+		{
+			$group: {
+				_id: '$assetId',
+				violationCount: { $sum: 1 },
+				platformCount: { $addToSet: '$platform' },
+			},
+		},
+		{ $sort: { violationCount: -1, platformCount: -1 } },
+		{ $limit: limit },
+	]);
+
+	// For each top asset, get its propagation graph
+	const propagationGraphs = await Promise.all(
+		topAssets.map((asset) =>
+			getAssetPropagationGraph(asset._id, orgId).then((graph) =>
+				graph
+					? {
+							...graph,
+							violationCountInRange: asset.violationCount,
+						}
+					: null,
+			),
+		),
+	);
+
+	// Calculate global spread metrics
+	const [globalMetrics] = await Violation.aggregate([
+		{
+			$match: {
+				orgId,
+				detectedAt: {
+					$gte: resolvedRange.startDate,
+					$lte: resolvedRange.endDate,
+				},
+			},
+		},
+		{
+			$group: {
+				_id: '$assetId',
+				platformCount: { $addToSet: '$platform' },
+				violationCount: { $sum: 1 },
+				timeSpan: {
+					$subtract: [
+						{ $max: '$detectedAt' },
+						{ $min: '$detectedAt' },
+					],
+				},
+			},
+		},
+		{
+			$group: {
+				_id: null,
+				avgPlatformsPerAsset: { $avg: { $size: '$platformCount' } },
+				maxPlatformsForSingleAsset: { $max: { $size: '$platformCount' } },
+				avgViolationsPerAsset: { $avg: '$violationCount' },
+				avgSpreadTimeHours: {
+					$avg: { $divide: ['$timeSpan', 3600000] },
+				},
+			},
+		},
+	]);
+
+	return {
+		range: resolvedRange.range,
+		rangeLabel: resolvedRange.label,
+		startDate: resolvedRange.startDate,
+		endDate: resolvedRange.endDate,
+		metrics: {
+			avgPlatformsPerAsset: Number((globalMetrics?.avgPlatformsPerAsset || 0).toFixed(1)),
+			maxPlatformsForSingleAsset: globalMetrics?.maxPlatformsForSingleAsset || 0,
+			avgViolationsPerAsset: Number((globalMetrics?.avgViolationsPerAsset || 0).toFixed(1)),
+			avgSpreadTimeHours: Math.round((globalMetrics?.avgSpreadTimeHours || 0) * 10) / 10,
+		},
+		topAssetPropagations: propagationGraphs.filter(Boolean),
+	};
+}

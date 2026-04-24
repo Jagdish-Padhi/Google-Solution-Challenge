@@ -4,6 +4,7 @@ import {
 	getAnalyticsPlatforms,
 	getAnalyticsTimeline,
 	getConfidenceCalibrationAnalysis,
+	getPropagationAnalytics,
 } from '../services/analytics.service.js';
 import { validateAnalyticsRangeQuery } from '../validators/analytics.validator.js';
 
@@ -79,6 +80,24 @@ export async function getConfidenceCalibrationController(req, res, next) {
 			range,
 			startDate,
 			endDate,
+		});
+
+		return res.status(200).json(data);
+	} catch (error) {
+		return next(error);
+	}
+}
+
+export async function getPropagationAnalyticsController(req, res, next) {
+	try {
+		const { range, startDate, endDate } = validateAnalyticsRangeQuery(req.query);
+		const limit = Math.min(parseInt(req.query.limit || 10, 10), 20);
+		const data = await getPropagationAnalytics({
+			orgId: req.auth.orgId,
+			range,
+			startDate,
+			endDate,
+			limit,
 		});
 
 		return res.status(200).json(data);
