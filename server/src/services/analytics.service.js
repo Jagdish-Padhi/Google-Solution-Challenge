@@ -677,3 +677,132 @@ export async function getAnalyticsKPIs({ orgId, range = '30d', startDate = null,
 		},
 	};
 }
+
+// Confidence Calibration - Analyze false-positive patterns by confidence band
+
+async function getConfidenceBandAnalysis(orgId, startDate, endDate) {
+	// Analyze false-positive rate across different confidence score bands
+	// This helps determine if thresholds need adjustment
+	const bands = [
+		{ min: 0, max: 30, label: 'Very Low (0-30%)' },
+		{ min: 30, max: 40, label: 'Low (30-40%)' },
+		{ min: 40, max: 50, label: 'Low-Medium (40-50%)' },
+		{ min: 50, max: 60, label: 'Medium (50-60%)' },
+		{ min: 60, max: 70, label: 'Medium-High (60-70%)' },
+		{ min: 70, max: 80, label: 'High (70-80%)' },
+		{ min: 80, max: 100, label: 'Very High (80-100%)' },
+	];
+
+	const bandAnalysis = await Promise.all(
+		bands.map(async (band) => {
+			const [result] = await Violation.aggregate([
+				{
+					$match: {
+						orgId,
+						detectedAt: {
+							$gte: startDate,
+							$lte: endDate,
+						},
+						matchConfidence: {
+							$gte: band.min,
+							$lt: band.max,
+						},
+					},
+				},
+				{
+					$group: {
+						_id: null,
+						totalCount: { $sum: 1 },
+						falsePositiveCount: {
+							$sum: {
+								$cond: [{ $eq: ['$status', 'false_positive'] }, 1, 0],
+							},
+						},
+						resolvedCount: {
+							$sum: {
+								$cond: [{ $eq: ['$status', 'resolved'] }, 1, 0],
+							},
+						},
+						reportedCount: {
+							$sum: {
+								$cond: [{ $eq: ['$status', 'reported'] }, 1, 0],
+							},
+						},
+					},
+				},
+			]);
+
+			if (!result) {
+				return {
+					band: band.label,
+					totalCount: 0,
+					falsePositiveRate: 0,
+					actionableRate: 0,
+					recommendation: 'No data',
+				};
+			}
+
+			const fpRate = result.totalCount > 0 ? Number(((result.falsePositiveCount / result.totalCount) * 100).toFixed(1)) : 0;
+			const actionableRate = result.totalCount > 0 ? Number((((result.resolvedCount + result.reportedCount) / result.totalCount) * 100).toFixed(1)) : 0;
+
+			let recommendation = 'Monitor';
+			if (fpRate > 15) {
+				recommendation = 'Raise threshold';
+			} else if (fpRate < 3 && actionableRate > 80) {
+				recommendation = 'Lower threshold';
+			}
+
+			return {
+				band: band.label,
+				totalCount: result.totalCount,
+				falsePositiveCount: result.falsePositiveCount,
+				falsePositiveRate: fpRate,
+				actionableRate,
+				resolvedCount: result.resolvedCount,
+				reportedCount: result.reportedCount,
+				recommendation,
+			};
+		}),
+	);
+
+	return bandAnalysis.filter((b) => b.totalCount > 0);
+}
+
+export async function getConfidenceCalibrationAnalysis({ orgId, range = '30d', startDate = null, endDate = null }) {
+	const resolvedRange = resolveAnalyticsRange({ range, startDate, endDate });
+
+	const bandAnalysis = await getConfidenceBandAnalysis(orgId, resolvedRange.startDate, resolvedRange.endDate);
+
+	// Generate overall recommendations
+	const highRiskBands = bandAnalysis.filter((b) => b.falsePositiveRate > 15);
+	const recommendations = [];
+
+	if (highRiskBands.length > 0) {
+		const lowestHighRiskBand = highRiskBands.reduce((min, b) => {
+			const minMin = parseFloat(min.band.match(/(\d+)/)[0]);
+			const bMin = parseFloat(b.band.match(/(\d+)/)[0]);
+			return bMin < minMin ? b : min;
+		});
+		recommendations.push({
+			priority: 'high',
+			message: `High false-positive rate (${lowestHighRiskBand.falsePositiveRate}%) detected in ${lowestHighRiskBand.band} confidence band. Consider raising violation detection threshold to >${lowestHighRiskBand.band.match(/(\d+)/)[0]}%.`,
+		});
+	}
+
+	const lowFpBands = bandAnalysis.filter((b) => b.falsePositiveRate < 3 && b.actionableRate > 80);
+	if (lowFpBands.length > 0) {
+		recommendations.push({
+			priority: 'medium',
+			message: `Excellent precision in ${lowFpBands.map((b) => b.band).join(', ')} bands. Consider exploring lower thresholds for early detection.`,
+		});
+	}
+
+	return {
+		range: resolvedRange.range,
+		rangeLabel: resolvedRange.label,
+		startDate: resolvedRange.startDate,
+		endDate: resolvedRange.endDate,
+		bandAnalysis,
+		recommendations,
+	};
+}

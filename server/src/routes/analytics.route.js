@@ -5,6 +5,7 @@ import {
 	getAnalyticsOverviewController,
 	getAnalyticsPlatformsController,
 	getAnalyticsTimelineController,
+	getConfidenceCalibrationController,
 } from '../controllers/analytics.controller.js';
 import { verifyToken } from '../middlewares/verifyToken.js';
 
@@ -16,5 +17,6 @@ analyticsRouter.get('/overview', getAnalyticsOverviewController);
 analyticsRouter.get('/timeline', getAnalyticsTimelineController);
 analyticsRouter.get('/platforms', getAnalyticsPlatformsController);
 analyticsRouter.get('/kpis', getAnalyticsKPIsController);
+analyticsRouter.get('/calibration', getConfidenceCalibrationController);
 
 export default analyticsRouter;
