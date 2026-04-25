@@ -48,12 +48,10 @@ select {
 }
 
 @keyframes float-slow {
-
 	0%,
 	100% {
 		transform: translate3d(0, 0, 0) scale(1);
 	}
-
 	50% {
 		transform: translate3d(0, -10px, 0) scale(1.03);
 	}
@@ -63,7 +61,6 @@ select {
 	0% {
 		background-position: 0% 50%;
 	}
-
 	100% {
 		background-position: 200% 50%;
 	}
@@ -74,7 +71,6 @@ select {
 		opacity: 0;
 		transform: translateY(24px);
 	}
-
 	100% {
 		opacity: 1;
 		transform: translateY(0);
@@ -144,7 +140,6 @@ select {
 		opacity: 0;
 		transform: translateX(30px);
 	}
-
 	to {
 		opacity: 1;
 		transform: translateX(0);
@@ -198,25 +193,10 @@ select {
 }
 
 @keyframes text-fade-up {
-	0% {
-		opacity: 0;
-		transform: translateY(10px);
-	}
-
-	15% {
-		opacity: 1;
-		transform: translateY(0);
-	}
-
-	85% {
-		opacity: 1;
-		transform: translateY(0);
-	}
-
-	100% {
-		opacity: 0;
-		transform: translateY(-10px);
-	}
+	0% { opacity: 0; transform: translateY(10px); }
+	15% { opacity: 1; transform: translateY(0); }
+	85% { opacity: 1; transform: translateY(0); }
+	100% { opacity: 0; transform: translateY(-10px); }
 }
 
 .animate-text-loop {
@@ -225,92 +205,40 @@ select {
 
 /* Net Loader Animations */
 @keyframes net-pulse {
-	0% {
-		transform: scale(1);
-	}
-
-	50% {
-		transform: scale(0.01);
-	}
-
-	100% {
-		transform: scale(1);
-	}
+	0% { transform: scale(1); }
+	50% { transform: scale(0.01); }
+	100% { transform: scale(1); }
 }
 
 @keyframes net-fade {
-	0% {
-		background: var(--loader-color-faint);
-	}
-
-	50% {
-		background: var(--loader-color);
-	}
-
-	100% {
-		background: var(--loader-color-soft);
-	}
+	0% { background: var(--loader-color-faint); }
+	50% { background: var(--loader-color); }
+	100% { background: var(--loader-color-soft); }
 }
 
 @keyframes progress {
-	0% {
-		transform: translateX(-100%);
-	}
-
-	100% {
-		transform: translateX(200%);
-	}
+	0% { transform: translateX(-100%); }
+	100% { transform: translateX(200%); }
 }
 
 @keyframes tagline-slide-up {
-	from {
-		opacity: 0;
-		transform: translateY(40px);
-	}
-
-	to {
-		opacity: 1;
-		transform: translateY(0);
-	}
+	from { opacity: 0; transform: translateY(40px); }
+	to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes loader-zoom-out {
-	from {
-		opacity: 1;
-		transform: scale(1);
-	}
-
-	to {
-		opacity: 0;
-		transform: scale(1.5);
-		filter: blur(10px);
-	}
+	from { opacity: 1; transform: scale(1); }
+	to { opacity: 0; transform: scale(1.5); filter: blur(10px); }
 }
 
 @keyframes dashboard-entrance {
-	from {
-		opacity: 0;
-		transform: scale(0.95);
-	}
-
-	to {
-		opacity: 1;
-		transform: scale(1);
-	}
+	from { opacity: 0; transform: scale(0.95); }
+	to { opacity: 1; transform: scale(1); }
 }
 
 @keyframes dashboard-exit {
-	from {
-		opacity: 1;
-		transform: scale(1);
-		opacity: 1;
-	}
-
-	to {
-		opacity: 0;
-		transform: scale(0.95);
-		filter: blur(4px);
-	}
+	from { opacity: 1; transform: scale(1); opacity: 1; }
+	to { opacity: 0; transform: scale(0.95); filter: blur(4px); }
 }
 
 .animate-tagline-reveal {
@@ -330,15 +258,8 @@ select {
 }
 
 @keyframes net-entrance {
-	from {
-		opacity: 0;
-		transform: scale(0.9);
-	}
-
-	to {
-		opacity: 1;
-		transform: scale(1);
-	}
+	from { opacity: 0; transform: scale(0.9); }
+	to { opacity: 1; transform: scale(1); }
 }
 
 .net-loader-wrapper {
@@ -372,47 +293,20 @@ select {
 	animation: net-fade 2s infinite;
 }
 
-.net-h2 {
-	transform: rotate(60deg);
-}
-
-.net-h3 {
-	transform: rotate(-60deg);
-}
+.net-h2 { transform: rotate(60deg); }
+.net-h3 { transform: rotate(-60deg); }
 
 .net-center-gel {
 	animation: net-pulse 2s infinite;
 }
 
-.net-r1 {
-	animation: net-pulse 2s infinite;
-	animation-delay: .2s;
-}
+.net-r1 { animation: net-pulse 2s infinite; animation-delay: .2s; }
+.net-r2 { animation: net-pulse 2s infinite; animation-delay: .4s; }
+.net-r3 { animation: net-pulse 2s infinite; animation-delay: .6s; }
 
-.net-r2 {
-	animation: net-pulse 2s infinite;
-	animation-delay: .4s;
-}
-
-.net-r3 {
-	animation: net-pulse 2s infinite;
-	animation-delay: .6s;
-}
-
-.net-r1>.net-hex-brick {
-	animation: net-fade 2s infinite;
-	animation-delay: .2s;
-}
-
-.net-r2>.net-hex-brick {
-	animation: net-fade 2s infinite;
-	animation-delay: .4s;
-}
-
-<<<<<<< HEAD .net-r3>.net-hex-brick {
-	animation: net-fade 2s infinite;
-	animation-delay: .6s;
-}
+.net-r1 > .net-hex-brick { animation: net-fade 2s infinite; animation-delay: .2s; }
+.net-r2 > .net-hex-brick { animation: net-fade 2s infinite; animation-delay: .4s; }
+.net-r3 > .net-hex-brick { animation: net-fade 2s infinite; animation-delay: .6s; }
 
 /* Discovery Pulse & Premium Effects */
 .noise-overlay {
@@ -424,13 +318,8 @@ select {
 }
 
 @keyframes progress-indefinite {
-	0% {
-		transform: translateX(-100%);
-	}
-
-	100% {
-		transform: translateX(200%);
-	}
+	0% { transform: translateX(-100%); }
+	100% { transform: translateX(200%); }
 }
 
 .animate-progress-indefinite {
@@ -451,25 +340,13 @@ select {
 }
 
 @keyframes fade-in {
-	from {
-		opacity: 0;
-	}
-
-	to {
-		opacity: 1;
-	}
+	from { opacity: 0; }
+	to { opacity: 1; }
 }
 
 @keyframes slide-in-from-bottom {
-	from {
-		transform: translateY(1rem);
-		opacity: 0;
-	}
-
-	to {
-		transform: translateY(0);
-		opacity: 1;
-	}
+	from { transform: translateY(1rem); opacity: 0; }
+	to { transform: translateY(0); opacity: 1; }
 }
 
 .zoom-in-95 {
@@ -477,20 +354,6 @@ select {
 }
 
 @keyframes zoom-in-95 {
-	from {
-		transform: scale(0.95);
-		opacity: 0;
-	}
-
-	to {
-		transform: scale(1);
-		opacity: 1;
-	}
+	from { transform: scale(0.95); opacity: 0; }
+	to { transform: scale(1); opacity: 1; }
 }
-
-=======.net-r3>.net-hex-brick {
-	animation: net-fade 2s infinite;
-	animation-delay: .6s;
-}
-
->>>>>>>43200190ccd8298f6f9a7016e1748c9a01e8b1a7

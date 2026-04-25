@@ -20,11 +20,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 
-<<<<<<< HEAD
 import { Card, Badge, Button, Loader } from '../../components';
-=======
-import { Card, EmptyState, Loader, StatCard } from '../../components';
->>>>>>> 43200190ccd8298f6f9a7016e1748c9a01e8b1a7
 import api from '../../services/api.js';
 import useAuthStore from '../../store/auth.store.js';
 
@@ -243,72 +239,58 @@ export default function DashboardHomePage() {
         </Card>
       </section>
 
-<<<<<<< HEAD
-  {/* --- ROW 3: COVERAGE MAP --- */ }
-  <Card className="border-slate-200/60 bg-white shadow-sm" title="Ecosystem Coverage" subtitle="Verified discovery counts across integrated platforms.">
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 py-2">
-      {[
-        { name: 'YouTube', key: 'youtube', icon: Play, color: 'text-red-600', bg: 'bg-red-50/50' },
-        { name: 'X (Twitter)', key: 'twitter', icon: Share2, color: 'text-slate-900', bg: 'bg-slate-50/50' },
-        { name: 'Telegram', key: 'telegram', icon: Send, color: 'text-sky-600', bg: 'bg-sky-50/50' },
-        { name: 'Global Web', key: 'web', icon: Layout, color: 'text-teal-600', bg: 'bg-teal-50/50' },
-      ].map((p) => (
-        <div key={p.name} className="flex items-center gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100 transition-all hover:bg-white hover:shadow-sm">
-          <div className={`p-3 rounded-xl ${p.bg} ${p.color}`}>
-            <p.icon className="w-5 h-5" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">{p.name}</p>
-            <div className="flex items-baseline gap-1">
-              <span className="text-xl font-bold text-slate-900">{data.coverage[p.key] || 0}</span>
-              <span className="text-[10px] font-bold text-primary uppercase">Matched</span>
+      {/* --- ROW 3: COVERAGE MAP --- */ }
+      <Card className="border-slate-200/60 bg-white shadow-sm" title="Ecosystem Coverage" subtitle="Verified discovery counts across integrated platforms.">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 py-2">
+          {[
+            { name: 'YouTube', key: 'youtube', icon: Play, color: 'text-red-600', bg: 'bg-red-50/50' },
+            { name: 'X (Twitter)', key: 'twitter', icon: Share2, color: 'text-slate-900', bg: 'bg-slate-50/50' },
+            { name: 'Telegram', key: 'telegram', icon: Send, color: 'text-sky-600', bg: 'bg-sky-50/50' },
+            { name: 'Global Web', key: 'web', icon: Layout, color: 'text-teal-600', bg: 'bg-teal-50/50' },
+          ].map((p) => (
+            <div key={p.name} className="flex items-center gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100 transition-all hover:bg-white hover:shadow-sm">
+              <div className={`p-3 rounded-xl ${p.bg} ${p.color}`}>
+                <p.icon className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">{p.name}</p>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-xl font-bold text-slate-900">{data.coverage[p.key] || 0}</span>
+                  <span className="text-[10px] font-bold text-primary uppercase">Matched</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col sm:flex-row gap-6 items-center justify-between">
+          <div className="flex items-center gap-8">
+            <div className="flex items-center gap-3">
+              <BarChart className="w-4 h-4 text-slate-300" />
+              <div>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Detection Efficiency</p>
+                <p className="text-xs font-bold text-slate-800">1.8 MINS MTTD</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Clock className="w-4 h-4 text-slate-300" />
+              <div>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Uptime Reliability</p>
+                <p className="text-xs font-bold text-slate-800">99.9% ACTIVE</p>
+              </div>
             </div>
           </div>
-        </div>
-      ))}
-    </div>
 
-    <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col sm:flex-row gap-6 items-center justify-between">
-      <div className="flex items-center gap-8">
-        <div className="flex items-center gap-3">
-          <BarChart className="w-4 h-4 text-slate-300" />
-          <div>
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Detection Efficiency</p>
-            <p className="text-xs font-bold text-slate-800">1.8 MINS MTTD</p>
+          <div className="flex gap-3 w-full sm:w-auto">
+            <Button as={Link} to="/dashboard/scans?openModal=true" variant="secondary" className="flex-1 sm:flex-none h-11 px-6 rounded-xl text-xs font-bold text-slate-700 bg-white border-slate-200 hover:bg-slate-50">
+              Manual Discovery
+            </Button>
+            <Button as={Link} to="/dashboard/assets?openModal=true" className="flex-1 sm:flex-none h-11 px-6 rounded-xl text-xs font-bold text-white shadow-lg shadow-primary/10">
+              Protect Content
+            </Button>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <Clock className="w-4 h-4 text-slate-300" />
-          <div>
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Uptime Reliability</p>
-            <p className="text-xs font-bold text-slate-800">99.9% ACTIVE</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex gap-3 w-full sm:w-auto">
-        <Button as={Link} to="/dashboard/scans?openModal=true" variant="secondary" className="flex-1 sm:flex-none h-11 px-6 rounded-xl text-xs font-bold text-slate-700 bg-white border-slate-200 hover:bg-slate-50">
-          Manual Discovery
-        </Button>
-        <Button as={Link} to="/dashboard/assets?openModal=true" className="flex-1 sm:flex-none h-11 px-6 rounded-xl text-xs font-bold text-white shadow-lg shadow-primary/10">
-          Protect Content
-        </Button>
-      </div>
+      </Card>
     </div>
-=======
-      <Card className='border-(--app-color-border) shadow-lg shadow-slate-900/5' style={{ backgroundColor: 'var(--app-color-surface-panel)' }} title='Recent activity' subtitle='Upload your first asset to start the fingerprint pipeline.'>
-      {error ? (
-        <p className='text-sm text-red-600'>{error}</p>
-      ) : isLoading ? (
-        <div className='flex flex-col items-center justify-center py-12 gap-6 text-sm text-(--app-color-text-muted)'>
-          <Loader size={0.6} />
-          <p className="font-bold uppercase tracking-widest animate-pulse">Aggregating dashboard insights...</p>
-        </div>
-      ) : (
-        <EmptyState title='No activity yet' message='Upload assets and start scanning once Phase 2 is in place.' />
-      )}
->>>>>>> 43200190ccd8298f6f9a7016e1748c9a01e8b1a7
-    </Card>
-  </div>
   );
 }

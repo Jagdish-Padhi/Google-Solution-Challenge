@@ -7,7 +7,6 @@ import Container from '../Container';
 import api from '../../services/api.js';
 import { connectRealtime, disconnectRealtime } from '../../services/realtime.js';
 import useAuthStore from '../../store/auth.store.js';
-import { useSocket } from '../hooks/useSocket.js';
 
 const navigationItems = [
 	{ label: 'Overview', path: '/dashboard' },
@@ -31,7 +30,6 @@ export default function DashboardLayout() {
 	const setTransitioning = useAuthStore((state) => state.setTransitioning);
 	const isTransitioning = useAuthStore((state) => state.isTransitioning);
 	const [unreadAlerts, setUnreadAlerts] = useState(0);
-	useSocket();
 
 	useEffect(() => {
 		let mounted = true;
