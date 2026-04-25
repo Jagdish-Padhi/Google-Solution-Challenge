@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
-import { Badge, Button, Card, EmptyState, Modal, Spinner } from '../../components';
+import { Badge, Button, Card, EmptyState, Loader, Modal, Spinner } from '../../components';
 import api from '../../services/api.js';
 
 const acceptedFileTypes = 'video/mp4,video/quicktime,image/jpeg,image/png';
@@ -175,18 +175,18 @@ export default function DashboardAssetsPage() {
 
 				<div className='mt-5'>
 					{processingCount > 0 && (
-						<div className='mb-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700'>
-							<Spinner size='sm' />
-							Processing fingerprint for {processingCount} asset{processingCount > 1 ? 's' : ''}...
+						<div className='mb-4 flex items-center gap-4 rounded-lg border border-emerald-200 bg-emerald-50/40 px-4 py-3 text-sm text-emerald-700'>
+							<Loader size={0.3} />
+							<span className="font-bold uppercase tracking-wider">Processing fingerprints for {processingCount} asset{processingCount > 1 ? 's' : ''}...</span>
 						</div>
 					)}
 
 					{error ? (
 						<p className='text-sm text-red-600'>{error}</p>
 					) : isLoading ? (
-						<div className='flex items-center gap-3 text-sm text-(--app-color-text-muted)'>
-							<Spinner size='sm' />
-							Loading assets...
+						<div className='flex flex-col items-center justify-center py-12 gap-6 text-sm text-(--app-color-text-muted)'>
+							<Loader size={0.6} />
+							<p className="font-bold uppercase tracking-widest animate-pulse">Syncing media library...</p>
 						</div>
 					) : assets.length === 0 ? (
 						<EmptyState title='No assets yet' message='Upload your first image or video to create its fingerprint.' />

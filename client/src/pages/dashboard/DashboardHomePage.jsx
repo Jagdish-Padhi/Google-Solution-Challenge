@@ -1,9 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import Card from '../../components/Card';
-import EmptyState from '../../components/EmptyState';
-import Spinner from '../../components/Spinner';
-import StatCard from '../../components/StatCard';
+import { Card, EmptyState, Loader, StatCard } from '../../components';
 import api from '../../services/api.js';
 import useAuthStore from '../../store/auth.store.js';
 
@@ -81,9 +78,9 @@ export default function DashboardHomePage() {
         {error ? (
           <p className='text-sm text-red-600'>{error}</p>
         ) : isLoading ? (
-          <div className='flex items-center gap-3 text-sm text-(--app-color-text-muted)'>
-            <Spinner size='sm' />
-            Loading dashboard summary...
+          <div className='flex flex-col items-center justify-center py-12 gap-6 text-sm text-(--app-color-text-muted)'>
+            <Loader size={0.6} />
+            <p className="font-bold uppercase tracking-widest animate-pulse">Aggregating dashboard insights...</p>
           </div>
         ) : (
           <EmptyState title='No activity yet' message='Upload assets and start scanning once Phase 2 is in place.' />

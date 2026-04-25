@@ -98,7 +98,7 @@ export default function DashboardLayout() {
 		<div className='min-h-screen text-(--app-color-text)' style={shellBackground}>
 			<header className='sticky top-0 z-20 border-b border-white/60 bg-white/75 backdrop-blur-xl'>
 				<Container className='flex min-h-20 items-center justify-between gap-4 py-4'>
-					<Link to='/dashboard' className='flex items-center gap-3'>
+					<Link to='/' className='flex items-center gap-3'>
 						<img src='/navlogo.png' alt='SportShield' className='h-16 w-16 object-contain' />
 						<div>
 							<p className='text-xs font-semibold uppercase tracking-[0.28em] text-(--app-color-text-muted)'>SportShield</p>

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Globe, Radio, Send, Video } from 'lucide-react';
 
-import { Badge, Button, Card, EmptyState, Pagination, Spinner } from '../../components';
+import { Badge, Button, Card, EmptyState, Loader, Pagination, Spinner } from '../../components';
 import api from '../../services/api.js';
 
 const resultPlatformFilters = ['', 'youtube', 'twitter', 'telegram', 'web'];
@@ -134,9 +134,9 @@ export default function DashboardScanResultsPage() {
 
 			<Card className='border-(--app-color-border) shadow-sm' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
 				{isLoading ? (
-					<div className='flex items-center gap-3 text-sm text-(--app-color-text-muted)'>
-						<Spinner size='sm' />
-						Loading scan details...
+					<div className='flex flex-col items-center justify-center py-12 gap-6 text-sm text-(--app-color-text-muted)'>
+						<Loader size={0.5} />
+						<p className="font-bold uppercase tracking-widest animate-pulse">Fetching discovery details...</p>
 					</div>
 				) : scanJob ? (
 					<div className='flex flex-wrap items-center justify-between gap-3'>

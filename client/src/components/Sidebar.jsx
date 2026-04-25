@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 const Sidebar = ({
 	items = [],
@@ -21,14 +22,14 @@ const Sidebar = ({
 			} flex flex-col h-screen sticky top-0 ${className}`}
 		>
 			{/* Logo Section */}
-			<div className={`flex items-center gap-3 p-6 ${isCollapsed ? 'justify-center p-4' : ''}`}>
+			<Link to='/' className={`flex items-center gap-3 p-6 hover:opacity-80 transition-opacity ${isCollapsed ? 'justify-center p-4' : ''}`}>
 				<img src='/logo.png' alt='Logo' className='h-10 w-10 object-contain' />
 				{!isCollapsed && (
 					<span className='text-sm font-bold uppercase tracking-[0.2em] text-[var(--app-color-text)]'>
 						SportShield
 					</span>
 				)}
-			</div>
+			</Link>
 
 			{/* Toggle Button Area */}
 			{collapsible && (
@@ -57,10 +58,10 @@ const Sidebar = ({
 								onItemClick(item.id);
 							}
 						}}
-						className={`flex items-center gap-4 px-4 py-3 rounded-lg transition-all ${
+						className={`flex items-center gap-4 px-4 py-3 rounded-xl text-sm transition-all ${
 							activeItem === item.id
-								? 'bg-[var(--app-color-primary-soft)] text-[var(--app-color-primary)] font-semibold'
-								: 'text-[var(--app-color-text)] hover:bg-[var(--app-color-surface-elevated)]'
+								? 'bg-[var(--app-color-primary-soft)] text-[var(--app-color-primary)] font-bold'
+								: 'text-[var(--app-color-text)] hover:bg-[var(--app-color-surface-elevated)] font-medium'
 						} ${isCollapsed ? 'justify-center' : ''}`}
 						title={isCollapsed ? item.label : ''}
 					>

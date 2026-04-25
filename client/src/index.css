@@ -191,3 +191,67 @@ select {
 	opacity: 1;
 	transform: translateY(0);
 }
+
+/* Net Loader Animations */
+@keyframes net-pulse {
+	0% { transform: scale(1); }
+	50% { transform: scale(0.01); }
+	100% { transform: scale(1); }
+}
+
+@keyframes net-fade {
+	0% { background: var(--loader-color-faint); }
+	50% { background: var(--loader-color); }
+	100% { background: var(--loader-color-soft); }
+}
+
+@keyframes net-entrance {
+	from { opacity: 0; transform: scale(0.9); }
+	to { opacity: 1; transform: scale(1); }
+}
+
+.net-loader-wrapper {
+	--loader-color: #10b981;
+	--loader-color-soft: rgba(16, 185, 129, 0.4);
+	--loader-color-faint: rgba(16, 185, 129, 0.1);
+	animation: net-entrance 0.5s ease-out forwards;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+
+.net-socket {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.net-gel {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transition: all 0.3s;
+}
+
+.net-hex-brick {
+	background: var(--loader-color);
+	position: absolute;
+	animation: net-fade 2s infinite;
+}
+
+.net-h2 { transform: rotate(60deg); }
+.net-h3 { transform: rotate(-60deg); }
+
+.net-center-gel {
+	animation: net-pulse 2s infinite;
+}
+
+.net-r1 { animation: net-pulse 2s infinite; animation-delay: .2s; }
+.net-r2 { animation: net-pulse 2s infinite; animation-delay: .4s; }
+.net-r3 { animation: net-pulse 2s infinite; animation-delay: .6s; }
+
+.net-r1 > .net-hex-brick { animation: net-fade 2s infinite; animation-delay: .2s; }
+.net-r2 > .net-hex-brick { animation: net-fade 2s infinite; animation-delay: .4s; }
+.net-r3 > .net-hex-brick { animation: net-fade 2s infinite; animation-delay: .6s; }

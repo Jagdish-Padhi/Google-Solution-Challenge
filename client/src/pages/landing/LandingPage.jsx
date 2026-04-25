@@ -167,7 +167,7 @@ export default function LandingPage() {
 							<div className='space-y-5'>
 								<Reveal>
 									<h1 className='max-w-3xl text-4xl font-semibold tracking-tight text-(--app-color-text) sm:text-5xl lg:text-6xl'>
-										You Created It. Don't Let Someone Else Own It.
+										You Created It. <span className='text-teal-600 font-bold italic underline decoration-teal-500/40 underline-offset-4'>Don't Let</span> Someone Else Own It.
 									</h1>
 								</Reveal>
 								<Reveal>
