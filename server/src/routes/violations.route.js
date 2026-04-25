@@ -2,6 +2,7 @@ import { Router } from 'express';
 
 import {
 	createViolationScreenshotController,
+	draftDmcaController,
 	getViolationByIdController,
 	listViolationsController,
 	updateViolationStatusController,
@@ -16,5 +17,6 @@ router.get('/', listViolationsController);
 router.get('/:id', getViolationByIdController);
 router.patch('/:id/status', updateViolationStatusController);
 router.post('/:id/screenshot', createViolationScreenshotController);
+router.post('/:id/draft-dmca', draftDmcaController);
 
 export default router;
