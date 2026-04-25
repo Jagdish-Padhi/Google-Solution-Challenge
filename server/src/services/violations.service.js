@@ -138,22 +138,26 @@ async function generateDmcaWithGemini({ organizationName, violation }) {
 	}
 
 	const model = process.env.GEMINI_MODEL?.trim() || 'gemini-2.5-flash';
-	const prompt = `Generate a concise formal DMCA takedown notice in plain text.
+	const prompt = `You are a strict, top-tier legal representative for ${organizationName}. 
+Generate a highly detailed, legally-binding, and intimidating formal DMCA Takedown Notice for copyright infringement.
+The notice MUST be formatted professionally for immediate dispatch to a legal department.
+Include placeholder brackets like [Your Name/Title], [Your Phone], [Your Address] for fields the user needs to fill in manually.
 
-Organization: ${organizationName}
-Infringing URL: ${violation.sourceUrl}
-Platform: ${violation.platform}
-Detected at: ${new Date(violation.detectedAt).toISOString()}
-Evidence: confidence ${violation.matchConfidence}%, match type ${violation.matchType}
+Details:
+- Offending Platform: ${violation.platform}
+- Infringing URL: ${violation.sourceUrl}
+- Time of Detection: ${new Date(violation.detectedAt).toUTCString()}
+- Evidence: Our automated proprietary system verified this with a matching confidence of ${violation.matchConfidence}% (Match Type: ${violation.matchType}).
 
-Include:
-1) ownership claim
-2) unauthorized use claim
-3) good-faith statement
-4) perjury/authority statement
-5) request for prompt removal
+The letter MUST include:
+1. A strong opening statement declaring ownership of the copyrighted work.
+2. The exact URL of the infringing material.
+3. A strict statement demanding immediate removal of the content.
+4. The good faith belief statement required by 17 U.S.C. § 512(c)(3)(A)(v).
+5. The penalty of perjury statement required by 17 U.S.C. § 512(c)(3)(A)(vi).
+6. A firm deadline for compliance (e.g. 24-48 hours) before further legal action is pursued.
 
-Return only the notice text.`;
+Return ONLY the plain text of the legal notice. Do not include markdown formatting or conversational text.`;
 
 	const response = await fetch(
 		`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
@@ -164,7 +168,7 @@ Return only the notice text.`;
 				contents: [{ parts: [{ text: prompt }] }],
 				generationConfig: {
 					temperature: 0.3,
-					maxOutputTokens: 700,
+					maxOutputTokens: 800,
 				},
 			}),
 		},
@@ -183,6 +187,16 @@ Return only the notice text.`;
 	return text || null;
 }
 
+const platformAbuseEmails = {
+	'youtube': 'copyright@youtube.com',
+	'twitter': 'copyright@twitter.com',
+	'tiktok': 'copyright@tiktok.com',
+	'instagram': 'ip@instagram.com',
+	'facebook': 'ip@fb.com',
+	'reddit': 'copyright@reddit.com',
+	'twitch': 'dmca@twitch.tv'
+};
+
 export async function draftDmcaNotice({ orgId, violationId }) {
 	const violation = await Violation.findOne({ _id: violationId, orgId }).lean();
 	if (!violation) {
@@ -200,5 +214,6 @@ export async function draftDmcaNotice({ orgId, violationId }) {
 		sourceUrl: violation.sourceUrl,
 		draft: geminiDraft || buildDmcaTemplate({ organizationName, violation }),
 		generatedBy: geminiDraft ? 'gemini' : 'template',
+		contactEmail: platformAbuseEmails[violation.platform.toLowerCase()] || 'abuse@platform.com'
 	};
 }
