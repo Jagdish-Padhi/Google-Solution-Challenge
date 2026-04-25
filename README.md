@@ -76,6 +76,35 @@ To experience SportShield in its fully-featured "Demo State" with realistic spor
 
 ---
 
+## 🚀 Deployment Guide
+
+SportShield is designed to be deployed across **Render** (Backends) and **Vercel** (Frontend).
+
+### 1. ML Service (Render)
+- **Service Type:** Web Service
+- **Build Command:** `pip install -r requirements.txt`
+- **Start Command:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- **Env Vars:** 
+  - `GEMINI_API_KEY`, `VISION_API_KEY`, `GOOGLE_APPLICATION_CREDENTIALS_JSON` (if using file).
+
+### 2. Backend API (Render)
+- **Service Type:** Web Service
+- **Build Command:** `npm install`
+- **Start Command:** `npm start`
+- **Env Vars:** 
+  - `MONGODB_URI`, `JWT_SECRET`, `ML_SERVICE_URL` (URL of your deployed ML Service).
+  - `BREVO_API_KEY`, `BREVO_SENDER_EMAIL`.
+
+### 3. Frontend (Vercel)
+- **Framework Preset:** Vite
+- **Build Command:** `npm run build`
+- **Output Directory:** `dist`
+- **Env Vars:**
+  - `VITE_API_URL` (URL of your deployed Backend API).
+  - `VITE_FIREBASE_API_KEY`, etc.
+
+---
+
 ## 🏁 Ending Note
 SportShield isn't just a tool; it's a shield for the digital economy. By combining Google's cutting-edge Generative AI with high-speed automated detection, we are leveling the playing field for creators and rights holders globally.
 

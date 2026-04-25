@@ -1,7 +1,21 @@
 FROM node:20-alpine
+
+# Install build dependencies for bcrypt/native modules
+RUN apk add --no-cache python3 make g++
+
 WORKDIR /app
+
+# Copy package files
 COPY package*.json ./
-RUN npm install
+
+# Install production dependencies only
+RUN npm ci --only=production
+
+# Copy application code
 COPY . .
-EXPOSE 5000
-CMD ["npm", "run", "dev"]
+
+# Set production environment
+ENV NODE_ENV=production
+
+# Production start command
+CMD ["npm", "start"]
