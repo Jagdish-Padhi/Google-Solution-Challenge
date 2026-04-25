@@ -12,6 +12,9 @@ const useAuthStore = create(
   persist(
     (set) => ({
       ...initialState,
+      isTransitioning: false,
+      isExiting: false,
+      transitionShowTagline: false,
       setAuth: ({ user, accessToken }) =>
         set({
           user,
@@ -24,6 +27,9 @@ const useAuthStore = create(
           hydrated: true,
         }),
       setHydrated: () => set({ hydrated: true }),
+      setTransitioning: (isTransitioning, showTagline = false) => 
+        set({ isTransitioning, transitionShowTagline: showTagline, isExiting: false }),
+      setExiting: (isExiting) => set({ isExiting }),
     }),
     {
       name: 'sportshield-auth-store',

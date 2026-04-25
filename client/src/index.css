@@ -216,6 +216,47 @@ select {
 	100% { background: var(--loader-color-soft); }
 }
 
+@keyframes progress {
+	0% { transform: translateX(-100%); }
+	100% { transform: translateX(200%); }
+}
+
+@keyframes tagline-slide-up {
+	from { opacity: 0; transform: translateY(40px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes loader-zoom-out {
+	from { opacity: 1; transform: scale(1); }
+	to { opacity: 0; transform: scale(1.5); filter: blur(10px); }
+}
+
+@keyframes dashboard-entrance {
+	from { opacity: 0; transform: scale(0.95); }
+	to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes dashboard-exit {
+	from { opacity: 1; transform: scale(1); opacity: 1; }
+	to { opacity: 0; transform: scale(0.95); filter: blur(4px); }
+}
+
+.animate-tagline-reveal {
+	animation: tagline-slide-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-loader-exit {
+	animation: loader-zoom-out 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-dashboard-land {
+	animation: dashboard-entrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-dashboard-exit {
+	animation: dashboard-exit 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 @keyframes net-entrance {
 	from { opacity: 0; transform: scale(0.9); }
 	to { opacity: 1; transform: scale(1); }

@@ -14,6 +14,7 @@ export { default as Badge } from './Badge';
 export { default as Alert } from './Alert';
 export { default as Spinner } from './Spinner';
 export { default as Loader } from './loaders/loadnet';
+export { default as GlobalLoader } from './loaders/GlobalLoader';
 export { default as Toast } from './Toast';
 
 // Form Components
