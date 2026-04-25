@@ -307,3 +307,53 @@ select {
 .net-r1 > .net-hex-brick { animation: net-fade 2s infinite; animation-delay: .2s; }
 .net-r2 > .net-hex-brick { animation: net-fade 2s infinite; animation-delay: .4s; }
 .net-r3 > .net-hex-brick { animation: net-fade 2s infinite; animation-delay: .6s; }
+
+/* Discovery Pulse & Premium Effects */
+.noise-overlay {
+	position: absolute;
+	inset: 0;
+	background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+	filter: contrast(120%) brightness(100%);
+	pointer-events: none;
+}
+
+@keyframes progress-indefinite {
+	0% { transform: translateX(-100%); }
+	100% { transform: translateX(200%); }
+}
+
+.animate-progress-indefinite {
+	animation: progress-indefinite 2s linear infinite;
+}
+
+.animate-in {
+	animation-duration: 0.7s;
+	animation-fill-mode: both;
+}
+
+.fade-in {
+	animation-name: fade-in;
+}
+
+.slide-in-from-bottom-4 {
+	animation-name: slide-in-from-bottom;
+}
+
+@keyframes fade-in {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+@keyframes slide-in-from-bottom {
+	from { transform: translateY(1rem); opacity: 0; }
+	to { transform: translateY(0); opacity: 1; }
+}
+
+.zoom-in-95 {
+	animation-name: zoom-in-95;
+}
+
+@keyframes zoom-in-95 {
+	from { transform: scale(0.95); opacity: 0; }
+	to { transform: scale(1); opacity: 1; }
+}

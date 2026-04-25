@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 import { Badge, Button, Card, EmptyState, Loader, Modal, Pagination, Spinner } from '../../components';
 import api from '../../services/api.js';
@@ -134,6 +134,14 @@ export default function DashboardScansPage() {
 			mounted = false;
 		};
 	}, [loadAssets, loadScans]);
+
+	const [searchParams] = useSearchParams();
+
+	useEffect(() => {
+		if (searchParams.get('openModal') === 'true') {
+			setIsModalOpen(true);
+		}
+	}, [searchParams]);
 
 	useEffect(() => {
 		if (runningCount === 0) {

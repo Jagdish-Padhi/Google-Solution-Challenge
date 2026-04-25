@@ -13,6 +13,7 @@ const Button = ({
 	loading = false,
 	type = 'button',
 	className = '',
+	as: Component = 'button',
 	...props
 }) => {
 	const baseStyles = 'font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed';
@@ -24,6 +25,7 @@ const Button = ({
 		tertiary: 'text-[var(--app-color-primary)] hover:bg-[var(--app-color-primary-soft)]',
 		danger: 'bg-red-600 text-white hover:bg-red-700 active:scale-95',
 		success: 'bg-green-600 text-white hover:bg-green-700 active:scale-95',
+		ghost: 'bg-transparent text-(--app-color-text-muted) hover:bg-(--app-color-surface-elevated)',
 	};
 
 	const sizeStyles = {
@@ -36,10 +38,16 @@ const Button = ({
 	const styles = `${baseStyles} ${variantStyles[variant] || variantStyles.primary} ${sizeStyles[size] || sizeStyles.md} ${className}`;
 
 	return (
-		<button type={type} onClick={onClick} disabled={disabled || loading} className={styles} {...props}>
+		<Component
+			type={Component === 'button' ? type : undefined}
+			onClick={onClick}
+			disabled={disabled || loading}
+			className={styles}
+			{...props}
+		>
 			{loading && <span className='inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin'></span>}
 			{children}
-		</button>
+		</Component>
 	);
 };
 

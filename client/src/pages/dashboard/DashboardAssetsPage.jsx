@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useSearchParams } from 'react-router-dom';
 
 import { Badge, Button, Card, EmptyState, Loader, Modal, Spinner } from '../../components';
 import api from '../../services/api.js';
@@ -61,6 +62,13 @@ export default function DashboardAssetsPage() {
 	useEffect(() => {
 		loadAssets();
 	}, []);
+
+	const [searchParams] = useSearchParams();
+	useEffect(() => {
+		if (searchParams.get('openModal') === 'true') {
+			setIsUploadModalOpen(true);
+		}
+	}, [searchParams]);
 
 	useEffect(() => {
 		if (processingCount === 0) {

@@ -1,9 +1,5 @@
-/**
- * Modal Component
- * Overlay dialog for focused user interactions
- */
-
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 const Modal = ({
 	isOpen = false,
@@ -18,6 +14,8 @@ const Modal = ({
 	useEffect(() => {
 		if (isOpen) {
 			document.body.style.overflow = 'hidden';
+		} else {
+			document.body.style.overflow = 'unset';
 		}
 		return () => {
 			document.body.style.overflow = 'unset';
@@ -37,38 +35,48 @@ const Modal = ({
 		'5xl': 'max-w-5xl',
 	};
 
-	return (
-		<div className='fixed inset-0 z-50 flex items-center justify-center'>
-			{/* Backdrop */}
+	const modalContent = (
+		<div className='fixed inset-0 z-[9999] overflow-y-auto overflow-x-hidden'>
+			{/* Backdrop with Blur */}
 			<div
-				className='absolute inset-0 bg-black/50 transition-opacity'
+				className='fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300'
 				onClick={() => closeOnBackdropClick && onClose()}
 			/>
 
-			{/* Modal Content */}
-			<div className={`relative bg-[var(--app-color-surface)] rounded-xl shadow-xl max-h-[90vh] overflow-y-auto ${sizeClasses[size] || sizeClasses.md} ${className}`}>
+			{/* Modal Content - Anchored to Center-Point */}
+			<div 
+				className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl flex flex-col w-[95%] sm:w-full max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-300 will-change-transform ${sizeClasses[size] || sizeClasses.md} ${className}`}
+			>
 				{/* Header */}
-				<div className='flex items-center justify-between gap-4 border-b border-[var(--app-color-border)] px-6 py-4'>
-					<h2 className='text-lg font-semibold text-[var(--app-color-text)]'>{title}</h2>
+				<div className='flex items-center justify-between gap-4 border-b border-slate-100 px-6 py-4 flex-shrink-0 bg-white z-10'>
+					<h2 className='text-lg font-bold text-slate-900 tracking-tight'>{title}</h2>
 					<button
 						onClick={onClose}
-						className='text-[var(--app-color-text-muted)] hover:text-[var(--app-color-text)] transition-colors'
+						className='p-2 rounded-xl text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-all'
 						aria-label='Close modal'
 					>
-						<svg className='w-6 h-6' fill='currentColor' viewBox='0 0 20 20'>
-							<path fillRule='evenodd' d='M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z' clipRule='evenodd' />
+						<svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+							<path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M6 18L18 6M6 6l12 12' />
 						</svg>
 					</button>
 				</div>
 
-				{/* Body */}
-				<div className='px-6 py-4'>{children}</div>
+				{/* Body - Scrollable */}
+				<div className='flex-1 overflow-y-auto px-6 py-6 scrollbar-thin scrollbar-thumb-slate-200'>
+					{children}
+				</div>
 
 				{/* Footer */}
-				{footer && <div className='border-t border-[var(--app-color-border)] px-6 py-4 bg-[var(--app-color-surface-elevated)] flex gap-3 justify-end'>{footer}</div>}
+				{footer && (
+					<div className='border-t border-slate-100 px-6 py-4 bg-slate-50 flex gap-3 justify-end flex-shrink-0'>
+						{footer}
+					</div>
+				)}
 			</div>
 		</div>
 	);
+
+	return createPortal(modalContent, document.body);
 };
 
 export default Modal;
