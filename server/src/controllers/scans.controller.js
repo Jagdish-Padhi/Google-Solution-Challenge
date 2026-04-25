@@ -15,13 +15,14 @@ import {
 
 export async function startScanController(req, res, next) {
 	try {
-		const { assetId, keywords, platforms } = validateStartScanPayload(req.body);
+		const { assetId, keywords, platforms, multiLanguage } = validateStartScanPayload(req.body);
 
 		const scanJob = await createScanJob({
 			orgId: req.auth.orgId,
 			assetId,
 			keywords,
 			platforms,
+			multiLanguage,
 		});
 
 		void dispatchScanJob(scanJob._id.toString());
