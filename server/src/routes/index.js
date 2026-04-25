@@ -8,6 +8,8 @@ import healthRouter from './health.route.js';
 import scansRouter from './scans.route.js';
 import userRouter from './user.route.js';
 import violationsRouter from './violations.route.js';
+import orgsRouter from './orgs.route.js';
+import digestRouter from './digest.route.js';
 
 const router = Router();
 
@@ -19,5 +21,7 @@ router.use('/alerts', alertsRouter);
 router.use('/scans', scansRouter);
 router.use('/violations', violationsRouter);
 router.use('/users', userRouter);
+router.use('/orgs', orgsRouter);
+router.use('/digest', digestRouter);
 
 export default router;
