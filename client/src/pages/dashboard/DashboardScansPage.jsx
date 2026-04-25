@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 
-import { Badge, Button, Card, EmptyState, Modal, Pagination, Spinner } from '../../components';
+import { Badge, Button, Card, EmptyState, Loader, Modal, Pagination, Spinner } from '../../components';
 import api from '../../services/api.js';
 
 const defaultPlatforms = ['youtube', 'web'];
@@ -366,9 +366,9 @@ export default function DashboardScansPage() {
 				{error ? (
 					<p className='text-sm text-red-600'>{error}</p>
 				) : isLoading ? (
-					<div className='flex items-center gap-3 text-sm text-(--app-color-text-muted)'>
-						<Spinner size='sm' />
-						Loading scans...
+					<div className='flex flex-col items-center justify-center py-12 gap-6 text-sm text-(--app-color-text-muted)'>
+						<Loader size={0.6} />
+						<p className="font-bold uppercase tracking-widest animate-pulse">Syncing scan records...</p>
 					</div>
 				) : scanJobs.length === 0 ? (
 					<EmptyState title='No scans yet' message='Start a new scan to begin discovery.' />

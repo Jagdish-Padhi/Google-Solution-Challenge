@@ -28,6 +28,8 @@ export default function DashboardLayout() {
 	const user = useAuthStore((state) => state.user);
 	const accessToken = useAuthStore((state) => state.accessToken);
 	const clearAuth = useAuthStore((state) => state.clearAuth);
+	const setTransitioning = useAuthStore((state) => state.setTransitioning);
+	const isTransitioning = useAuthStore((state) => state.isTransitioning);
 	const [unreadAlerts, setUnreadAlerts] = useState(0);
 	useSocket();
 
@@ -88,6 +90,7 @@ export default function DashboardLayout() {
 	}, [accessToken]);
 
 	const handleLogout = async () => {
+		setTransitioning(true);
 		try {
 			await api.post('/auth/logout');
 		} finally {
@@ -97,13 +100,11 @@ export default function DashboardLayout() {
 	};
 
 	return (
-		<div className='min-h-screen text-(--app-color-text)' style={shellBackground}>
+		<div className={`min-h-screen text-(--app-color-text) ${isTransitioning ? 'animate-dashboard-exit' : 'animate-dashboard-land'}`} style={shellBackground}>
 			<header className='sticky top-0 z-20 border-b border-white/60 bg-white/75 backdrop-blur-xl'>
 				<Container className='flex min-h-20 items-center justify-between gap-4 py-4'>
-					<Link to='/dashboard' className='flex items-center gap-3'>
-						<span className='grid h-11 w-11 place-items-center rounded-2xl bg-(--app-color-primary) text-lg font-bold text-white shadow-lg shadow-teal-500/20'>
-							S
-						</span>
+					<Link to='/' className='flex items-center gap-3'>
+						<img src='/navlogo.png' alt='SportShield' className='h-16 w-16 object-contain' />
 						<div>
 							<p className='text-xs font-semibold uppercase tracking-[0.28em] text-(--app-color-text-muted)'>SportShield</p>
 							<h1 className='text-lg font-semibold'>Dashboard</h1>

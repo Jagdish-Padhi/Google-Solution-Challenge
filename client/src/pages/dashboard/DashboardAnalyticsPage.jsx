@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
-import { Badge, Button, Card, EmptyState, Spinner } from '../../components';
+import { Badge, Button, Card, EmptyState, Loader } from '../../components';
 import api from '../../services/api.js';
 
 const rangeOptions = [
@@ -448,9 +448,9 @@ export default function DashboardAnalyticsPage() {
 			{error ? <p className='text-sm text-red-600'>{error}</p> : null}
 
 			{isLoading ? (
-				<div className='flex items-center gap-3 rounded-2xl border border-(--app-color-border) bg-(--app-color-surface-panel) px-5 py-8 text-sm text-(--app-color-text-muted)'>
-					<Spinner size='sm' />
-					Loading analytics...
+				<div className='flex flex-col items-center justify-center py-20 gap-6 rounded-2xl border border-(--app-color-border) bg-(--app-color-surface-panel) text-sm text-(--app-color-text-muted)'>
+					<Loader size={0.7} />
+					<p className="font-bold uppercase tracking-widest animate-pulse">Running advanced heuristics...</p>
 				</div>
 			) : !overview ? (
 				<EmptyState title='No analytics range selected yet' message='Choose a valid date range to load analytics.' />

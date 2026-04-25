@@ -96,7 +96,7 @@ function SignInwithGoogle() {
         type='button'
         onClick={googleLogin}
         disabled={isSubmitting}
-        className='flex w-60 items-center justify-center gap-3 rounded-xl border border-(--app-color-border) bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-70'
+        className='flex w-full items-center justify-center gap-3 rounded-xl border border-(--app-color-border) bg-white px-4 py-3 text-sm font-bold text-gray-700 shadow-sm transition-all hover:bg-gray-50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70'
       >
         <img
           src='https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg'
