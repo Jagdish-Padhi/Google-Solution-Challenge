@@ -24,7 +24,7 @@ const uploadDirectory = path.resolve(__dirname, '../uploads');
 // 	}),
 // );
 app.use(cors({
-    origin: "http://localhost:5173",
+    origin: true,
     credentials: true
 }));
 app.use(cookieParser());
