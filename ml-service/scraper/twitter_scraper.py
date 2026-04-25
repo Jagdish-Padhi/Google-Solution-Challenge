@@ -1,69 +1,12 @@
-<<<<<<< HEAD
-"""Twitter/X scraper adapter using public web search discovery."""
-
-from __future__ import annotations
-
-import os
-from urllib.parse import urlparse
-
-from scraper.search_utils import fetch_page_preview, now_iso, search_duckduckgo_links
-
-
-TWITTER_MAX_RESULTS = int(os.getenv("TWITTER_MAX_RESULTS", "5"))
-
-
-def _is_twitter_url(url: str) -> bool:
-    hostname = urlparse(url).netloc.lower()
-    return hostname.endswith("x.com") or hostname.endswith("twitter.com")
-=======
-"""Twitter/X scraper — uses public Nitter instances to search tweets. No API key needed."""
+"""Twitter/X scraper — uses public Nitter instances to search tweets."""
 
 from __future__ import annotations
 
 import random
 from datetime import datetime, timezone
->>>>>>> pvj
-
 import requests
 from bs4 import BeautifulSoup
 
-<<<<<<< HEAD
-def scrape_twitter(keyword: str) -> list[dict]:
-    normalized = keyword.strip()
-    if not normalized:
-        return []
-
-    query = f"site:x.com OR site:twitter.com {normalized}"
-    links = search_duckduckgo_links(query, max_results=max(1, min(10, TWITTER_MAX_RESULTS)))
-
-    results: list[dict] = []
-    for link in links:
-        if not _is_twitter_url(link):
-            continue
-
-        title = link
-        thumbnail_url = None
-        try:
-            preview = fetch_page_preview(link)
-            title = preview.get("title") or link
-            thumbnail_url = preview.get("thumbnailUrl")
-        except Exception:
-            pass
-
-        results.append(
-            {
-                "platform": "twitter",
-                "sourceUrl": link,
-                "thumbnailUrl": thumbnail_url,
-                "videoUrl": None,
-                "pageTitle": title,
-                "status": "pending_match",
-                "scrapedAt": now_iso(),
-            }
-        )
-
-    return results
-=======
 _HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -81,59 +24,47 @@ _NITTER_INSTANCES = [
     "https://nitter.woodland.cafe",
 ]
 
-
 def _try_nitter_search(base_url: str, keyword: str, max_results: int) -> list[dict]:
     """Try a single Nitter instance for search results."""
     search_url = f"{base_url}/search"
     params = {"q": keyword, "f": "tweets"}
-    resp = requests.get(search_url, params=params, headers=_HEADERS, timeout=10)
+    try:
+        resp = requests.get(search_url, params=params, headers=_HEADERS, timeout=10)
+        if resp.status_code != 200:
+            return []
 
-    if resp.status_code != 200:
-        raise ValueError(f"Nitter returned {resp.status_code}")
+        soup = BeautifulSoup(resp.text, "html.parser")
+        now = datetime.now(timezone.utc).isoformat()
+        results = []
 
-    soup = BeautifulSoup(resp.text, "html.parser")
-    now = datetime.now(timezone.utc).isoformat()
-    results = []
+        tweets = soup.select("div.timeline-item")
+        for tweet in tweets[:max_results]:
+            text_el = tweet.select_one("div.tweet-content")
+            text = text_el.get_text(strip=True) if text_el else ""
 
-    # Each tweet is a div.timeline-item
-    tweets = soup.select("div.timeline-item")
-    for tweet in tweets[:max_results]:
-        # Get tweet text
-        text_el = tweet.select_one("div.tweet-content")
-        text = text_el.get_text(strip=True) if text_el else ""
+            link_el = tweet.select_one("a.tweet-link")
+            tweet_path = link_el["href"] if link_el and link_el.get("href") else ""
+            tweet_url = f"https://x.com{tweet_path}" if tweet_path else ""
 
-        # Get tweet link
-        link_el = tweet.select_one("a.tweet-link")
-        tweet_path = link_el["href"] if link_el and link_el.get("href") else ""
-        tweet_url = f"https://x.com{tweet_path}" if tweet_path else ""
+            thumbnail = ""
+            img_el = tweet.select_one("div.attachments img")
+            if img_el and img_el.get("src"):
+                src = img_el["src"]
+                thumbnail = f"{base_url}{src}" if src.startswith("/") else src
 
-        # Get image if present
-        thumbnail = ""
-        img_el = tweet.select_one("div.attachments img")
-        if img_el and img_el.get("src"):
-            src = img_el["src"]
-            # Nitter uses relative paths for images
-            if src.startswith("/"):
-                thumbnail = f"{base_url}{src}"
-            else:
-                thumbnail = src
+            if not thumbnail:
+                video_el = tweet.select_one("div.attachments video")
+                if video_el and video_el.get("poster"):
+                    poster = video_el["poster"]
+                    thumbnail = f"{base_url}{poster}" if poster.startswith("/") else poster
 
-        # Get video thumbnail if no image
-        if not thumbnail:
-            video_el = tweet.select_one("div.attachments video")
-            if video_el and video_el.get("poster"):
-                poster = video_el["poster"]
-                thumbnail = f"{base_url}{poster}" if poster.startswith("/") else poster
+            author_el = tweet.select_one("a.username")
+            author = author_el.get_text(strip=True) if author_el else "Unknown"
 
-        # Get author
-        author_el = tweet.select_one("a.username")
-        author = author_el.get_text(strip=True) if author_el else ""
+            if not tweet_url:
+                continue
 
-        if not tweet_url:
-            continue
-
-        results.append(
-            {
+            results.append({
                 "platform": "twitter",
                 "sourceUrl": tweet_url,
                 "thumbnailUrl": thumbnail,
@@ -142,9 +73,22 @@ def _try_nitter_search(base_url: str, keyword: str, max_results: int) -> list[di
                 "authorHandle": author,
                 "status": "pending_match",
                 "scrapedAt": now,
-            }
-        )
+            })
+        return results
+    except Exception as e:
+        print(f"Nitter instance {base_url} failed: {e}")
+        return []
 
+def scrape_twitter(keyword: str, max_results: int = 8) -> list[dict]:
+    """Search Twitter/X via Nitter instances."""
+    instances = _NITTER_INSTANCES.copy()
+    random.shuffle(instances)
+
+    for instance in instances:
+        results = _try_nitter_search(instance, keyword, max_results)
+        if results:
+            return results
+    return []
     return results
 
 
@@ -166,4 +110,3 @@ def scrape_twitter(keyword: str, max_results: int = 8) -> list[dict]:
 
     # All instances failed — return empty list (don't crash the whole scan job)
     return []
->>>>>>> pvj
