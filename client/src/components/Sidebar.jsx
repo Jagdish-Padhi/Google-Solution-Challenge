@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 const Sidebar = ({
 	items = [],
@@ -20,15 +21,25 @@ const Sidebar = ({
 				isCollapsed ? 'w-20' : 'w-64'
 			} flex flex-col h-screen sticky top-0 ${className}`}
 		>
-			{/* Toggle Button */}
+			{/* Logo Section */}
+			<Link to='/' className={`flex items-center gap-3 p-6 hover:opacity-80 transition-opacity ${isCollapsed ? 'justify-center p-4' : ''}`}>
+				<img src='/logo.png' alt='Logo' className='h-10 w-10 object-contain' />
+				{!isCollapsed && (
+					<span className='text-sm font-bold uppercase tracking-[0.2em] text-[var(--app-color-text)]'>
+						SportShield
+					</span>
+				)}
+			</Link>
+
+			{/* Toggle Button Area */}
 			{collapsible && (
-				<div className='flex items-center justify-end p-4 border-b border-[var(--app-color-border)]'>
+				<div className='flex items-center justify-end px-4 py-2'>
 					<button
 						onClick={() => setIsCollapsed(!isCollapsed)}
-						className='p-2 hover:bg-[var(--app-color-surface-elevated)] rounded-lg transition-colors'
+						className='p-1.5 hover:bg-[var(--app-color-surface-elevated)] rounded-lg transition-colors border border-transparent hover:border-[var(--app-color-border)]'
 						title={isCollapsed ? 'Expand' : 'Collapse'}
 					>
-						<svg className='w-5 h-5 text-[var(--app-color-text)]' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+						<svg className='w-4 h-4 text-[var(--app-color-text-muted)]' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
 							<path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d={isCollapsed ? 'M9 5l7 7-7 7' : 'M15 19l-7-7 7-7'} />
 						</svg>
 					</button>
@@ -47,10 +58,10 @@ const Sidebar = ({
 								onItemClick(item.id);
 							}
 						}}
-						className={`flex items-center gap-4 px-4 py-3 rounded-lg transition-all ${
+						className={`flex items-center gap-4 px-4 py-3 rounded-xl text-sm transition-all ${
 							activeItem === item.id
-								? 'bg-[var(--app-color-primary-soft)] text-[var(--app-color-primary)] font-semibold'
-								: 'text-[var(--app-color-text)] hover:bg-[var(--app-color-surface-elevated)]'
+								? 'bg-[var(--app-color-primary-soft)] text-[var(--app-color-primary)] font-bold'
+								: 'text-[var(--app-color-text)] hover:bg-[var(--app-color-surface-elevated)] font-medium'
 						} ${isCollapsed ? 'justify-center' : ''}`}
 						title={isCollapsed ? item.label : ''}
 					>

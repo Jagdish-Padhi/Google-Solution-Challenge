@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 
-import { Badge, Button, Card, EmptyState, Modal, Pagination, Spinner } from '../../components';
+import { Badge, Button, Card, EmptyState, Loader, Modal, Pagination, Spinner } from '../../components';
 import api from '../../services/api.js';
 
 const defaultPlatforms = ['youtube', 'web'];
@@ -72,7 +72,9 @@ export default function DashboardScansPage() {
 		assetId: '',
 		keywords: '',
 		platforms: defaultPlatforms,
+		multiLanguage: false,
 	});
+	const [isSuggesting, setIsSuggesting] = useState(false);
 
 	const runningCount = useMemo(
 		() => scanJobs.filter((job) => job.status === 'queued' || job.status === 'running').length,
@@ -159,6 +161,33 @@ export default function DashboardScansPage() {
 		});
 	};
 
+	const handleSuggestKeywords = async () => {
+		if (!formState.assetId) {
+			toast.error('Please select an asset first to suggest keywords.');
+			return;
+		}
+		
+		setIsSuggesting(true);
+		try {
+			const response = await api.post(`/assets/${formState.assetId}/suggest-keywords`);
+			const suggestedKeywords = response.data.keywords || [];
+			
+			if (suggestedKeywords.length > 0) {
+				setFormState((current) => ({
+					...current,
+					keywords: suggestedKeywords.join(', '),
+				}));
+				toast.success('AI suggestions applied!');
+			} else {
+				toast.error('No keywords suggested by AI.');
+			}
+		} catch (requestError) {
+			toast.error('Failed to suggest keywords.');
+		} finally {
+			setIsSuggesting(false);
+		}
+	};
+
 	const handleSubmit = async (event) => {
 		event.preventDefault();
 
@@ -189,6 +218,7 @@ export default function DashboardScansPage() {
 				assetId: formState.assetId,
 				searchKeywords: keywords,
 				platforms: formState.platforms,
+				multiLanguage: formState.multiLanguage,
 			});
 
 			toast.success('Scan started successfully.');
@@ -336,9 +366,9 @@ export default function DashboardScansPage() {
 				{error ? (
 					<p className='text-sm text-red-600'>{error}</p>
 				) : isLoading ? (
-					<div className='flex items-center gap-3 text-sm text-(--app-color-text-muted)'>
-						<Spinner size='sm' />
-						Loading scans...
+					<div className='flex flex-col items-center justify-center py-12 gap-6 text-sm text-(--app-color-text-muted)'>
+						<Loader size={0.6} />
+						<p className="font-bold uppercase tracking-widest animate-pulse">Syncing scan records...</p>
 					</div>
 				) : scanJobs.length === 0 ? (
 					<EmptyState title='No scans yet' message='Start a new scan to begin discovery.' />
@@ -413,7 +443,17 @@ export default function DashboardScansPage() {
 					</div>
 
 					<div>
-						<label className='mb-1 block text-sm font-medium text-(--app-color-text)'>Search keywords</label>
+						<div className='mb-1 flex items-center justify-between'>
+							<label className='block text-sm font-medium text-(--app-color-text)'>Search keywords</label>
+							<button 
+								type='button' 
+								onClick={handleSuggestKeywords} 
+								disabled={isSuggesting || !formState.assetId}
+								className='text-xs font-semibold text-(--app-color-primary) hover:underline disabled:opacity-50'
+							>
+								{isSuggesting ? '✨ Thinking...' : '✨ Auto-suggest with AI'}
+							</button>
+						</div>
 						<input
 							type='text'
 							value={formState.keywords}
@@ -446,6 +486,19 @@ export default function DashboardScansPage() {
 								);
 							})}
 						</div>
+					</div>
+
+					<div className='flex items-center gap-2'>
+						<input
+							type='checkbox'
+							id='multiLanguage'
+							checked={formState.multiLanguage}
+							onChange={(event) => setFormState((current) => ({ ...current, multiLanguage: event.target.checked }))}
+							className='h-4 w-4 rounded border-(--app-color-border) text-(--app-color-primary) focus:ring-(--app-color-primary)'
+						/>
+						<label htmlFor='multiLanguage' className='text-sm text-(--app-color-text)'>
+							Enable Multi-language Scan <span className='text-xs text-(--app-color-text-muted)'>(Translates keywords to 5 languages)</span>
+						</label>
 					</div>
 
 					<div className='flex justify-end gap-2'>

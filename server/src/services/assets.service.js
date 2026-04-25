@@ -19,6 +19,28 @@ async function requestFingerprint(sourceUrl) {
 	return response.json();
 }
 
+async function requestSuggestedKeywords({ title, assetType, sourceUrl, count = 10 }) {
+	const response = await fetch(`${ML_SERVICE_URL}/ml/suggest-keywords`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify({
+			title,
+			assetType,
+			sourceUrl,
+			count,
+		}),
+	});
+
+	if (!response.ok) {
+		const errorText = await response.text();
+		throw new Error(`Keyword suggestion service failed (${response.status}): ${errorText}`);
+	}
+
+	return response.json();
+}
+
 export function inferAssetType(mimeType = '') {
 	if (mimeType.startsWith('image/')) {
 		return 'image';
@@ -98,6 +120,30 @@ export async function softDeleteAsset({ orgId, assetId }) {
 	).lean();
 
 	return deletedAsset;
+}
+
+export async function suggestKeywordsForAsset({ orgId, assetId, count = 10 }) {
+	const asset = await Asset.findOne({ _id: assetId, orgId, status: { $ne: 'deleted' } }).lean();
+
+	if (!asset) {
+		const error = new Error('Asset not found for this organization.');
+		error.statusCode = 404;
+		throw error;
+	}
+
+	const suggestion = await requestSuggestedKeywords({
+		title: asset.title,
+		assetType: asset.type,
+		sourceUrl: asset.gcsUrl,
+		count,
+	});
+
+	return {
+		assetId: asset._id.toString(),
+		assetTitle: asset.title,
+		keywords: suggestion.keywords || [],
+		count: suggestion.count || 0,
+	};
 }
 
 export async function getDashboardAssetStats(orgId) {

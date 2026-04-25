@@ -18,6 +18,7 @@ export function validateStartScanPayload(payload) {
 	const platforms = Array.isArray(payload?.platforms)
 		? payload.platforms.map((platform) => String(platform).trim().toLowerCase()).filter(Boolean)
 		: [];
+	const multiLanguage = Boolean(payload?.multiLanguage);
 
 	if (keywords.length === 0) {
 		throw validationError('At least one search keyword is required.');
@@ -31,6 +32,7 @@ export function validateStartScanPayload(payload) {
 		assetId,
 		keywords,
 		platforms,
+		multiLanguage,
 	};
 }
 

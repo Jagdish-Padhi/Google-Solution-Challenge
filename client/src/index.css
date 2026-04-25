@@ -135,6 +135,51 @@ select {
 	animation: float-slow 14s ease-in-out infinite;
 }
 
+@keyframes auth-slide-in {
+	from {
+		opacity: 0;
+		transform: translateX(30px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+.auth-form-slide {
+	animation: auth-slide-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Global Scrollbar Customization */
+::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+
+::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+	background: color-mix(in srgb, var(--app-color-primary) 15%, transparent);
+	border-radius: 10px;
+	border: 2px solid transparent;
+	background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: color-mix(in srgb, var(--app-color-primary) 30%, transparent);
+	border-radius: 10px;
+	border: 2px solid transparent;
+	background-clip: padding-box;
+}
+
+/* Firefox support */
+* {
+	scrollbar-width: thin;
+	scrollbar-color: color-mix(in srgb, var(--app-color-primary) 15%, transparent) transparent;
+}
+
 .reveal-on-scroll {
 	opacity: 0;
 	transform: translateY(24px);
@@ -146,3 +191,119 @@ select {
 	opacity: 1;
 	transform: translateY(0);
 }
+
+@keyframes text-fade-up {
+	0% { opacity: 0; transform: translateY(10px); }
+	15% { opacity: 1; transform: translateY(0); }
+	85% { opacity: 1; transform: translateY(0); }
+	100% { opacity: 0; transform: translateY(-10px); }
+}
+
+.animate-text-loop {
+	animation: text-fade-up 3s ease-in-out infinite;
+}
+
+/* Net Loader Animations */
+@keyframes net-pulse {
+	0% { transform: scale(1); }
+	50% { transform: scale(0.01); }
+	100% { transform: scale(1); }
+}
+
+@keyframes net-fade {
+	0% { background: var(--loader-color-faint); }
+	50% { background: var(--loader-color); }
+	100% { background: var(--loader-color-soft); }
+}
+
+@keyframes progress {
+	0% { transform: translateX(-100%); }
+	100% { transform: translateX(200%); }
+}
+
+@keyframes tagline-slide-up {
+	from { opacity: 0; transform: translateY(40px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes loader-zoom-out {
+	from { opacity: 1; transform: scale(1); }
+	to { opacity: 0; transform: scale(1.5); filter: blur(10px); }
+}
+
+@keyframes dashboard-entrance {
+	from { opacity: 0; transform: scale(0.95); }
+	to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes dashboard-exit {
+	from { opacity: 1; transform: scale(1); opacity: 1; }
+	to { opacity: 0; transform: scale(0.95); filter: blur(4px); }
+}
+
+.animate-tagline-reveal {
+	animation: tagline-slide-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-loader-exit {
+	animation: loader-zoom-out 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-dashboard-land {
+	animation: dashboard-entrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-dashboard-exit {
+	animation: dashboard-exit 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes net-entrance {
+	from { opacity: 0; transform: scale(0.9); }
+	to { opacity: 1; transform: scale(1); }
+}
+
+.net-loader-wrapper {
+	--loader-color: #10b981;
+	--loader-color-soft: rgba(16, 185, 129, 0.4);
+	--loader-color-faint: rgba(16, 185, 129, 0.1);
+	animation: net-entrance 0.5s ease-out forwards;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+
+.net-socket {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.net-gel {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transition: all 0.3s;
+}
+
+.net-hex-brick {
+	background: var(--loader-color);
+	position: absolute;
+	animation: net-fade 2s infinite;
+}
+
+.net-h2 { transform: rotate(60deg); }
+.net-h3 { transform: rotate(-60deg); }
+
+.net-center-gel {
+	animation: net-pulse 2s infinite;
+}
+
+.net-r1 { animation: net-pulse 2s infinite; animation-delay: .2s; }
+.net-r2 { animation: net-pulse 2s infinite; animation-delay: .4s; }
+.net-r3 { animation: net-pulse 2s infinite; animation-delay: .6s; }
+
+.net-r1 > .net-hex-brick { animation: net-fade 2s infinite; animation-delay: .2s; }
+.net-r2 > .net-hex-brick { animation: net-fade 2s infinite; animation-delay: .4s; }
+.net-r3 > .net-hex-brick { animation: net-fade 2s infinite; animation-delay: .6s; }

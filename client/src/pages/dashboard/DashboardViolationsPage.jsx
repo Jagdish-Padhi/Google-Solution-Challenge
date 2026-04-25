@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
-import { Badge, Button, Card, EmptyState, Modal, Pagination, Spinner } from '../../components';
+import { Badge, Button, Card, EmptyState, Loader, Modal, Pagination, Spinner } from '../../components';
 import api from '../../services/api.js';
 
 const statusFilters = ['', 'open', 'reported', 'resolved', 'false_positive'];
@@ -38,6 +38,11 @@ export default function DashboardViolationsPage() {
 		limit: 10,
 		totalPages: 1,
 	});
+	const [isDraftingDmca, setIsDraftingDmca] = useState(false);
+	const [dmcaDraftText, setDmcaDraftText] = useState('');
+	const [dmcaContactEmail, setDmcaContactEmail] = useState('');
+	const [dmcaSubject, setDmcaSubject] = useState('');
+	const [isDmcaModalOpen, setIsDmcaModalOpen] = useState(false);
 
 	const openCount = useMemo(() => violations.filter((item) => item.status === 'open').length, [violations]);
 
@@ -111,6 +116,24 @@ export default function DashboardViolationsPage() {
 			toast.error(message);
 		} finally {
 			setIsCapturing(false);
+		}
+	};
+
+	const handleDraftDmca = async () => {
+		if (!selectedViolation?._id) return;
+		setIsDraftingDmca(true);
+		try {
+			const response = await api.post(`/violations/${selectedViolation._id}/draft-dmca`);
+			setDmcaDraftText(response.data.draft || '');
+			setDmcaContactEmail(response.data.contactEmail || '');
+			setDmcaSubject('URGENT: Formal DMCA Takedown Notice - Copyright Infringement');
+			setIsDmcaModalOpen(true);
+			toast.success('DMCA drafted successfully.');
+		} catch (requestError) {
+			const message = requestError.response?.data?.message || 'Failed to draft DMCA notice.';
+			toast.error(message);
+		} finally {
+			setIsDraftingDmca(false);
 		}
 	};
 
@@ -216,9 +239,9 @@ export default function DashboardViolationsPage() {
 				{error ? (
 					<p className='text-sm text-red-600'>{error}</p>
 				) : isLoading ? (
-					<div className='flex items-center gap-3 text-sm text-(--app-color-text-muted)'>
-						<Spinner size='sm' />
-						Loading violations...
+					<div className='flex flex-col items-center justify-center py-12 gap-6 text-sm text-(--app-color-text-muted)'>
+						<Loader size={0.6} />
+						<p className="font-bold uppercase tracking-widest animate-pulse">Scanning for violations...</p>
 					</div>
 				) : violations.length === 0 ? (
 					<EmptyState title='No violations found' message='Run scans and complete matching to detect infringement cases.' />
@@ -303,66 +326,160 @@ export default function DashboardViolationsPage() {
 				isOpen={isDetailsOpen}
 				onClose={() => setIsDetailsOpen(false)}
 				title='Violation evidence'
-				size='lg'
+				size='5xl'
 			>
 				{selectedViolation ? (
-					<div className='space-y-4 text-sm'>
-						<div className='grid gap-3 sm:grid-cols-2'>
-							<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-3'>
-								<p className='text-xs uppercase tracking-[0.12em] text-(--app-color-text-muted)'>Match confidence</p>
-								<p className='mt-1 text-xl font-semibold text-(--app-color-text)'>{selectedViolation.matchConfidence}%</p>
+					<div className='grid grid-cols-1 gap-6 lg:grid-cols-2 text-sm'>
+						{/* Left Column: Details & Actions */}
+						<div className='flex flex-col justify-between space-y-4'>
+							<div className='space-y-4'>
+								<div className='grid gap-3 sm:grid-cols-2'>
+									<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-3'>
+										<p className='text-xs uppercase tracking-[0.12em] text-(--app-color-text-muted)'>Match confidence</p>
+										<p className='mt-1 text-xl font-semibold text-(--app-color-text)'>{selectedViolation.matchConfidence}%</p>
+									</div>
+									<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-3'>
+										<p className='text-xs uppercase tracking-[0.12em] text-(--app-color-text-muted)'>Match type</p>
+										<p className='mt-1 text-xl font-semibold capitalize text-(--app-color-text)'>{selectedViolation.matchType}</p>
+									</div>
+								</div>
+
+								<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-4'>
+									<p className='text-xs font-semibold uppercase tracking-[0.14em] text-(--app-color-text-muted)'>Evidence explainability</p>
+									<div className='mt-3 grid gap-2 sm:grid-cols-3'>
+										<p className='text-(--app-color-text-muted)'>Hamming: <span className='font-semibold text-(--app-color-text)'>{selectedViolation.evidenceBundle?.hammingDistance ?? '-'}</span></p>
+										<p className='text-(--app-color-text-muted)'>Color: <span className='font-semibold text-(--app-color-text)'>{selectedViolation.evidenceBundle?.colorSimilarity ?? '-'}</span></p>
+										<p className='text-(--app-color-text-muted)'>Frames: <span className='font-semibold text-(--app-color-text)'>{selectedViolation.evidenceBundle?.frameMatchCount ?? '-'}</span></p>
+									</div>
+								</div>
+
+								<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-4'>
+									<p className='text-xs font-semibold uppercase tracking-[0.14em] text-(--app-color-text-muted)'>Source</p>
+									<a href={selectedViolation.sourceUrl} target='_blank' rel='noreferrer' className='mt-1 block break-all text-(--app-color-primary) hover:underline'>
+										{selectedViolation.sourceUrl}
+									</a>
+								</div>
 							</div>
-							<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-3'>
-								<p className='text-xs uppercase tracking-[0.12em] text-(--app-color-text-muted)'>Match type</p>
-								<p className='mt-1 text-xl font-semibold capitalize text-(--app-color-text)'>{selectedViolation.matchType}</p>
+
+							<div className='pt-4'>
+								<p className='mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-(--app-color-text-muted)'>Actions</p>
+								<div className='flex flex-wrap items-center gap-2'>
+									<Button variant='secondary' onClick={captureScreenshot} loading={isCapturing} disabled={isCapturing}>
+										Capture screenshot
+									</Button>
+									<Button variant='secondary' onClick={handleDraftDmca} loading={isDraftingDmca} disabled={isDraftingDmca} className='border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-400 dark:hover:bg-purple-900/30'>
+										✨ Draft DMCA Notice
+									</Button>
+									{statusOptions.map((status) => (
+										<Button
+											key={status}
+											variant={selectedViolation.status === status ? 'primary' : 'secondary'}
+											onClick={() => updateStatus(selectedViolation._id, status)}
+										>
+											Mark {status}
+										</Button>
+									))}
+								</div>
 							</div>
 						</div>
 
-						<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-4'>
-							<p className='text-xs font-semibold uppercase tracking-[0.14em] text-(--app-color-text-muted)'>Evidence explainability</p>
-							<div className='mt-3 grid gap-2 sm:grid-cols-3'>
-								<p>Hamming distance: <span className='font-semibold'>{selectedViolation.evidenceBundle?.hammingDistance ?? '-'}</span></p>
-								<p>Color similarity: <span className='font-semibold'>{selectedViolation.evidenceBundle?.colorSimilarity ?? '-'}</span></p>
-								<p>Frame matches: <span className='font-semibold'>{selectedViolation.evidenceBundle?.frameMatchCount ?? '-'}</span></p>
-							</div>
-						</div>
-
-						<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-4'>
-							<p className='text-xs font-semibold uppercase tracking-[0.14em] text-(--app-color-text-muted)'>Source</p>
-							<a href={selectedViolation.sourceUrl} target='_blank' rel='noreferrer' className='mt-1 block text-(--app-color-primary) hover:underline'>
-								{selectedViolation.sourceUrl}
-							</a>
-						</div>
-
-						{selectedViolation.screenshotUrl ? (
-							<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-4'>
-								<p className='text-xs font-semibold uppercase tracking-[0.14em] text-(--app-color-text-muted)'>Captured evidence</p>
-								<img src={selectedViolation.screenshotUrl} alt='Violation evidence screenshot' className='mt-3 w-full rounded-lg border border-(--app-color-border)' />
-							</div>
-						) : (
-							<div className='rounded-xl border border-dashed border-(--app-color-border) bg-(--app-color-surface) p-4 text-(--app-color-text-muted)'>
-								No screenshot captured yet.
-							</div>
-						)}
-
-						<div className='flex flex-wrap items-center gap-2'>
-							<Button variant='secondary' onClick={captureScreenshot} loading={isCapturing} disabled={isCapturing}>
-								Capture screenshot
-							</Button>
-							{statusOptions.map((status) => (
-								<Button
-									key={status}
-									variant={selectedViolation.status === status ? 'primary' : 'secondary'}
-									onClick={() => updateStatus(selectedViolation._id, status)}
-								>
-									Mark {status}
-								</Button>
-							))}
+						{/* Right Column: Screenshot */}
+						<div className='flex h-full flex-col'>
+							{selectedViolation.screenshotUrl ? (
+								<div className='flex h-full flex-col rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-4'>
+									<p className='mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-(--app-color-text-muted)'>Captured evidence</p>
+									<div className='flex min-h-[300px] flex-1 items-center justify-center overflow-hidden rounded-lg border border-(--app-color-border) bg-black/5 dark:bg-black/20'>
+										<img src={selectedViolation.screenshotUrl} alt='Violation evidence screenshot' className='max-h-[500px] max-w-full object-contain' />
+									</div>
+								</div>
+							) : (
+								<div className='flex min-h-[300px] flex-1 items-center justify-center rounded-xl border border-dashed border-(--app-color-border) bg-(--app-color-surface) p-4 text-(--app-color-text-muted)'>
+									No screenshot captured yet.
+								</div>
+							)}
 						</div>
 					</div>
 				) : (
 					<p className='text-sm text-(--app-color-text-muted)'>Select a violation to view details.</p>
 				)}
+			</Modal>
+
+			<Modal
+				isOpen={isDmcaModalOpen}
+				onClose={() => setIsDmcaModalOpen(false)}
+				title='✨ DMCA Takedown Notice'
+				size='lg'
+			>
+				<div className='space-y-4'>
+					<div className='overflow-hidden rounded-xl border border-(--app-color-border) bg-(--app-color-surface-panel) shadow-sm'>
+						<div className='border-b border-(--app-color-border) bg-(--app-color-surface) px-4 py-3 space-y-2'>
+							<div className='flex items-center gap-3 text-sm'>
+								<label htmlFor='dmca-to' className='w-14 font-semibold text-(--app-color-text-muted)'>To:</label>
+								<input
+									id='dmca-to'
+									type='email'
+									value={dmcaContactEmail}
+									onChange={(e) => setDmcaContactEmail(e.target.value)}
+									className='flex-1 rounded-md border border-transparent bg-transparent px-2 py-1 font-medium text-(--app-color-text) hover:border-(--app-color-border) focus:border-(--app-color-primary) focus:bg-(--app-color-surface-panel) focus:outline-none'
+									placeholder='abuse@platform.com'
+								/>
+							</div>
+							<div className='flex items-center gap-3 text-sm'>
+								<label htmlFor='dmca-subject' className='w-14 font-semibold text-(--app-color-text-muted)'>Subject:</label>
+								<input
+									id='dmca-subject'
+									type='text'
+									value={dmcaSubject}
+									onChange={(e) => setDmcaSubject(e.target.value)}
+									className='flex-1 rounded-md border border-transparent bg-transparent px-2 py-1 font-medium text-(--app-color-text) hover:border-(--app-color-border) focus:border-(--app-color-primary) focus:bg-(--app-color-surface-panel) focus:outline-none'
+								/>
+							</div>
+						</div>
+						<div className='bg-white p-4 dark:bg-(--app-color-surface)'>
+							<textarea
+								value={dmcaDraftText}
+								onChange={(e) => setDmcaDraftText(e.target.value)}
+								className='w-full min-h-[200px] max-h-[40vh] overflow-y-auto resize-none bg-transparent text-sm leading-relaxed text-(--app-color-text) focus:outline-none'
+								spellCheck={false}
+							/>
+						</div>
+					</div>
+
+					<div className='flex flex-wrap items-center justify-between gap-2 pt-2'>
+						<div className='flex items-center gap-2 text-xs font-medium text-(--app-color-text-muted)'>
+							<span className='flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'>
+								<svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg>
+							</span>
+							AI Draft Verified & Ready to Send
+						</div>
+						<div className='flex flex-wrap items-center gap-2'>
+							<Button type='button' variant='secondary' onClick={() => setIsDmcaModalOpen(false)}>
+								Cancel
+							</Button>
+							<Button
+								type='button'
+								variant='secondary'
+								onClick={() => {
+									navigator.clipboard.writeText(dmcaDraftText);
+									toast.success('Draft copied to clipboard!');
+								}}
+							>
+								Copy text
+							</Button>
+							{dmcaContactEmail && dmcaSubject && (
+								<a
+									href={`mailto:${dmcaContactEmail}?subject=${encodeURIComponent(dmcaSubject)}&body=${encodeURIComponent(dmcaDraftText)}`}
+									className='flex items-center justify-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:bg-red-700 hover:shadow-lg dark:bg-red-700 dark:hover:bg-red-600'
+									target="_blank"
+									rel="noreferrer"
+								>
+									<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+									Send Notice Now
+								</a>
+							)}
+						</div>
+					</div>
+				</div>
 			</Modal>
 		</div>
 	);

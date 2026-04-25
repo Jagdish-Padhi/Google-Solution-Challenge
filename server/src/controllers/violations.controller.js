@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
 	createViolationScreenshot,
+	draftDmcaNotice,
 	getViolationById,
 	listViolationsByOrg,
 	updateViolationStatus,
@@ -82,8 +83,6 @@ export async function createViolationScreenshotController(req, res, next) {
 		const violation = await createViolationScreenshot({
 			orgId: req.auth.orgId,
 			violationId: req.params.id,
-			uploadsRoot,
-			publicBaseUrl: getPublicUploadsUrl(req),
 		});
 
 		return res.status(200).json({
@@ -96,6 +95,19 @@ export async function createViolationScreenshotController(req, res, next) {
 			error.message = 'Screenshot capture dependency is missing. Install puppeteer in server service.';
 		}
 
+		return next(error);
+	}
+}
+
+export async function draftDmcaController(req, res, next) {
+	try {
+		const result = await draftDmcaNotice({
+			orgId: req.auth.orgId,
+			violationId: req.params.id,
+		});
+
+		return res.status(200).json(result);
+	} catch (error) {
 		return next(error);
 	}
 }

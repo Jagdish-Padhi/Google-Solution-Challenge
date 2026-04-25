@@ -6,6 +6,8 @@ import ScanResult from '../models/scanResult.model.js';
 import Violation from '../models/violation.model.js';
 
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://localhost:8000';
+const GOOGLE_TRANSLATE_API_URL = 'https://translation.googleapis.com/language/translate/v2';
+const MULTI_LANGUAGE_TARGETS = ['es', 'ar', 'hi', 'pt', 'fr'];
 
 function getSourceDomain(sourceUrl) {
 	if (!sourceUrl) {
@@ -68,6 +70,67 @@ async function requestScan(payload) {
 	return response.json();
 }
 
+async function requestTranslations({ keyword, targetLanguage, apiKey }) {
+	const response = await fetch(`${GOOGLE_TRANSLATE_API_URL}?key=${apiKey}`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify({
+			q: keyword,
+			target: targetLanguage,
+			format: 'text',
+			source: 'en',
+		}),
+	});
+
+	if (!response.ok) {
+		return null;
+	}
+
+	const payload = await response.json();
+	const translated = payload?.data?.translations?.[0]?.translatedText;
+	return typeof translated === 'string' ? translated.trim() : null;
+}
+
+async function expandKeywordsForMultiLanguage(keywords = [], enabled = false) {
+	const normalized = keywords.map((item) => String(item || '').trim()).filter(Boolean);
+	if (!enabled || normalized.length === 0) {
+		return normalized;
+	}
+
+	const apiKey = process.env.GOOGLE_TRANSLATE_API_KEY?.trim();
+	if (!apiKey) {
+		return normalized;
+	}
+
+	const expanded = [...normalized];
+	const seen = new Set(expanded.map((item) => item.toLowerCase()));
+
+	for (const keyword of normalized) {
+		for (const language of MULTI_LANGUAGE_TARGETS) {
+			try {
+				const translated = await requestTranslations({ keyword, targetLanguage: language, apiKey });
+				if (!translated) {
+					continue;
+				}
+
+				const lowered = translated.toLowerCase();
+				if (seen.has(lowered)) {
+					continue;
+				}
+
+				seen.add(lowered);
+				expanded.push(translated);
+			} catch {
+				// Ignore translation failures and continue with available keywords.
+			}
+		}
+	}
+
+	return expanded;
+}
+
 async function requestMatch(payload) {
 	const response = await fetch(`${ML_SERVICE_URL}/ml/match`, {
 		method: 'POST',
@@ -80,6 +143,27 @@ async function requestMatch(payload) {
 	if (!response.ok) {
 		const errorText = await response.text();
 		throw new Error(`ML match request failed (${response.status}): ${errorText}`);
+	}
+
+	return response.json();
+}
+
+async function requestVisionVerify({ referenceUrl, candidateUrl, baseConfidence }) {
+	const response = await fetch(`${ML_SERVICE_URL}/ml/vision-verify`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify({
+			referenceUrl,
+			candidateUrl,
+			baseConfidence,
+		}),
+	});
+
+	if (!response.ok) {
+		const errorText = await response.text();
+		throw new Error(`ML vision verify request failed (${response.status}): ${errorText}`);
 	}
 
 	return response.json();
@@ -135,7 +219,37 @@ async function runMatchingForScan({ scanJob, results }) {
 				referenceFingerprint: asset.fingerprint,
 			});
 
-			const confidence = Number(match.matchConfidence || 0);
+			let confidence = Number(match.matchConfidence || 0);
+			let visionEvidence = null;
+
+			if (confidence >= 40 && confidence < 70 && asset?.gcsUrl && compareUrl) {
+				try {
+					const vision = await requestVisionVerify({
+						referenceUrl: asset.gcsUrl,
+						candidateUrl: compareUrl,
+						baseConfidence: confidence,
+					});
+
+					visionEvidence = {
+						available: Boolean(vision.available),
+						labelOverlap: Array.isArray(vision.labelOverlap) ? vision.labelOverlap : [],
+						labelOverlapScore: Number(vision.labelOverlapScore || 0),
+						confidenceBoost: Number(vision.confidenceBoost || 0),
+					};
+
+					if (typeof vision.boostedConfidence === 'number') {
+						confidence = Number(vision.boostedConfidence);
+					}
+				} catch {
+					visionEvidence = {
+						available: false,
+						labelOverlap: [],
+						labelOverlapScore: 0,
+						confidenceBoost: 0,
+					};
+				}
+			}
+
 			const matchedStatus = confidence >= 30 ? 'matched' : 'no_match';
 
 			const [domainPriorViolations, priorUrlViolation] = await Promise.all([
@@ -173,6 +287,9 @@ async function runMatchingForScan({ scanJob, results }) {
 					hammingDistance: match.evidenceBundle?.hammingDistance ?? null,
 					colorSimilarity: match.evidenceBundle?.colorSimilarity ?? null,
 					frameMatchCount: match.evidenceBundle?.frameMatchCount ?? null,
+					visionLabelOverlapScore: visionEvidence?.labelOverlapScore ?? null,
+					visionConfidenceBoost: visionEvidence?.confidenceBoost ?? null,
+					visionLabels: visionEvidence?.labelOverlap ?? [],
 				},
 				persistenceSignals: {
 					domainPriorViolations,
@@ -204,6 +321,9 @@ async function runMatchingForScan({ scanJob, results }) {
 						hammingDistance: match.evidenceBundle?.hammingDistance ?? null,
 						colorSimilarity: match.evidenceBundle?.colorSimilarity ?? null,
 						frameMatchCount: match.evidenceBundle?.frameMatchCount ?? null,
+						visionLabelOverlapScore: visionEvidence?.labelOverlapScore ?? null,
+						visionConfidenceBoost: visionEvidence?.confidenceBoost ?? null,
+						visionLabels: visionEvidence?.labelOverlap ?? [],
 					},
 					detectedAt: new Date(),
 				});
@@ -237,7 +357,7 @@ async function runMatchingForScan({ scanJob, results }) {
 	return violationsCount;
 }
 
-export async function createScanJob({ orgId, assetId, keywords, platforms }) {
+export async function createScanJob({ orgId, assetId, keywords, platforms, multiLanguage = false }) {
 	const asset = await Asset.findOne({ _id: assetId, orgId, status: { $ne: 'deleted' } }).lean();
 
 	if (!asset) {
@@ -246,12 +366,14 @@ export async function createScanJob({ orgId, assetId, keywords, platforms }) {
 		throw error;
 	}
 
+	const expandedKeywords = await expandKeywordsForMultiLanguage(keywords, multiLanguage);
+
 	return ScanJob.create({
 		orgId,
 		assetId,
 		status: 'queued',
 		platforms,
-		keywords,
+		keywords: expandedKeywords,
 		resultsCount: 0,
 		violationsCount: 0,
 	});

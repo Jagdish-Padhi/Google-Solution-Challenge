@@ -84,6 +84,18 @@ const scanResultSchema = new mongoose.Schema(
 				type: Number,
 				default: null,
 			},
+			visionLabelOverlapScore: {
+				type: Number,
+				default: null,
+			},
+			visionConfidenceBoost: {
+				type: Number,
+				default: null,
+			},
+			visionLabels: {
+				type: [String],
+				default: [],
+			},
 		},
 		persistenceSignals: {
 			domainPriorViolations: {
