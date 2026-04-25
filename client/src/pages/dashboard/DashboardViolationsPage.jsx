@@ -359,6 +359,15 @@ export default function DashboardViolationsPage() {
 										{selectedViolation.sourceUrl}
 									</a>
 								</div>
+
+								{selectedViolation.discoveryKeyword && (
+									<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-4'>
+										<p className='text-xs font-semibold uppercase tracking-[0.14em] text-(--app-color-text-muted)'>Found via search</p>
+										<p className='mt-1 font-mono text-xs font-semibold text-(--app-color-text) bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded inline-block'>
+											{selectedViolation.discoveryKeyword}
+										</p>
+									</div>
+								)}
 							</div>
 
 							<div className='pt-4'>

@@ -52,6 +52,10 @@ const violationSchema = new mongoose.Schema(
 			type: String,
 			required: true,
 		},
+		discoveryKeyword: {
+			type: String,
+			default: null,
+		},
 		screenshotUrl: {
 			type: String,
 			default: null,

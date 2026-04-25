@@ -277,6 +277,7 @@ async function getSummaryStats(orgId, startDate, endDate) {
 		falsePositives: summary?.falsePositives || 0,
 		avgConfidenceScore: Number((summary?.avgConfidenceScore || 0).toFixed(1)),
 		resolutionRate: totalViolations > 0 ? Number((resolvedViolations / totalViolations).toFixed(2)) : 0,
+		estimatedRevenueLoss: totalViolations * 150, // Assuming avg 150 currency units loss per detection
 	};
 }
 

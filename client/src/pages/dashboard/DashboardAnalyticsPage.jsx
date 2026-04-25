@@ -364,9 +364,9 @@ export default function DashboardAnalyticsPage() {
 	const statCards = overview
 		? [
 				{ label: 'Total violations', value: overview.totalViolations, subtitle: overview.rangeLabel },
+				{ label: 'Revenue at risk', value: `₹${(overview.estimatedRevenueLoss || 0).toLocaleString()}`, subtitle: 'Est. value of stolen media' },
 				{ label: 'Resolved', value: overview.resolvedViolations, subtitle: `${Math.round((overview.resolutionRate || 0) * 100)}% resolution rate` },
 				{ label: 'Avg confidence', value: `${overview.avgConfidenceScore}%`, subtitle: 'Across detected matches' },
-				{ label: 'Assets monitored', value: overview.totalAssets, subtitle: `${overview.openViolations} currently open` },
 			]
 		: [];
 

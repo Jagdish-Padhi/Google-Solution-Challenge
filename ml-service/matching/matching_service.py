@@ -1,13 +1,20 @@
-"""Fingerprint matching service for Phase 4 violation detection."""
+"""Fingerprint matching service with Phase 7 Google Vision AI fallback."""
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 import numpy as np
+from google.cloud import vision
 
 from fingerprint.fingerprint_service import generate_fingerprint, hamming_distance
 
+# Configuration for thresholds
+VISION_API_KEY = os.getenv("VISION_API_KEY")  # Optional, usually uses GOOGLE_APPLICATION_CREDENTIALS
+VISION_CONFIDENCE_THRESHOLD = 0.45
+MATCH_BORDELINE_MIN = 40
+MATCH_BORDELINE_MAX = 75
 
 def _cosine_similarity(left: list[float], right: list[float]) -> float:
     if not left or not right:
@@ -41,8 +48,8 @@ def _frame_match_count(scraped_frames: list[str], reference_frames: list[str], t
     return matched
 
 
-def _match_type_from_signals(hamming_bits: int, frame_matches: int) -> str:
-    if hamming_bits <= 6:
+def _match_type_from_signals(hamming_bits: int, frame_matches: int, vision_boosted: bool = False) -> str:
+    if vision_boosted or hamming_bits <= 6:
         return "exact"
     if hamming_bits <= 12 or frame_matches >= 2:
         return "near-duplicate"
@@ -60,7 +67,38 @@ def _confidence_score(hamming_bits: int, color_similarity: float, frame_matches:
     return int(round(max(0.0, min(100.0, weighted))))
 
 
-def match_fingerprint_bundle(scraped_fingerprint: dict[str, Any], reference_fingerprint: dict[str, Any]) -> dict[str, Any]:
+def _verify_with_vision_api(scraped_url: str, reference_tags: list[str]) -> bool:
+    """
+    Perform semantic label matching using Google Cloud Vision.
+    Boosts confidence if semantic labels (stadium, player, jersey, etc.) match.
+    """
+    if not reference_tags:
+        return False
+
+    try:
+        client = vision.ImageAnnotatorClient()
+        image = vision.Image()
+        image.source.image_uri = scraped_url
+
+        response = client.label_detection(image=image)
+        labels = [label.description.lower() for label in response.label_annotations if label.score >= VISION_CONFIDENCE_THRESHOLD]
+
+        if not labels:
+            return False
+
+        # Check for intersection between scraped labels and reference tags
+        matches = [tag for tag in reference_tags if tag.lower() in labels]
+        return len(matches) >= 2  # Require at least 2 matching semantic signals
+    except Exception as e:
+        print(f"[matching_service] Vision API tie-breaker failed: {e}")
+        return False
+
+
+def match_fingerprint_bundle(
+    scraped_fingerprint: dict[str, Any], 
+    reference_fingerprint: dict[str, Any],
+    source_url: str = ""
+) -> dict[str, Any]:
     scraped_hash = scraped_fingerprint.get("pHash")
     stored_hash = reference_fingerprint.get("pHash")
 
@@ -78,7 +116,20 @@ def match_fingerprint_bundle(scraped_fingerprint: dict[str, Any], reference_fing
     frame_matches = _frame_match_count(scraped_frames, reference_frames)
 
     confidence = _confidence_score(hamming_bits, color_similarity, frame_matches, scraped_frames)
-    match_type = _match_type_from_signals(hamming_bits, frame_matches)
+    
+    # --- Phase 7: Vision API Tie-breaker for borderline cases ---
+    vision_boosted = False
+    reasoning = "Calculated using perceptual hashing and color analysis."
+    
+    if MATCH_BORDELINE_MIN <= confidence <= MATCH_BORDELINE_MAX and source_url:
+        # Use keywords/title as semantic tags for the reference
+        tags = reference_fingerprint.get("tags", []) or [reference_fingerprint.get("title", "")]
+        if _verify_with_vision_api(source_url, tags):
+            confidence = min(92, confidence + 25)  # Boost significantly but keep below absolute "exact"
+            vision_boosted = True
+            reasoning = "Vision API confirmed semantic match (stadium/content overlap), boosting confidence."
+
+    match_type = _match_type_from_signals(hamming_bits, frame_matches, vision_boosted)
 
     return {
         "matchConfidence": confidence,
@@ -87,6 +138,8 @@ def match_fingerprint_bundle(scraped_fingerprint: dict[str, Any], reference_fing
             "hammingDistance": hamming_bits,
             "colorSimilarity": round(color_similarity, 4),
             "frameMatchCount": frame_matches,
+            "visionBoosted": vision_boosted,
+            "reasoning": reasoning
         },
         "scrapedFingerprint": scraped_fingerprint,
     }
@@ -94,4 +147,4 @@ def match_fingerprint_bundle(scraped_fingerprint: dict[str, Any], reference_fing
 
 def match_content(scraped_url: str, reference_fingerprint: dict[str, Any]) -> dict[str, Any]:
     scraped_fingerprint = generate_fingerprint(source_url=scraped_url)
-    return match_fingerprint_bundle(scraped_fingerprint, reference_fingerprint)
+    return match_fingerprint_bundle(scraped_fingerprint, reference_fingerprint, source_url=scraped_url)

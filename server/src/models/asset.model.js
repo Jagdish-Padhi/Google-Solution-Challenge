@@ -13,6 +13,10 @@ const assetSchema = new mongoose.Schema(
 			required: true,
 			trim: true,
 		},
+		tags: {
+			type: [String],
+			default: [],
+		},
 		type: {
 			type: String,
 			enum: ['video', 'image', 'highlight'],

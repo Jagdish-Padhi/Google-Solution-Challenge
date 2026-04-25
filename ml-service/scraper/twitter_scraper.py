@@ -23,6 +23,14 @@ _NITTER_INSTANCES = [
     "https://nitter.poast.org",
     "https://nitter.lucabased.xyz",
     "https://nitter.woodland.cafe",
+    "https://nitter.no-logs.com",
+    "https://nitter.rawbit.ninja",
+    "https://nitter.perennialte.ch",
+    "https://nitter.cz",
+    "https://nitter.on-snow.com",
+    "https://nitter.dr460neye.at",
+    "https://nitter.moomoo.me",
+    "https://nitter.projectsegfau.lt",
 ]
 
 

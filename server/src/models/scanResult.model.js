@@ -33,6 +33,10 @@ const scanResultSchema = new mongoose.Schema(
 			type: String,
 			required: true,
 		},
+		discoveryKeyword: {
+			type: String,
+			default: null,
+		},
 		discoveryQualityScore: {
 			type: Number,
 			default: 0,
@@ -48,6 +52,10 @@ const scanResultSchema = new mongoose.Schema(
 			default: null,
 		},
 		pageTitle: {
+			type: String,
+			default: null,
+		},
+		discoveryKeyword: {
 			type: String,
 			default: null,
 		},
