@@ -192,6 +192,17 @@ select {
 	transform: translateY(0);
 }
 
+@keyframes text-fade-up {
+	0% { opacity: 0; transform: translateY(10px); }
+	15% { opacity: 1; transform: translateY(0); }
+	85% { opacity: 1; transform: translateY(0); }
+	100% { opacity: 0; transform: translateY(-10px); }
+}
+
+.animate-text-loop {
+	animation: text-fade-up 3s ease-in-out infinite;
+}
+
 /* Net Loader Animations */
 @keyframes net-pulse {
 	0% { transform: scale(1); }

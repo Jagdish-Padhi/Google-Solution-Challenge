@@ -71,7 +71,9 @@ export default function LoginPage() {
             <div className='mt-8'>
               <h1 className='text-4xl font-black uppercase tracking-tighter lg:text-5xl italic skew-x-[-6deg]'>
                 You Created It. <br />
-                <span className='text-teal-400'><span className='text-white font-black italic underline decoration-teal-500/60 underline-offset-4'>Don't Let</span> Someone Else Own It.</span>
+                <span className='text-teal-400'>
+                  <span className='text-white font-black italic underline decoration-teal-500/60 underline-offset-4'>Don't Let</span> Someone Else Own It.
+                </span>
               </h1>
               <p className='mx-auto mt-4 max-w-sm text-lg font-bold leading-tight text-white/70'>
                 Protecting your creativity with enterprise-grade intelligence.
