@@ -7,9 +7,12 @@ import {
 	deleteAssetController,
 	getAssetByIdController,
 	listAssetsController,
+	suggestAssetKeywordsController,
 	uploadAssetController,
 } from '../controllers/assets.controller.js';
 import { verifyToken } from '../middlewares/verifyToken.js';
+
+import { storage } from '../config/cloudinary.js';
 
 const router = Router();
 
@@ -19,15 +22,6 @@ const acceptedMimeTypes = new Set([
 	'image/jpeg',
 	'image/png',
 ]);
-
-const storage = multer.diskStorage({
-	destination: 'uploads/',
-	filename: (_req, file, callback) => {
-		const extension = path.extname(file.originalname || '') || '.bin';
-		const uniqueName = `${Date.now()}-${crypto.randomUUID()}${extension.toLowerCase()}`;
-		callback(null, uniqueName);
-	},
-});
 
 const upload = multer({
 	storage,
@@ -50,6 +44,7 @@ router.use(verifyToken);
 
 router.post('/upload', upload.single('file'), uploadAssetController);
 router.get('/', listAssetsController);
+router.post('/:id/suggest-keywords', suggestAssetKeywordsController);
 router.get('/:id', getAssetByIdController);
 router.delete('/:id', deleteAssetController);
 

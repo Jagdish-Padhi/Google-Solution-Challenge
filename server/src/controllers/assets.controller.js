@@ -4,13 +4,9 @@ import {
 	getAssetById,
 	listAssetsByOrg,
 	softDeleteAsset,
+	suggestKeywordsForAsset,
 } from '../services/assets.service.js';
 import { validateAssetUploadPayload, validatePaginationQuery } from '../validators/assets.validator.js';
-
-function getBaseAssetUrl(req) {
-	const origin = `${req.protocol}://${req.get('host')}`;
-	return `${origin}/uploads`;
-}
 
 export async function uploadAssetController(req, res, next) {
 	try {
@@ -19,7 +15,7 @@ export async function uploadAssetController(req, res, next) {
 		}
 
 		const { title } = validateAssetUploadPayload(req.body);
-		const publicUrl = `${getBaseAssetUrl(req)}/${req.file.filename}`;
+		const publicUrl = req.file.path; // Cloudinary URL
 
 		const asset = await createAsset({
 			orgId: req.auth.orgId,
@@ -85,6 +81,23 @@ export async function deleteAssetController(req, res, next) {
 		return res.status(200).json({
 			message: 'Asset deleted successfully.',
 		});
+	} catch (error) {
+		return next(error);
+	}
+}
+
+export async function suggestAssetKeywordsController(req, res, next) {
+	try {
+		const requestedCount = Number.parseInt(req.body?.count || '10', 10);
+		const count = Number.isNaN(requestedCount) ? 10 : Math.min(20, Math.max(5, requestedCount));
+
+		const result = await suggestKeywordsForAsset({
+			orgId: req.auth.orgId,
+			assetId: req.params.id,
+			count,
+		});
+
+		return res.status(200).json(result);
 	} catch (error) {
 		return next(error);
 	}

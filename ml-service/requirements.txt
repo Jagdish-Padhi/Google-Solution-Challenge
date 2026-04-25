@@ -10,3 +10,4 @@ pymongo
 requests
 beautifulsoup4
 numpy
+python-dotenv
