@@ -4,11 +4,6 @@ import { triggerWeeklyDigest } from '../services/alerts.service.js';
 const router = Router();
 
 /**
- * POST /api/digest/trigger
- *
- * Called by cron-job.org every Monday at 09:00.
- * Protected by a shared secret in the Authorization header.
- *
  * cron-job.org setup:
  *   URL: https://your-backend.com/api/digest/trigger
  *   Method: POST

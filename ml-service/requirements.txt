@@ -11,3 +11,5 @@ requests
 beautifulsoup4
 numpy
 python-dotenv
+google-cloud-vision
+google-generativeai
