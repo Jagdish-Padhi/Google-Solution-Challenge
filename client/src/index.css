@@ -150,6 +150,36 @@ select {
 	animation: auth-slide-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* Global Scrollbar Customization */
+::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+
+::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+	background: color-mix(in srgb, var(--app-color-primary) 15%, transparent);
+	border-radius: 10px;
+	border: 2px solid transparent;
+	background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: color-mix(in srgb, var(--app-color-primary) 30%, transparent);
+	border-radius: 10px;
+	border: 2px solid transparent;
+	background-clip: padding-box;
+}
+
+/* Firefox support */
+* {
+	scrollbar-width: thin;
+	scrollbar-color: color-mix(in srgb, var(--app-color-primary) 15%, transparent) transparent;
+}
+
 .reveal-on-scroll {
 	opacity: 0;
 	transform: translateY(24px);
