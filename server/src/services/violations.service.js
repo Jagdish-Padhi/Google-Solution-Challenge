@@ -50,7 +50,9 @@ export async function updateViolationStatus({ orgId, violationId, status }) {
 	return Violation.findOneAndUpdate({ _id: violationId, orgId }, update, { new: true }).lean();
 }
 
-async function captureViolationScreenshot(sourceUrl, outputPath) {
+import { cloudinary } from '../config/cloudinary.js';
+
+async function captureViolationScreenshot(sourceUrl) {
 	const puppeteer = await import('puppeteer');
 	const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
 
@@ -61,13 +63,24 @@ async function captureViolationScreenshot(sourceUrl, outputPath) {
 			waitUntil: 'domcontentloaded',
 			timeout: 30000,
 		});
-		await page.screenshot({ path: outputPath, fullPage: false });
+		const screenshotBuffer = await page.screenshot({ type: 'png', fullPage: false });
+		
+		return new Promise((resolve, reject) => {
+			const uploadStream = cloudinary.uploader.upload_stream(
+				{ folder: 'sportshield_screenshots', resource_type: 'image' },
+				(error, result) => {
+					if (error) return reject(error);
+					resolve(result.secure_url);
+				}
+			);
+			uploadStream.end(screenshotBuffer);
+		});
 	} finally {
 		await browser.close();
 	}
 }
 
-export async function createViolationScreenshot({ orgId, violationId, uploadsRoot, publicBaseUrl }) {
+export async function createViolationScreenshot({ orgId, violationId }) {
 	const violation = await Violation.findOne({ _id: violationId, orgId });
 
 	if (!violation) {
@@ -82,14 +95,110 @@ export async function createViolationScreenshot({ orgId, violationId, uploadsRoo
 		throw error;
 	}
 
-	const fileName = `violation-${Date.now()}-${crypto.randomUUID()}.png`;
-	const outputPath = path.join(uploadsRoot, fileName);
+	const screenshotUrl = await captureViolationScreenshot(violation.sourceUrl);
 
-	await fs.mkdir(uploadsRoot, { recursive: true });
-	await captureViolationScreenshot(violation.sourceUrl, outputPath);
-
-	violation.screenshotUrl = `${publicBaseUrl}/${fileName}`;
+	violation.screenshotUrl = screenshotUrl;
 	await violation.save();
 
 	return violation.toObject();
+}
+
+function buildDmcaTemplate({ organizationName, violation }) {
+	return `Subject: DMCA Takedown Notice - Unauthorized Use of Copyrighted Sports Content
+
+To Whom It May Concern,
+
+I represent ${organizationName}, the lawful copyright owner (or authorized agent) of the sports media content identified below.
+
+We have identified unauthorized use/distribution of our copyrighted work at:
+- Infringing URL: ${violation.sourceUrl}
+- Platform: ${violation.platform}
+- Detection Time: ${new Date(violation.detectedAt).toISOString()}
+- Internal Reference: ${violation._id}
+
+We request immediate removal or disabling access to this infringing content under applicable copyright law and your platform policy.
+
+Good-faith statement:
+I have a good faith belief that use of the copyrighted material described above is not authorized by the copyright owner, its agent, or the law.
+
+Accuracy and authority statement:
+I swear, under penalty of perjury, that the information in this notice is accurate and that I am authorized to act on behalf of the copyright owner.
+
+Please confirm receipt and action taken.
+
+Sincerely,
+${organizationName}
+`;
+}
+
+async function generateDmcaWithGemini({ organizationName, violation }) {
+	const apiKey = process.env.GEMINI_API_KEY?.trim();
+	if (!apiKey) {
+		return null;
+	}
+
+	const model = process.env.GEMINI_MODEL?.trim() || 'gemini-2.5-flash';
+	const prompt = `Generate a concise formal DMCA takedown notice in plain text.
+
+Organization: ${organizationName}
+Infringing URL: ${violation.sourceUrl}
+Platform: ${violation.platform}
+Detected at: ${new Date(violation.detectedAt).toISOString()}
+Evidence: confidence ${violation.matchConfidence}%, match type ${violation.matchType}
+
+Include:
+1) ownership claim
+2) unauthorized use claim
+3) good-faith statement
+4) perjury/authority statement
+5) request for prompt removal
+
+Return only the notice text.`;
+
+	const response = await fetch(
+		`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+		{
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				contents: [{ parts: [{ text: prompt }] }],
+				generationConfig: {
+					temperature: 0.3,
+					maxOutputTokens: 700,
+				},
+			}),
+		},
+	);
+
+	if (!response.ok) {
+		return null;
+	}
+
+	const payload = await response.json();
+	const text = payload?.candidates?.[0]?.content?.parts
+		?.map((part) => part?.text || '')
+		.join('\n')
+		.trim();
+
+	return text || null;
+}
+
+export async function draftDmcaNotice({ orgId, violationId }) {
+	const violation = await Violation.findOne({ _id: violationId, orgId }).lean();
+	if (!violation) {
+		const error = new Error('Violation not found.');
+		error.statusCode = 404;
+		throw error;
+	}
+
+	const organizationName = 'SportShield Rights Team';
+	const geminiDraft = await generateDmcaWithGemini({ organizationName, violation });
+
+	return {
+		violationId: violation._id.toString(),
+		platform: violation.platform,
+		sourceUrl: violation.sourceUrl,
+		draft: geminiDraft || buildDmcaTemplate({ organizationName, violation }),
+		generatedBy: geminiDraft ? 'gemini' : 'template',
+	};
 }
