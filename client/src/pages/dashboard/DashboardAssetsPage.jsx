@@ -46,6 +46,26 @@ function getFingerprintShortValue(value) {
 	return value.slice(-8);
 }
 
+const AssetThumbnail = ({ src, alt }) => {
+	const [isLoaded, setIsLoaded] = useState(false);
+	
+	return (
+		<div className="relative mb-4 h-36 w-full overflow-hidden rounded-lg bg-slate-100/50">
+			{!isLoaded && (
+				<div className="absolute inset-0 flex items-center justify-center opacity-30">
+					<Loader size={0.4} />
+				</div>
+			)}
+			<img
+				src={src}
+				alt={alt}
+				onLoad={() => setIsLoaded(true)}
+				className={`h-full w-full object-cover transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+			/>
+		</div>
+	);
+};
+
 export default function DashboardAssetsPage() {
 	const [assets, setAssets] = useState([]);
 	const [isLoading, setIsLoading] = useState(true);
@@ -324,14 +344,8 @@ export default function DashboardAssetsPage() {
 										style={{ backgroundColor: 'var(--app-color-surface)' }}
 										onClick={() => !isProcessing && handleOpenDetail(asset)}
 									>
-										{asset.type === 'image' && asset.gcsUrl ? (
-											<div className="overflow-hidden rounded-lg">
-												<img 
-													src={asset.gcsUrl} 
-													alt={asset.title} 
-													className="mb-4 h-36 w-full object-cover" 
-												/>
-											</div>
+										{(asset.thumbnailUrl || asset.gcsUrl) ? (
+											<AssetThumbnail src={asset.thumbnailUrl || asset.gcsUrl} alt={asset.title} />
 										) : null}
 
 										<div className='flex items-start justify-between gap-3'>
