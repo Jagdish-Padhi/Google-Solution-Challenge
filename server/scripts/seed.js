@@ -23,19 +23,40 @@ if (!MONGO_URI) {
 	process.exit(1);
 }
 
+// Helpers for random generation
+const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+const randomElement = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const randomDate = (startDaysAgo, endDaysAgo) => {
+	const end = new Date();
+	end.setDate(end.getDate() - endDaysAgo);
+	const start = new Date();
+	start.setDate(start.getDate() - startDaysAgo);
+	return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+};
+
+const platforms = ['youtube', 'twitter', 'telegram', 'web'];
+const domains = ['youtube.com', 'x.com', 't.me', 'vipleague.st', 'crackstreams.me', 'reddit.com', 'facebook.com', 'piratebay.org', 'sportsurge.net'];
+const highRiskDomains = ['vipleague.st', 'crackstreams.me', 't.me', 'sportsurge.net']; // Repeat offenders
+
 const seedData = async () => {
 	try {
 		console.log('Connecting to MongoDB...');
 		await mongoose.connect(MONGO_URI);
 		console.log('Connected.');
 
-		// 1. Clear existing data
-		console.log('Clearing existing data...');
-		await Promise.all([
-			Organization.deleteMany({ email: 'demo@sportshield.com' }),
-			// Note: We only delete for the demo org if it exists to avoid wiping others, 
-			// but for a clean seed we'll clear related data by orgId later.
-		]);
+		// 1. Clear existing data for demo org
+		console.log('Clearing existing demo data...');
+		const existingOrg = await Organization.findOne({ email: 'demo@sportshield.com' });
+		if (existingOrg) {
+			const orgId = existingOrg._id;
+			await Promise.all([
+				Asset.deleteMany({ orgId }),
+				ScanJob.deleteMany({ orgId }),
+				Violation.deleteMany({ orgId }),
+				Alert.deleteMany({ orgId }),
+				Organization.deleteOne({ _id: orgId })
+			]);
+		}
 
 		// 2. Create Demo Organization
 		console.log('Creating demo organization...');
@@ -45,190 +66,210 @@ const seedData = async () => {
 			email: 'demo@sportshield.com',
 			passwordHash,
 			plan: 'pro',
+			createdAt: randomDate(45, 45) // Org created 45 days ago
 		});
-
 		const orgId = demoOrg._id;
 
-		// 3. Create Sports Assets
-		console.log('Seeding assets...');
-		const assets = await Asset.insertMany([
+		// 3. Create Broad Variety of Assets
+		console.log('Seeding diverse sports assets...');
+		const assetData = [
 			{
-				orgId,
 				title: 'UEFA Champions League Final: Real Madrid vs Dortmund',
-				type: 'highlight',
-				storageKey: 'ucl_final_2024_highlights',
-				gcsUrl: 'https://res.cloudinary.com/diqmfvdzi/video/upload/v1714030000/demo/ucl_highlights.mp4',
+				type: 'video',
+				gcsUrl: 'https://res.cloudinary.com/diqmfvdzi/video/upload/v1714030000/demo/ucl.mp4',
 				thumbnailUrl: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=800',
-				status: 'active',
-				fileSize: 157286400, // 150MB
-				fingerprint: {
-					pHash: 'a1b2c3d4e5f6g7h8',
-					videoHash: 'v1v2v3v4v5v6v7v8',
-					colorHistogram: [0.1, 0.2, 0.5, 0.2],
-				},
-				violationsFound: 12,
 			},
 			{
-				orgId,
 				title: 'NBA Finals: Lakers vs Celtics Game 7',
 				type: 'video',
-				storageKey: 'nba_finals_game7_full',
-				gcsUrl: 'https://res.cloudinary.com/diqmfvdzi/video/upload/v1714030000/demo/nba_finals.mp4',
+				gcsUrl: 'https://res.cloudinary.com/diqmfvdzi/video/upload/v1714030000/demo/nba.mp4',
 				thumbnailUrl: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&q=80&w=800',
-				status: 'active',
-				fileSize: 2147483648, // 2GB
-				fingerprint: {
-					pHash: 'z9y8x7w6v5u4t3s2',
-					videoHash: 'n1b2a3f4i5n6a7l8',
-					colorHistogram: [0.3, 0.1, 0.4, 0.2],
-				},
-				violationsFound: 8,
 			},
 			{
-				orgId,
-				title: 'Wimbledon Men\'s Final: Match Point',
+				title: 'Wimbledon Men\'s Final Match Point',
 				type: 'highlight',
-				storageKey: 'wimbledon_2024_match_point',
-				gcsUrl: 'https://res.cloudinary.com/diqmfvdzi/video/upload/v1714030000/demo/wimbledon.mp4',
+				gcsUrl: 'https://res.cloudinary.com/diqmfvdzi/video/upload/v1714030000/demo/tennis.mp4',
 				thumbnailUrl: 'https://images.unsplash.com/photo-1595435064212-362677840449?auto=format&fit=crop&q=80&w=800',
-				status: 'active',
-				fileSize: 52428800, // 50MB
-				fingerprint: {
-					pHash: 'w1i2m3b4l5e6d7o8',
-					videoHash: 't1e2n3n4i5s6h7a8',
-				},
-				violationsFound: 5,
 			},
-		]);
-
-		// 4. Create Scan Jobs
-		console.log('Seeding scan jobs...');
-		const scanJobs = await ScanJob.insertMany([
 			{
+				title: 'UFC 300: Heavyweight Championship Knockout',
+				type: 'highlight',
+				gcsUrl: 'https://res.cloudinary.com/diqmfvdzi/video/upload/v1714030000/demo/ufc.mp4',
+				thumbnailUrl: 'https://images.unsplash.com/photo-1591550215446-240e8a7161b3?auto=format&fit=crop&q=80&w=800',
+			},
+			{
+				title: 'Formula 1: Red Bull RB20 Official Reveal',
+				type: 'image',
+				gcsUrl: 'https://res.cloudinary.com/diqmfvdzi/image/upload/v1714030000/demo/f1.jpg',
+				thumbnailUrl: 'https://images.unsplash.com/photo-1532983330958-4b32bb398e2c?auto=format&fit=crop&q=80&w=800',
+			},
+			{
+				title: 'ICC Cricket World Cup 2024 Official Promo Poster',
+				type: 'image',
+				gcsUrl: 'https://res.cloudinary.com/diqmfvdzi/image/upload/v1714030000/demo/cricket.jpg',
+				thumbnailUrl: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&q=80&w=800',
+			},
+			{
+				title: 'Manchester City Official Home Kit 24/25',
+				type: 'image',
+				gcsUrl: 'https://res.cloudinary.com/diqmfvdzi/image/upload/v1714030000/demo/jersey.jpg',
+				thumbnailUrl: 'https://images.unsplash.com/photo-1589487391730-58f20eb2c308?auto=format&fit=crop&q=80&w=800',
+			},
+			{
+				title: 'Player Exclusive Sneaker Release (Merch)',
+				type: 'image',
+				gcsUrl: 'https://res.cloudinary.com/diqmfvdzi/image/upload/v1714030000/demo/sneaker.jpg',
+				thumbnailUrl: 'https://images.unsplash.com/photo-1552346154-21d32810baa3?auto=format&fit=crop&q=80&w=800',
+			}
+		];
+
+		const assets = await Asset.insertMany(assetData.map((data, index) => ({
+			orgId,
+			...data,
+			storageKey: `demo_asset_${index}`,
+			status: 'active',
+			createdAt: randomDate(35, 40),
+			fileSize: data.type === 'video' ? randomInt(100, 2000) * 1024 * 1024 : randomInt(1, 10) * 1024 * 1024,
+			fingerprint: {
+				pHash: Math.random().toString(16).substring(2, 18),
+				videoHash: data.type !== 'image' ? Math.random().toString(16).substring(2, 18) : undefined,
+				colorHistogram: [Math.random(), Math.random(), Math.random(), Math.random()],
+			},
+			violationsFound: 0 // Will update later
+		})));
+
+		// 4. Create Historical Scan Jobs
+		console.log('Seeding 30-day historical scan jobs...');
+		const scanJobsData = [];
+		for (let i = 0; i < 40; i++) {
+			const asset = randomElement(assets);
+			const startedAt = randomDate(1, 30);
+			const durationMins = randomInt(2, 15);
+			const completedAt = new Date(startedAt.getTime() + durationMins * 60000);
+			
+			scanJobsData.push({
 				orgId,
-				assetId: assets[0]._id,
+				assetId: asset._id,
 				status: 'completed',
-				platforms: ['youtube', 'twitter', 'telegram', 'web'],
-				keywords: ['UCL final 2024 highlights', 'Real Madrid vs Dortmund live stream'],
-				resultsCount: 45,
-				violationsCount: 12,
-				startedAt: new Date(Date.now() - 86400000), // 1 day ago
-				completedAt: new Date(Date.now() - 86400000 + 300000), // 5 mins later
-			},
-			{
-				orgId,
-				assetId: assets[1]._id,
-				status: 'completed',
-				platforms: ['youtube', 'web'],
-				keywords: ['NBA finals game 7 full', 'Lakers Celtics stream free'],
-				resultsCount: 28,
-				violationsCount: 8,
-				startedAt: new Date(Date.now() - 43200000), // 12 hours ago
-				completedAt: new Date(Date.now() - 43200000 + 450000), // 7.5 mins later
-			},
-		]);
+				platforms: [randomElement(platforms), randomElement(platforms)],
+				keywords: [`${asset.title.split(' ')[0]} live`, `watch ${asset.title.split(' ')[1]} free`],
+				resultsCount: randomInt(10, 150),
+				violationsCount: 0, // Will update later
+				startedAt,
+				completedAt
+			});
+		}
+		const scanJobs = await ScanJob.insertMany(scanJobsData);
 
-		// 5. Create Violations
-		console.log('Seeding violations...');
-		const violations = await Violation.insertMany([
-			{
-				orgId,
-				assetId: assets[0]._id,
-				scanJobId: scanJobs[0]._id,
-				platform: 'telegram',
-				sourceUrl: 'https://t.me/live_sports_streams_hd/1024',
-				sourceDomain: 't.me',
-				matchConfidence: 94.5,
-				matchType: 'exact',
-				status: 'open',
-				screenshotUrl: 'https://images.unsplash.com/photo-1614850523296-d8c1af93d400?auto=format&fit=crop&q=80&w=800', // Abstract digital piracy look
-				evidenceBundle: {
-					hammingDistance: 2,
-					colorSimilarity: 0.98,
-					frameMatchCount: 15,
-				},
-				detectedAt: new Date(Date.now() - 80000000),
-			},
-			{
-				orgId,
-				assetId: assets[0]._id,
-				scanJobId: scanJobs[0]._id,
-				platform: 'youtube',
-				sourceUrl: 'https://youtube.com/watch?v=pirate_ucl_highlights',
-				sourceDomain: 'youtube.com',
-				matchConfidence: 88.2,
-				matchType: 'near-duplicate',
-				status: 'reported',
-				screenshotUrl: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&q=80&w=800', // Crowd/stadium look
-				evidenceBundle: {
-					hammingDistance: 8,
-					colorSimilarity: 0.92,
-					frameMatchCount: 12,
-				},
-				detectedAt: new Date(Date.now() - 75000000),
-			},
-			{
-				orgId,
-				assetId: assets[1]._id,
-				scanJobId: scanJobs[1]._id,
-				platform: 'web',
-				sourceUrl: 'https://vipleague.st/basketball/nba-finals-replay-free',
-				sourceDomain: 'vipleague.st',
-				matchConfidence: 76.4,
-				matchType: 'partial',
-				status: 'open',
-				screenshotUrl: 'https://images.unsplash.com/photo-1504450758481-7338eba7524a?auto=format&fit=crop&q=80&w=800', // Basketball court
-				evidenceBundle: {
-					hammingDistance: 12,
-					colorSimilarity: 0.85,
-				},
-				detectedAt: new Date(Date.now() - 40000000),
-			},
-			{
-				orgId,
-				assetId: assets[2]._id,
-				scanJobId: scanJobs[0]._id,
-				platform: 'twitter',
-				sourceUrl: 'https://x.com/sports_leaks/status/123456789',
-				sourceDomain: 'x.com',
-				matchConfidence: 92.1,
-				matchType: 'exact',
-				status: 'resolved',
-				resolvedAt: new Date(),
-				screenshotUrl: 'https://images.unsplash.com/photo-1595435064212-362677840449?auto=format&fit=crop&q=80&w=800', // Tennis
-				evidenceBundle: {
-					hammingDistance: 3,
-					colorSimilarity: 0.95,
-				},
-				detectedAt: new Date(Date.now() - 30000000),
-			},
-		]);
+		// 5. Create Realistic Violations (100+ over 30 days)
+		console.log('Seeding 100+ realistic violations across all cases...');
+		const violationData = [];
+		const assetViolationCounts = {};
+		const scanViolationCounts = {};
 
-		// 6. Create Alerts
-		console.log('Seeding alerts...');
-		await Alert.insertMany([
-			{
+		for (let i = 0; i < 120; i++) {
+			const scanJob = randomElement(scanJobs);
+			const asset = assets.find(a => a._id.toString() === scanJob.assetId.toString());
+			const detectedAt = new Date(scanJob.completedAt.getTime() - randomInt(0, 60000));
+			
+			// Simulate Repeat Offenders (60% chance to pick from highRiskDomains)
+			const domain = Math.random() > 0.4 ? randomElement(highRiskDomains) : randomElement(domains);
+			const platform = domain === 'youtube.com' ? 'youtube' : domain === 'x.com' ? 'twitter' : domain === 't.me' ? 'telegram' : 'web';
+			
+			// Realistic statuses
+			const statusRand = Math.random();
+			let status = 'open';
+			let resolvedAt = null;
+			let matchConfidence = randomInt(40, 99);
+			let matchType = matchConfidence > 90 ? 'exact' : matchConfidence > 70 ? 'near-duplicate' : 'partial';
+
+			if (statusRand < 0.15) {
+				status = 'false_positive';
+				matchConfidence = randomInt(30, 60);
+				matchType = 'partial';
+			} else if (statusRand < 0.35) {
+				status = 'resolved';
+				// SLA Realistic: Resolved 2 to 48 hours after detection
+				resolvedAt = new Date(detectedAt.getTime() + randomInt(2, 48) * 3600000);
+			} else if (statusRand < 0.5) {
+				status = 'reported';
+			}
+
+			// Generate screenshots based on asset type
+			const screenshotUrl = asset.thumbnailUrl;
+
+			violationData.push({
 				orgId,
-				violationId: violations[0]._id,
+				assetId: asset._id,
+				scanJobId: scanJob._id,
+				platform,
+				sourceUrl: `https://${domain}/watch/${Math.random().toString(36).substring(7)}`,
+				sourceDomain: domain,
+				matchConfidence,
+				matchType,
+				status,
+				resolvedAt,
+				screenshotUrl,
+				evidenceBundle: {
+					hammingDistance: randomInt(0, 15),
+					colorSimilarity: Number((Math.random() * 0.5 + 0.5).toFixed(2)),
+					frameMatchCount: asset.type !== 'image' ? randomInt(1, 20) : undefined,
+				},
+				detectedAt,
+				repeatOffenderScore: highRiskDomains.includes(domain) ? randomInt(50, 95) : randomInt(0, 30)
+			});
+
+			// Accumulate counts
+			assetViolationCounts[asset._id] = (assetViolationCounts[asset._id] || 0) + 1;
+			scanViolationCounts[scanJob._id] = (scanViolationCounts[scanJob._id] || 0) + 1;
+		}
+
+		const violations = await Violation.insertMany(violationData);
+
+		// Update counts in Assets and ScanJobs
+		for (const asset of assets) {
+			await Asset.findByIdAndUpdate(asset._id, { violationsFound: assetViolationCounts[asset._id] || 0 });
+		}
+		for (const job of scanJobs) {
+			await ScanJob.findByIdAndUpdate(job._id, { violationsCount: scanViolationCounts[job._id] || 0 });
+		}
+
+		// 6. Create Alerts (Spikes and High Confidence)
+		console.log('Seeding strategic alerts...');
+		const alertData = [];
+		const highConfViolations = violations.filter(v => v.matchConfidence >= 90 && v.status === 'open').slice(0, 15);
+		
+		for (const v of highConfViolations) {
+			alertData.push({
+				orgId,
+				violationId: v._id,
 				type: 'high_confidence',
 				severity: 'critical',
 				title: 'Critical Infringement Detected',
-				message: 'High-confidence match found on Telegram for "UCL Final Highlights".',
+				message: `Exact match found on ${v.platform} with ${v.matchConfidence}% confidence.`,
 				channels: ['in-app', 'email'],
-			},
-			{
-				orgId,
-				violationId: violations[2]._id,
-				type: 'new_violation',
-				severity: 'high',
-				title: 'New Piracy Source Found',
-				message: 'A new domain "vipleague.st" is hosting your NBA content.',
-				channels: ['in-app'],
-			},
-		]);
+				read: Math.random() > 0.5,
+				createdAt: new Date(v.detectedAt.getTime() + 2000)
+			});
+		}
 
-		console.log('\n✅ Seeding completed successfully!');
+		// Simulate a platform surge alert
+		alertData.push({
+			orgId,
+			type: 'platform_surge',
+			severity: 'high',
+			title: 'Telegram Piracy Surge',
+			message: 'Detected 12 new violations on Telegram within the last hour.',
+			channels: ['in-app'],
+			read: false,
+			createdAt: randomDate(1, 2)
+		});
+
+		await Alert.insertMany(alertData);
+
+		console.log('\n✅ ROBUST SEEDING COMPLETED SUCCESSFULLY!');
 		console.log('-----------------------------------');
+		console.log(`Seeded 1 Org, ${assets.length} Assets, ${scanJobs.length} Scans, ${violations.length} Violations, ${alertData.length} Alerts.`);
 		console.log('Demo Credentials:');
 		console.log('Email: demo@sportshield.com');
 		console.log('Password: SportShield@123');
