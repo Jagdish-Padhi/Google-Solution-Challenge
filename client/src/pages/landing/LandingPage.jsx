@@ -17,7 +17,7 @@ import {
 	Zap,
 } from 'lucide-react';
 
-import { Button, Container, Header, Loader } from '../../components';
+import { Button, Container, Header, Loader, Footer } from '../../components';
 
 const navItems = [
 	{ label: 'Product', href: '#product', icon: Box },
@@ -332,30 +332,81 @@ export default function LandingPage() {
 				</Container>
 			</section>
 
-			<section id='contact' className='border-t border-(--app-color-border) py-16'>
-				<Container>
-					<Reveal className='flex flex-col items-start justify-between gap-6 rounded-[3rem] border border-(--app-color-border) bg-(--app-color-surface) p-10 shadow-sm lg:flex-row lg:items-center'>
-						<div className='max-w-2xl space-y-3'>
-							<p className='text-xs font-bold uppercase tracking-[0.3em] text-(--app-color-primary)'>Secure Your Legacy</p>
-							<h2 className='text-2xl font-black text-(--app-color-text) sm:text-4xl'>
-								Stop unauthorized distribution today.
-							</h2>
-							<p className='text-sm leading-7 text-(--app-color-text-muted)'>
-								Join leading rights holders who trust SportShield to monitor their global digital presence 24/7.
-							</p>
-						</div>
+			<section id='contact' className='border-t border-(--app-color-border) py-24 bg-(--app-color-surface) relative overflow-hidden'>
+				<div className="absolute top-0 left-0 w-full h-full opacity-[0.03] pointer-events-none">
+					<div className="absolute -top-24 -right-24 w-96 h-96 bg-(--app-color-primary) rounded-full blur-3xl" />
+					<div className="absolute -bottom-24 -left-24 w-96 h-96 bg-(--app-color-success) rounded-full blur-3xl" />
+				</div>
 
-						<div className='flex flex-col gap-4 sm:flex-row'>
-							<Link to='/register'>
-								<Button size="lg" className="px-10">Start now</Button>
-							</Link>
-							<Link to='/login'>
-								<Button variant='secondary' size="lg" className="px-10">Access dashboard</Button>
-							</Link>
-						</div>
-					</Reveal>
+				<Container>
+					<div className="grid lg:grid-cols-2 gap-16 items-center">
+						<Reveal className='space-y-8'>
+							<div className="space-y-4">
+								<p className='text-xs font-black uppercase tracking-[0.3em] text-(--app-color-primary)'>Enterprise Support</p>
+								<h2 className='text-4xl font-black text-(--app-color-text) leading-[1.1]'>
+									Protect your legacy. <br />
+									<span className="text-(--app-color-primary)">Talk to our Experts.</span>
+								</h2>
+								<p className='text-base leading-7 text-(--app-color-text-muted) max-w-lg'>
+									Join the world's leading rights holders who trust SportShield to monitor their global digital footprint 24/7. Our team is ready to help you secure your content.
+								</p>
+							</div>
+
+							<div className="space-y-6">
+								<div className="flex items-start gap-4">
+									<div className="h-10 w-10 rounded-xl bg-(--app-color-primary-soft) flex items-center justify-center text-(--app-color-primary) shrink-0">
+										<Mail size={20} />
+									</div>
+									<div>
+										<p className="text-xs font-bold uppercase tracking-wider text-(--app-color-text-muted)">Direct Email</p>
+										<a href="mailto:code369decode@gmail.com" className="text-lg font-bold text-(--app-color-text) hover:text-(--app-color-primary) transition-colors">code369decode@gmail.com</a>
+									</div>
+								</div>
+
+								<div className="flex items-start gap-4">
+									<div className="h-10 w-10 rounded-xl bg-(--app-color-primary-soft) flex items-center justify-center text-(--app-color-primary) shrink-0">
+										<ShieldCheck size={20} />
+									</div>
+									<div>
+										<p className="text-xs font-bold uppercase tracking-wider text-(--app-color-text-muted)">Team Signature</p>
+										<p className="text-lg font-bold text-(--app-color-text)">Esc(Reality);</p>
+									</div>
+								</div>
+							</div>
+						</Reveal>
+
+						<Reveal className="relative">
+							<div className="rounded-[2.5rem] border border-(--app-color-border) bg-(--app-color-surface-glass) p-10 shadow-2xl backdrop-blur-xl space-y-8">
+								<div className="space-y-3">
+									<h3 className="text-2xl font-black text-(--app-color-text)">Establish Connection</h3>
+									<p className="text-sm text-(--app-color-text-muted) leading-relaxed">
+										We provide dedicated engineering support for large-scale rights holders. Reach out directly to initiate onboarding.
+									</p>
+								</div>
+
+								<div className="space-y-4">
+									<div className="p-6 rounded-2xl bg-(--app-color-surface-elevated) border border-(--app-color-border) group hover:border-(--app-color-primary)/30 transition-all">
+										<label className="text-[10px] font-bold uppercase tracking-widest text-(--app-color-primary) mb-2 block">Technical Inquiries</label>
+										<p className="text-lg font-mono font-bold text-(--app-color-text)">code369decode@gmail.com</p>
+									</div>
+									
+									<div className="p-6 rounded-2xl bg-(--app-color-surface-elevated) border border-(--app-color-border) group hover:border-(--app-color-primary)/30 transition-all">
+										<label className="text-[10px] font-bold uppercase tracking-widest text-(--app-color-primary) mb-2 block">Lead Developer</label>
+										<p className="text-lg font-mono font-bold text-(--app-color-text)">TEAM ESC(REALITY);</p>
+									</div>
+								</div>
+
+								<div className="flex items-center gap-3 text-xs font-bold text-(--app-color-text-muted) uppercase tracking-widest">
+									<span className="w-2 h-2 rounded-full bg-(--app-color-success) animate-pulse"></span>
+									Available for deployment
+								</div>
+							</div>
+						</Reveal>
+					</div>
 				</Container>
 			</section>
+
+			<Footer />
 		</main>
 	);
 }
