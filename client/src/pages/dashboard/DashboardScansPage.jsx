@@ -40,6 +40,7 @@ export default function DashboardScansPage() {
 	const [isLoading, setIsLoading] = useState(true);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isRunningScheduled, setIsRunningScheduled] = useState(false);
+	const [isRetryingAll, setIsRetryingAll] = useState(false);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [error, setError] = useState('');
 	const [filters, setFilters] = useState({
@@ -240,6 +241,24 @@ export default function DashboardScansPage() {
 		}
 	};
 
+	const handleRetryAllFailed = async () => {
+		const failedJobs = scanJobs.filter((job) => job.status === 'failed');
+		if (failedJobs.length === 0) {
+			toast.error('No failed scans to retry.');
+			return;
+		}
+		setIsRetryingAll(true);
+		try {
+			await Promise.all(failedJobs.map((job) => api.post(`/scans/${job._id}/retry`)));
+			toast.success(`Re-queued ${failedJobs.length} failed scan${failedJobs.length === 1 ? '' : 's'}.`);
+			await loadScans();
+		} catch {
+			toast.error('Some scans could not be retried.');
+		} finally {
+			setIsRetryingAll(false);
+		}
+	};
+
 	const handleRunScheduledNow = async () => {
 		setIsRunningScheduled(true);
 		try {
@@ -284,6 +303,12 @@ export default function DashboardScansPage() {
 					<p className='text-sm text-(--app-color-text-muted)'>Queue scans, monitor progress, and review discovered results.</p>
 				</div>
 				<div className='flex items-center gap-2'>
+					{scanJobs.some((job) => job.status === 'failed') && (
+						<Button variant='secondary' onClick={handleRetryAllFailed} loading={isRetryingAll} disabled={isRetryingAll} className="flex items-center gap-2">
+							<RotateCcw size={16} />
+							Retry All Failed
+						</Button>
+					)}
 					<Button variant='secondary' onClick={handleRunScheduledNow} loading={isRunningScheduled} disabled={isRunningScheduled} className="flex items-center gap-2">
 						<CalendarClock size={16} />
 						Run Scheduled Now

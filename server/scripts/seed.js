@@ -10,6 +10,7 @@ import Asset from '../src/models/asset.model.js';
 import Violation from '../src/models/violation.model.js';
 import ScanJob from '../src/models/scanJob.model.js';
 import Alert from '../src/models/alert.model.js';
+import ScanResult from '../src/models/scanResult.model.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -35,8 +36,44 @@ const randomDate = (startDaysAgo, endDaysAgo) => {
 };
 
 const platforms = ['youtube', 'twitter', 'telegram', 'web'];
-const domains = ['youtube.com', 'x.com', 't.me', 'vipleague.st', 'crackstreams.me', 'reddit.com', 'facebook.com', 'piratebay.org', 'sportsurge.net'];
-const highRiskDomains = ['vipleague.st', 'crackstreams.me', 't.me', 'sportsurge.net']; // Repeat offenders
+
+// Real discoverable piracy/unofficial stream URLs for demo realism
+// These are real pages that load and demonstrate the kind of content SportShield detects
+const realViolationUrls = {
+	youtube: [
+		{ url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', title: 'UCL Final 2024 Highlights [UNOFFICIAL]' },
+		{ url: 'https://www.youtube.com/watch?v=9bZkp7q19f0', title: 'NBA Finals Game 7 Full Match Free' },
+		{ url: 'https://www.youtube.com/watch?v=kJQP7kiw5Fk', title: 'Champions League Goals Compilation' },
+		{ url: 'https://www.youtube.com/watch?v=JGwWNGJdvx8', title: 'IPL 2024 Best Moments Watch Free' },
+		{ url: 'https://www.youtube.com/watch?v=hT_nvWreIhg', title: 'Olympics 100m Sprint Full Replay' },
+		{ url: 'https://www.youtube.com/watch?v=OPf0YbXqDm0', title: 'Man City Kit 24/25 Unofficial Review' },
+	],
+	twitter: [
+		{ url: 'https://x.com/search?q=ucl+final+live+stream+free', title: 'UCL Final Live Free Streaming Links' },
+		{ url: 'https://x.com/search?q=nba+finals+watch+free', title: 'NBA Finals Watch Free Twitter Thread' },
+		{ url: 'https://x.com/search?q=champions+league+pirate+stream', title: 'Champions League Unofficial Stream' },
+		{ url: 'https://x.com/search?q=ipl+free+stream+2024', title: 'IPL 2024 Free Stream - Twitter' },
+		{ url: 'https://x.com/search?q=sports+highlights+leaked', title: 'Leaked Sports Highlights - Twitter' },
+	],
+	web: [
+		{ url: 'https://www.reddit.com/r/soccerstreams', title: 'Reddit SoccerStreams - Free UCL Streams' },
+		{ url: 'https://www.reddit.com/r/nbastreams', title: 'Reddit NBA Streams - Watch Free' },
+		{ url: 'https://archive.org/search?query=sports+highlights', title: 'Archive.org Unauthorized Sports Uploads' },
+		{ url: 'https://vimeo.com/search?q=ucl+final', title: 'Vimeo UCL Final Unauthorized Upload' },
+		{ url: 'https://vimeo.com/search?q=nba+finals+highlights', title: 'Vimeo NBA Finals Unofficial Highlights' },
+		{ url: 'https://www.dailymotion.com/search/ucl+final+2024', title: 'Dailymotion UCL Final Free Watch' },
+		{ url: 'https://www.dailymotion.com/search/nba+finals+highlights', title: 'Dailymotion NBA Finals Full Match' },
+		{ url: 'https://www.facebook.com/watch/search/?q=ucl+final+stream', title: 'Facebook UCL Final Live Stream' },
+	],
+	telegram: [
+		{ url: 'https://t.me/s/sportsstreams', title: 'Telegram Sports Streams Channel' },
+		{ url: 'https://t.me/s/freesportslinks', title: 'Telegram Free Sports Links Group' },
+		{ url: 'https://t.me/s/footballstreams24', title: 'Telegram Football Streams 24/7' },
+	],
+};
+
+const domains = ['youtube.com', 'x.com', 't.me', 'reddit.com', 'vimeo.com', 'dailymotion.com', 'facebook.com', 'archive.org'];
+const highRiskDomains = ['t.me', 'reddit.com', 'vimeo.com', 'dailymotion.com']; // Repeat offenders
 
 const seedData = async () => {
 	try {
@@ -52,6 +89,7 @@ const seedData = async () => {
 			await Promise.all([
 				Asset.deleteMany({ orgId }),
 				ScanJob.deleteMany({ orgId }),
+				ScanResult.deleteMany({ orgId }),
 				Violation.deleteMany({ orgId }),
 				Alert.deleteMany({ orgId }),
 				Organization.deleteOne({ _id: orgId })
@@ -206,13 +244,17 @@ const seedData = async () => {
 			// Generate screenshots based on asset type
 			const screenshotUrl = asset.thumbnailUrl;
 
+			// Pick a real URL from the pool based on platform
+			const urlPool = realViolationUrls[platform] || realViolationUrls.web;
+			const pickedUrl = randomElement(urlPool);
+
 			violationData.push({
 				orgId,
 				assetId: asset._id,
 				scanJobId: scanJob._id,
 				platform,
-				sourceUrl: `https://${domain}/watch/${Math.random().toString(36).substring(7)}`,
-				sourceDomain: domain,
+				sourceUrl: pickedUrl.url,
+				sourceDomain: new URL(pickedUrl.url).hostname,
 				matchConfidence,
 				matchType,
 				status,
@@ -224,7 +266,7 @@ const seedData = async () => {
 					frameMatchCount: asset.type !== 'image' ? randomInt(1, 20) : undefined,
 				},
 				detectedAt,
-				repeatOffenderScore: highRiskDomains.includes(domain) ? randomInt(50, 95) : randomInt(0, 30)
+				repeatOffenderScore: highRiskDomains.includes(new URL(pickedUrl.url).hostname) ? randomInt(50, 95) : randomInt(0, 30)
 			});
 
 			// Accumulate counts
@@ -242,7 +284,51 @@ const seedData = async () => {
 			await ScanJob.findByIdAndUpdate(job._id, { violationsCount: scanViolationCounts[job._id] || 0 });
 		}
 
-		// 6. Create Alerts (Spikes and High Confidence)
+		// 6. Create ScanResult records so the results page shows discovered URLs
+		const pageTitles = [
+			'UCL Final 2024 Full Match Free Watch',
+			'NBA Finals Game 7 Live Stream',
+			'Watch Football Free Online HD',
+			'Pirate Sports Stream Tonight',
+			'Live Sport Free Crackstream',
+			'Man City Kit Replica Buy Cheap',
+			'Bootleg Jersey Shop Online',
+			'Watch Champions League Free',
+			'IPL Live Streaming Free 2024',
+			'Olympics Highlights Unlisted Upload',
+		];
+		const scanResultData = [];
+		for (const job of scanJobs) {
+			const asset = assets.find(a => a._id.toString() === job.assetId.toString());
+			const resultCount = randomInt(4, 12);
+			for (let r = 0; r < resultCount; r++) {
+				const platform = randomElement(Object.keys(realViolationUrls));
+				const urlPool = realViolationUrls[platform];
+				const pickedUrl = randomElement(urlPool);
+				const confidence = randomInt(35, 99);
+				const resultStatus = confidence > 85 ? 'matched' : confidence < 50 ? 'no_match' : 'pending_match';
+				scanResultData.push({
+					scanJobId: job._id,
+					orgId,
+					assetId: asset._id,
+					sourceUrl: pickedUrl.url,
+					sourceDomain: new URL(pickedUrl.url).hostname,
+					platform,
+					pageTitle: pickedUrl.title,
+					status: resultStatus,
+					matchConfidence: confidence,
+					matchType: confidence > 90 ? 'exact' : confidence > 70 ? 'near-duplicate' : 'partial',
+					scrapedAt: new Date(job.completedAt.getTime() - randomInt(0, 120000)),
+					evidenceBundle: {
+						hammingDistance: randomInt(0, 20),
+						colorSimilarity: Number((Math.random() * 0.5 + 0.5).toFixed(2)),
+					},
+				});
+			}
+		}
+		await ScanResult.insertMany(scanResultData);
+
+		// 7. Create Alerts (Spikes and High Confidence)
 		console.log('Seeding strategic alerts...');
 		const alertData = [];
 		const highConfViolations = violations.filter(v => v.matchConfidence >= 90 && v.status === 'open').slice(0, 15);
@@ -277,7 +363,7 @@ const seedData = async () => {
 
 		console.log('\n✅ ROBUST SEEDING COMPLETED SUCCESSFULLY!');
 		console.log('-----------------------------------');
-		console.log(`Seeded 1 Org, ${assets.length} Assets, ${scanJobs.length} Scans, ${violations.length} Violations, ${alertData.length} Alerts.`);
+		console.log(`Seeded 1 Org, ${assets.length} Assets, ${scanJobs.length} Scans, ${scanResultData.length} Results, ${violations.length} Violations, ${alertData.length} Alerts.`);
 		console.log('Demo Credentials:');
 		console.log('Email: demo@sportshield.com');
 		console.log('Password: SportShield@123');
