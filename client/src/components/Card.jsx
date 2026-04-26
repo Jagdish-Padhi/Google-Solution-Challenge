@@ -13,6 +13,7 @@ const Card = ({
 	elevated = false,
 	className = '',
 	onClick = null,
+	headerAction = null,
 	...props
 }) => {
 	const bgColor = elevated ? 'bg-[var(--app-color-surface-elevated)]' : 'bg-[var(--app-color-surface)]';
@@ -25,9 +26,12 @@ const Card = ({
 			{(header || title) && (
 				<div className='border-b border-(--app-color-border) px-6 py-4'>
 					{title ? (
-						<div>
-							<h3 className='text-lg font-semibold text-(--app-color-text)'>{title}</h3>
-							{subtitle && <p className='text-sm text-(--app-color-text-muted) mt-1'>{subtitle}</p>}
+						<div className="flex items-center justify-between">
+							<div>
+								<h3 className='text-lg font-semibold text-(--app-color-text)'>{title}</h3>
+								{subtitle && <p className='text-sm text-(--app-color-text-muted) mt-1'>{subtitle}</p>}
+							</div>
+							{headerAction && <div>{headerAction}</div>}
 						</div>
 					) : (
 						header

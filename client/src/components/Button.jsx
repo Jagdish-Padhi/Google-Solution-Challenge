@@ -14,6 +14,7 @@ const Button = ({
 	type = 'button',
 	className = '',
 	as: Component = 'button',
+	fullWidth = false,
 	...props
 }) => {
 	const baseStyles = 'font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed';
@@ -35,7 +36,7 @@ const Button = ({
 		xl: 'px-8 py-4 text-lg',
 	};
 
-	const styles = `${baseStyles} ${variantStyles[variant] || variantStyles.primary} ${sizeStyles[size] || sizeStyles.md} ${className}`;
+	const styles = `${baseStyles} ${variantStyles[variant] || variantStyles.primary} ${sizeStyles[size] || sizeStyles.md} ${fullWidth ? 'w-full' : ''} ${className}`;
 
 	return (
 		<Component

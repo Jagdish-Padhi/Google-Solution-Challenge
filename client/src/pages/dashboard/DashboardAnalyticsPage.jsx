@@ -69,22 +69,6 @@ function inferDownloadFileName(report) {
 	return 'analytics-report.pdf';
 }
 
-function buildChartPoints(items) {
-	if (!items.length) {
-		return '';
-	}
-
-	const maxValue = Math.max(...items.map((item) => item.count), 1);
-
-	return items
-		.map((item, index) => {
-			const x = items.length === 1 ? 210 : (index / (items.length - 1)) * 420;
-			const y = 140 - (item.count / maxValue) * 120;
-			return `${x},${y}`;
-		})
-		.join(' ');
-}
-
 function trendBadgeVariant(direction) {
 	if (direction === 'up') {
 		return 'warning';
@@ -98,49 +82,180 @@ function trendBadgeVariant(direction) {
 }
 
 function TrendLineChart({ items }) {
+	const [hoveredPoint, setHoveredPoint] = useState(null);
+
 	if (!items.length) {
 		return <EmptyState title='No timeline data' message='Run more scans to build trend visibility.' />;
 	}
 
-	const points = buildChartPoints(items);
 	const maxValue = Math.max(...items.map((item) => item.count), 1);
+	
+	const pointsList = items.map((item, index) => {
+		const x = items.length === 1 ? 220 : 10 + (index / (items.length - 1)) * 420;
+		const y = 140 - (item.count / maxValue) * 120;
+		return { x, y, item };
+	});
+	
+	const pointsString = pointsList.map(p => `${p.x},${p.y}`).join(' ');
+	const firstX = pointsList[0].x;
+	const lastX = pointsList[pointsList.length - 1].x;
+	const areaString = `${firstX},140 ${pointsString} ${lastX},140`;
 
 	return (
-		<div className='space-y-4'>
-			<svg viewBox='0 0 440 160' className='h-44 w-full overflow-visible'>
-				<defs>
-					<linearGradient id='analytics-line' x1='0%' y1='0%' x2='100%' y2='0%'>
-						<stop offset='0%' stopColor='#14b8a6' />
-						<stop offset='100%' stopColor='#0f766e' />
-					</linearGradient>
-				</defs>
-				<line x1='0' y1='140' x2='420' y2='140' stroke='rgba(148, 163, 184, 0.6)' strokeWidth='1' />
-				<polyline
-					fill='none'
-					stroke='url(#analytics-line)'
-					strokeWidth='4'
-					strokeLinecap='round'
-					strokeLinejoin='round'
-					points={points}
-				/>
-				{items.map((item, index) => {
-					const x = items.length === 1 ? 210 : (index / (items.length - 1)) * 420;
-					const y = 140 - (item.count / maxValue) * 120;
-
-					return (
-						<g key={item.date}>
-							<circle cx={x} cy={y} r='4' fill='#0f766e' />
+		<div className='space-y-6 relative group/chart py-2'>
+			<style>
+				{`
+					@keyframes drawLine {
+						from { stroke-dashoffset: 2000; }
+						to { stroke-dashoffset: 0; }
+					}
+					@keyframes fadeArea {
+						from { opacity: 0; }
+						to { opacity: 1; }
+					}
+					.animated-line {
+						stroke-dasharray: 2000;
+						stroke-dashoffset: 2000;
+						animation: drawLine 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+					}
+					.animated-area {
+						opacity: 0;
+						animation: fadeArea 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) 0.4s forwards;
+					}
+				`}
+			</style>
+			
+			<div className="relative w-full">
+				<svg viewBox='0 0 440 150' className='w-full h-auto overflow-visible' preserveAspectRatio='none'>
+					<defs>
+						<linearGradient id='analytics-line' x1='0%' y1='0%' x2='100%' y2='0%'>
+							<stop offset='0%' stopColor='var(--app-color-primary)' />
+							<stop offset='100%' stopColor='#0f766e' />
+						</linearGradient>
+						<linearGradient id='analytics-area' x1='0%' y1='0%' x2='0%' y2='100%'>
+							<stop offset='0%' stopColor='var(--app-color-primary)' stopOpacity='0.15' />
+							<stop offset='100%' stopColor='#0f766e' stopOpacity='0' />
+						</linearGradient>
+					</defs>
+					
+					{/* Horizontal Grid lines */}
+					{[0, 0.25, 0.5, 0.75, 1].map(ratio => (
+						<g key={ratio}>
+							<line 
+								x1='0' y1={140 - ratio * 120} 
+								x2='440' y2={140 - ratio * 120} 
+								stroke='var(--app-color-border)' 
+								strokeWidth='1' 
+								strokeDasharray={ratio === 0 ? "" : "4 4"}
+								opacity={ratio === 0 ? 1 : 0.5}
+							/>
+							{/* Y-axis labels */}
+							{ratio > 0 && (
+								<text 
+									x="0" 
+									y={140 - ratio * 120 - 4} 
+									fontSize="8" 
+									fontWeight="bold"
+									fill="var(--app-color-text-muted)"
+									opacity="0.6"
+								>
+									{Math.round(ratio * maxValue)}
+								</text>
+							)}
 						</g>
+					))}
+
+					{/* Vertical hover line indicator */}
+					{hoveredPoint && (
+						<line 
+							x1={hoveredPoint.x} y1={hoveredPoint.y} 
+							x2={hoveredPoint.x} y2="140" 
+							stroke="var(--app-color-text-muted)" 
+							strokeWidth="1" 
+							strokeDasharray="3 3"
+							opacity="0.6"
+							className="animate-in fade-in duration-200"
+						/>
+					)}
+
+					{/* Filled Area under the curve */}
+					<polygon
+						points={areaString}
+						fill='url(#analytics-area)'
+						className='animated-area'
+					/>
+
+					{/* The Stroke Line */}
+					<polyline
+						fill='none'
+						stroke='url(#analytics-line)'
+						strokeWidth='2'
+						strokeLinecap='round'
+						strokeLinejoin='round'
+						points={pointsString}
+						className='animated-line'
+					/>
+
+					{/* Data Points */}
+					{pointsList.map((p) => {
+						const isHovered = hoveredPoint?.x === p.x;
+						return (
+							<g 
+								key={p.item.date} 
+								className="cursor-pointer"
+								onMouseEnter={() => setHoveredPoint(p)}
+								onMouseLeave={() => setHoveredPoint(null)}
+							>
+								{/* Actual dot - hidden unless hovered */}
+								<circle 
+									cx={p.x} 
+									cy={p.y} 
+									r='4.5'
+									fill='var(--app-color-surface)'
+									stroke='var(--app-color-primary)'
+									strokeWidth='2'
+									opacity={isHovered ? 1 : 0}
+									className="transition-opacity duration-150"
+								/>
+								{/* Invisible hover target */}
+								<circle cx={p.x} cy={p.y} r='16' fill='transparent' />
+							</g>
+						);
+					})}
+					{/* Tooltip Overlay perfectly synced inside SVG coordinate space */}
+					{hoveredPoint && (
+						<foreignObject 
+							x={hoveredPoint.x - 60} 
+							y={hoveredPoint.y - 60} 
+							width="120" 
+							height="55"
+							className="overflow-visible pointer-events-none"
+						>
+							<div className="flex flex-col items-center justify-end h-full w-full animate-in fade-in zoom-in-95 duration-150">
+								<div className="bg-slate-900 text-white px-3 py-1.5 rounded-xl shadow-xl shadow-teal-900/20 border border-slate-700/50 flex flex-col items-center">
+									<span className="text-[8px] font-bold uppercase tracking-widest text-slate-400 whitespace-nowrap leading-none">{hoveredPoint.item.label}</span>
+									<span className="text-sm font-black text-teal-400 tabular-nums leading-tight mt-0.5">
+										{hoveredPoint.item.count}
+										<span className="text-[8px] text-slate-500 font-bold ml-1">VIOLATIONS</span>
+									</span>
+								</div>
+								<div className="w-2.5 h-2.5 bg-slate-900 rotate-45 border-r border-b border-slate-700/50 -mt-1.5 z-[-1]"></div>
+							</div>
+						</foreignObject>
+					)}
+				</svg>
+			</div>
+
+			{/* X-Axis labels below the chart */}
+			<div className='flex justify-between text-[10px] font-bold uppercase tracking-widest text-(--app-color-text-muted) px-2 mt-4'>
+				{items.filter((_, i) => i % Math.max(1, Math.floor(items.length / 7)) === 0).map((item) => {
+					const parts = item.label.split(' ');
+					return (
+						<span key={item.date} className="text-center inline-block">
+							{parts[0]}<br/><span className="text-slate-400">{parts[1] || ''}</span>
+						</span>
 					);
 				})}
-			</svg>
-			<div className='grid grid-cols-4 gap-2 text-xs text-(--app-color-text-muted) sm:grid-cols-7'>
-				{items.slice(Math.max(0, items.length - 7)).map((item) => (
-					<div key={item.date} className='rounded-lg bg-(--app-color-surface) px-2 py-2 text-center'>
-						<p>{item.label}</p>
-						<p className='mt-1 font-semibold text-(--app-color-text)'>{item.count}</p>
-					</div>
-				))}
 			</div>
 		</div>
 	);
