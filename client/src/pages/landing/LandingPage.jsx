@@ -4,22 +4,26 @@ import {
 	ArrowRight,
 	BarChart3,
 	BellRing,
+	Box,
 	FileSearch,
 	Globe2,
 	Layers3,
+	Lock,
 	LockKeyhole,
+	Mail,
 	Radar,
 	ShieldCheck,
 	Workflow,
+	Zap,
 } from 'lucide-react';
 
 import { Button, Container, Header, Loader } from '../../components';
 
 const navItems = [
-	{ label: 'Product', href: '#product' },
-	{ label: 'Capabilities', href: '#capabilities' },
-	{ label: 'Security', href: '#security' },
-	{ label: 'Contact', href: '#contact' },
+	{ label: 'Product', href: '#product', icon: Box },
+	{ label: 'Capabilities', href: '#capabilities', icon: Zap },
+	{ label: 'Security', href: '#security', icon: Lock },
+	{ label: 'Contact', href: '#contact', icon: Mail },
 ];
 
 const featureCards = [

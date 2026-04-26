@@ -20,14 +20,22 @@ const Header = ({
 	const brand = onLogoClick ? (
 		<button
 			type='button'
-			className='flex items-center gap-2 text-lg font-semibold text-(--app-color-primary)'
+			className='flex items-center gap-3 logo-brand group'
 			onClick={onLogoClick}
 		>
-			{logo}
+			<img src='/navlogo.png' alt='SportShield' className='h-12 w-12 object-contain transition-transform duration-500 group-hover:scale-110' />
+			<div className="flex items-baseline gap-0.5">
+				<span className="text-(--app-color-text) text-2xl!">Sport</span>
+				<span className="logo-shield text-2xl!">Shield</span>
+			</div>
 		</button>
 	) : (
-		<Link to={logoHref} className='flex items-center gap-2 text-lg font-semibold text-(--app-color-primary)'>
-			{logo}
+		<Link to={logoHref} className='flex items-center gap-3 logo-brand group'>
+			<img src='/navlogo.png' alt='SportShield' className='h-12 w-12 object-contain transition-transform duration-500 group-hover:scale-110' />
+			<div className="flex items-baseline gap-0.5">
+				<span className="text-(--app-color-text) text-2xl!">Sport</span>
+				<span className="logo-shield text-2xl!">Shield</span>
+			</div>
 		</Link>
 	);
 
@@ -44,15 +52,19 @@ const Header = ({
 				{brand}
 
 				<nav className='hidden items-center gap-6 md:flex'>
-					{navItems.map((item) => (
-						<a
-							key={item.label}
-							href={item.href}
-							className='text-sm font-medium text-(--app-color-text-muted) transition-colors hover:text-(--app-color-primary)'
-						>
-							{item.label}
-						</a>
-					))}
+					{navItems.map((item) => {
+						const Icon = item.icon;
+						return (
+							<a
+								key={item.label}
+								href={item.href}
+								className='nav-link-underline flex items-center gap-2 text-sm font-medium'
+							>
+								{Icon && <Icon size={16} className="text-(--app-color-success)/70" />}
+								{item.label}
+							</a>
+						);
+					})}
 				</nav>
 
 				<div className='flex items-center gap-3'>{userMenu}</div>

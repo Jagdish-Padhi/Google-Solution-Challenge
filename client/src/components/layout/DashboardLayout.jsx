@@ -8,13 +8,24 @@ import api from '../../services/api.js';
 import { connectRealtime, disconnectRealtime } from '../../services/realtime.js';
 import useAuthStore from '../../store/auth.store.js';
 
+import {
+	BarChart3,
+	Bell,
+	Building2,
+	Layers,
+	LayoutDashboard,
+	LogOut,
+	Radar,
+	ShieldAlert,
+} from 'lucide-react';
+
 const navigationItems = [
-	{ label: 'Overview', path: '/dashboard' },
-	{ label: 'Assets', path: '/dashboard/assets' },
-	{ label: 'Scans', path: '/dashboard/scans' },
-	{ label: 'Analytics', path: '/dashboard/analytics' },
-	{ label: 'Alerts', path: '/dashboard/alerts' },
-	{ label: 'Violations', path: '/dashboard/violations' },
+	{ label: 'Overview', path: '/dashboard', icon: LayoutDashboard },
+	{ label: 'Assets', path: '/dashboard/assets', icon: Layers },
+	{ label: 'Scans', path: '/dashboard/scans', icon: Radar },
+	{ label: 'Analytics', path: '/dashboard/analytics', icon: BarChart3 },
+	{ label: 'Alerts', path: '/dashboard/alerts', icon: Bell },
+	{ label: 'Violations', path: '/dashboard/violations', icon: ShieldAlert },
 ];
 
 const shellBackground = {
@@ -101,25 +112,29 @@ export default function DashboardLayout() {
 		<div className={`min-h-screen text-(--app-color-text) ${isTransitioning ? 'animate-dashboard-exit' : 'animate-dashboard-land'}`} style={shellBackground}>
 			<header className='sticky top-0 z-20 border-b border-white/60 bg-white/75 backdrop-blur-xl'>
 				<Container className='flex min-h-20 items-center justify-between gap-4 py-4'>
-					<Link to='/' className='flex items-center gap-3'>
-						<img src='/navlogo.png' alt='SportShield' className='h-16 w-16 object-contain' />
-						<div>
-							<p className='text-xs font-semibold uppercase tracking-[0.28em] text-(--app-color-text-muted)'>SportShield</p>
-							<h1 className='text-lg font-semibold'>Dashboard</h1>
+					<Link to='/' className='flex items-center gap-3 group'>
+						<img src='/navlogo.png' alt='SportShield' className='h-12 w-12 object-contain transition-transform duration-500 group-hover:scale-110' />
+						<div className="logo-brand">
+							<div className="flex items-baseline gap-0.5">
+								<span className="text-(--app-color-text) text-2xl!">Sport</span>
+								<span className="logo-shield text-2xl!">Shield</span>
+							</div>
 						</div>
 					</Link>
 
 					<nav className='hidden items-center gap-2 md:flex'>
 						{navigationItems.map((item) => {
 							const isActive = location.pathname === item.path;
+							const Icon = item.icon;
 
 							return (
 								<Link
 									key={item.path}
 									to={item.path}
-									className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${isActive ? 'bg-(--app-color-primary-soft) text-(--app-color-primary)' : 'text-(--app-color-text-muted) hover:text-(--app-color-text)'}`}
+									className={`nav-link-underline px-4 py-2 text-sm font-medium ${isActive ? 'active' : ''}`}
 								>
-									<span className='flex items-center gap-2'>
+									<span className='flex items-center gap-2.5'>
+										<Icon size={16} className={`${isActive ? 'text-(--app-color-success)' : 'text-(--app-color-text-muted)'} transition-colors duration-300`} />
 										{item.label}
 										{item.label === 'Alerts' && unreadAlerts > 0 ? (
 											<Badge variant='danger' size='sm' className='min-w-6 justify-center px-2 py-0.5 text-[10px]'>
@@ -133,12 +148,26 @@ export default function DashboardLayout() {
 					</nav>
 
 					<div className='flex items-center gap-3'>
-						<Badge variant='outline' className='hidden sm:inline-flex'>
-							{user?.orgName || 'Guest'}
-						</Badge>
-						<Button variant='secondary' size='sm' onClick={handleLogout}>
-							Logout
-						</Button>
+						<div className='tooltip-container'>
+							<div className='flex h-11 w-11 items-center justify-center rounded-full border border-(--app-color-border) bg-white/50 text-(--app-color-primary) transition-all hover:bg-white hover:border-(--app-color-primary)/30 hover:shadow-md cursor-help'>
+								<Building2 size={20} />
+							</div>
+							<div className='tooltip-dropdown-content'>
+								{user?.orgName || 'Guest'}
+							</div>
+						</div>
+
+						<button 
+							onClick={handleLogout}
+							className='tooltip-container group'
+						>
+							<div className='flex h-11 w-11 items-center justify-center rounded-full border border-red-100 bg-red-50/50 text-red-500 transition-all hover:bg-red-50 hover:border-red-200 hover:shadow-md'>
+								<LogOut size={20} />
+							</div>
+							<div className='tooltip-dropdown-content !text-red-600 !border-red-100'>
+								Logout
+							</div>
+						</button>
 					</div>
 				</Container>
 			</header>
