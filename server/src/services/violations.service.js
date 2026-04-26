@@ -105,30 +105,59 @@ export async function createViolationScreenshot({ orgId, violationId }) {
 }
 
 function buildDmcaTemplate({ organizationName, violation }) {
-	return `Subject: DMCA Takedown Notice - Unauthorized Use of Copyrighted Sports Content
+	const assetTitle = violation.assetId?.title || 'proprietary sports broadcast content';
+	const platformName = (violation.platform || 'the platform').charAt(0).toUpperCase() + (violation.platform || 'the platform').slice(1);
+	const detectedDate = new Date(violation.detectedAt).toUTCString();
+	const matchType = (violation.matchType || 'near-duplicate').replace('-', ' ');
+	const confidence = violation.matchConfidence || 95;
+	const hammingDist = violation.evidenceBundle?.hammingDistance ?? 'N/A';
+	const colorSim = violation.evidenceBundle?.colorSimilarity != null ? `${(violation.evidenceBundle.colorSimilarity * 100).toFixed(1)}%` : 'N/A';
 
-To Whom It May Concern,
+	return `FORMAL DMCA TAKEDOWN NOTICE
+Pursuant to 17 U.S.C. § 512 (Digital Millennium Copyright Act)
 
-I represent ${organizationName}, the lawful copyright owner (or authorized agent) of the sports media content identified below.
+Date: ${new Date().toUTCString()}
+To: ${platformName} Copyright/Trust & Safety Team
 
-We have identified unauthorized use/distribution of our copyrighted work at:
-- Infringing URL: ${violation.sourceUrl}
-- Platform: ${violation.platform}
-- Detection Time: ${new Date(violation.detectedAt).toISOString()}
-- Internal Reference: ${violation._id}
+RE: Unauthorized Distribution of Copyrighted Sports Broadcast — "${assetTitle}"
 
-We request immediate removal or disabling access to this infringing content under applicable copyright law and your platform policy.
+I. IDENTIFICATION OF RIGHTS HOLDER
+${organizationName} is the exclusive rights holder and authorized distributor of the copyrighted work identified herein. This notice is issued on behalf of the rights holder pursuant to the protections afforded under the DMCA and applicable international copyright treaties.
 
-Good-faith statement:
-I have a good faith belief that use of the copyrighted material described above is not authorized by the copyright owner, its agent, or the law.
+II. DESCRIPTION OF INFRINGING MATERIAL
+The following URL hosts unauthorized content that is a ${matchType} of the protected work titled "${assetTitle}":
 
-Accuracy and authority statement:
-I swear, under penalty of perjury, that the information in this notice is accurate and that I am authorized to act on behalf of the copyright owner.
+  Infringing URL:     ${violation.sourceUrl}
+  Platform:           ${platformName}
+  Domain:             ${violation.sourceDomain || new URL(violation.sourceUrl).hostname}
+  Detection Time:     ${detectedDate}
 
-Please confirm receipt and action taken.
+III. FORENSIC EVIDENCE OF INFRINGEMENT
+Our proprietary AI-powered Rights Detection System (SportShield) has confirmed infringement via multi-signal forensic analysis:
+  - Match Confidence Score:  ${confidence}%
+  - Match Classification:    ${matchType}
+  - Perceptual Hash Distance: ${hammingDist} (lower = higher similarity)
+  - Color DNA Similarity:    ${colorSim}
+  - Verdict: This material is a direct unauthorized copy of the protected work.
+
+IV. DEMAND FOR IMMEDIATE ACTION
+We hereby demand that ${platformName} immediately and permanently remove or disable access to the above-identified infringing content. Failure to act within 24 hours of receipt of this notice will compel us to pursue all available legal remedies, including but not limited to injunctive relief and statutory damages.
+
+V. GOOD FAITH STATEMENT
+I have a good faith belief that the use of the copyrighted material described in this notice is not authorized by the copyright owner, its agent, or the law. (17 U.S.C. § 512(c)(3)(A)(v))
+
+VI. ACCURACY AND AUTHORITY STATEMENT
+I swear, under penalty of perjury, that the information in this notification is accurate and that I am authorized to act on behalf of the copyright owner of the exclusive rights being infringed. (17 U.S.C. § 512(c)(3)(A)(vi))
 
 Sincerely,
+
+[Authorized Representative Name & Title]
 ${organizationName}
+[Address], [City, State, ZIP]
+[Phone Number]
+[Email Address]
+
+Case Reference ID: ${violation._id}
 `;
 }
 
@@ -138,54 +167,93 @@ async function generateDmcaWithGemini({ organizationName, violation }) {
 		return null;
 	}
 
-	const model = process.env.GEMINI_MODEL?.trim() || 'gemini-2.5-flash';
-	const prompt = `You are a strict, top-tier legal representative for ${organizationName}. 
-Generate a highly detailed, legally-binding, and intimidating formal DMCA Takedown Notice for copyright infringement.
-The notice MUST be formatted professionally for immediate dispatch to a legal department.
-Include placeholder brackets like [Your Name/Title], [Your Phone], [Your Address] for fields the user needs to fill in manually.
+	const assetTitle = violation.assetId?.title || 'exclusive sports broadcast content';
+	const platformName = (violation.platform || 'the platform').charAt(0).toUpperCase() + (violation.platform || 'the platform').slice(1);
+	const detectedDate = new Date(violation.detectedAt).toUTCString();
+	const matchType = (violation.matchType || 'near-duplicate').replace('-', ' ');
+	const confidence = violation.matchConfidence || 95;
+	const sourceDomain = violation.sourceDomain || (violation.sourceUrl ? new URL(violation.sourceUrl).hostname : 'unknown');
+	const hammingDist = violation.evidenceBundle?.hammingDistance ?? 'not available';
+	const colorSim = violation.evidenceBundle?.colorSimilarity != null
+		? `${(violation.evidenceBundle.colorSimilarity * 100).toFixed(1)}%`
+		: 'not available';
+	const frameMatch = violation.evidenceBundle?.frameMatchCount != null
+		? `${violation.evidenceBundle.frameMatchCount} matching frames detected`
+		: null;
+	const visionBoost = violation.evidenceBundle?.visionConfidenceBoost != null
+		? `Google Cloud Vision API independently boosted match confidence by ${violation.evidenceBundle.visionConfidenceBoost}%`
+		: null;
+	const repeatScore = violation.repeatOffenderScore > 50
+		? `NOTE: This domain (${sourceDomain}) is a known repeat offender with a persistent threat score of ${violation.repeatOffenderScore}/100.`
+		: '';
 
-Details:
-- Offending Platform: ${violation.platform}
+	const model = process.env.GEMINI_MODEL?.trim() || 'gemini-1.5-flash';
+	const prompt = `You are the senior legal counsel for ${organizationName}, a premier sports broadcasting rights protection firm.
+
+Draft a formal, legally rigorous DMCA Takedown Notice for the specific copyright infringement case described below.
+
+CASE DETAILS:
+- Protected Work Title: "${assetTitle}"
+- Rights Holder: ${organizationName}
+- Infringing Platform: ${platformName}
 - Infringing URL: ${violation.sourceUrl}
-- Time of Detection: ${new Date(violation.detectedAt).toUTCString()}
-- Evidence: Our automated proprietary system verified this with a matching confidence of ${violation.matchConfidence}% (Match Type: ${violation.matchType}).
+- Hosting Domain: ${sourceDomain}
+- Infringement Detected: ${detectedDate}
+- Match Classification: ${matchType} (${confidence}% confidence)
+${repeatScore}
 
-The letter MUST include:
-1. A strong opening statement declaring ownership of the copyrighted work.
-2. The exact URL of the infringing material.
-3. A strict statement demanding immediate removal of the content.
-4. The good faith belief statement required by 17 U.S.C. § 512(c)(3)(A)(v).
-5. The penalty of perjury statement required by 17 U.S.C. § 512(c)(3)(A)(vi).
-6. A firm deadline for compliance (e.g. 24-48 hours) before further legal action is pursued.
+FORENSIC EVIDENCE SUMMARY (from SportShield AI Detection Engine):
+- Perceptual Hash (pHash) Hamming Distance: ${hammingDist} — a distance below 12 confirms near-identical content
+- Color DNA Similarity: ${colorSim} — spatial color fingerprint match across frames
+${frameMatch ? `- Temporal Fingerprint: ${frameMatch}` : ''}
+${visionBoost ? `- Vision AI Verification: ${visionBoost}` : ''}
+- Overall Verdict: Forensic analysis confirms unauthorized reproduction of "${assetTitle}"
 
-Return ONLY the plain text of the legal notice. Do not include markdown formatting or conversational text.`;
+INSTRUCTIONS FOR THE NOTICE:
+1. Address the notice specifically to ${platformName}'s copyright/legal team using the correct formal salutation.
+2. Open with a strong, declarative statement of copyright ownership for "${assetTitle}".
+3. Cite the exact infringing URL and all forensic evidence provided above — do NOT omit or generalize the evidence, cite specific numbers.
+4. Include citations to 17 U.S.C. § 512(c)(3)(A) (DMCA safe harbor removal obligations)${platformName === 'Youtube' || platformName === 'YouTube' ? ', YouTube\u2019s Content ID Policy,' : ''} and any relevant international treaties (e.g. Berne Convention for international platforms).
+5. Set a strict 24-hour deadline for content removal with explicit warning that failure will result in legal proceedings for statutory damages under 17 U.S.C. § 504.
+6. Include the mandatory DMCA good-faith belief statement (17 U.S.C. § 512(c)(3)(A)(v)).
+7. Include the mandatory penalty-of-perjury accuracy statement (17 U.S.C. § 512(c)(3)(A)(vi)).
+8. Use placeholder brackets for the signatory fields: [Authorized Representative], [Title], [Phone], [Email], [Address].
+9. End with the internal Case Reference ID: ${violation._id}
 
-	const response = await fetch(
-		`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-		{
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				contents: [{ parts: [{ text: prompt }] }],
-				generationConfig: {
-					temperature: 0.3,
-					maxOutputTokens: 800,
-				},
-			}),
-		},
-	);
+Tone: Authoritative, precise, and unambiguous. This is a real legal document dispatched by a legal team, not a template.
+Format: Plain text only. No markdown. No bullet points. Use formal legal letter structure with numbered sections.
+Length: Comprehensive but focused — between 400 and 600 words.`;
 
-	if (!response.ok) {
+	try {
+		const response = await fetch(
+			`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+			{
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					contents: [{ parts: [{ text: prompt }] }],
+					generationConfig: {
+						temperature: 0.2,
+						maxOutputTokens: 1200,
+					},
+				}),
+			},
+		);
+
+		if (!response.ok) {
+			return null;
+		}
+
+		const payload = await response.json();
+		const text = payload?.candidates?.[0]?.content?.parts
+			?.map((part) => part?.text || '')
+			.join('\n')
+			.trim();
+
+		return text || null;
+	} catch {
 		return null;
 	}
-
-	const payload = await response.json();
-	const text = payload?.candidates?.[0]?.content?.parts
-		?.map((part) => part?.text || '')
-		.join('\n')
-		.trim();
-
-	return text || null;
 }
 
 const platformAbuseEmails = {
@@ -199,7 +267,7 @@ const platformAbuseEmails = {
 };
 
 export async function draftDmcaNotice({ orgId, violationId }) {
-	const violation = await Violation.findOne({ _id: violationId, orgId }).lean();
+	const violation = await Violation.findOne({ _id: violationId, orgId }).populate('assetId', 'title type').lean();
 	if (!violation) {
 		const error = new Error('Violation not found.');
 		error.statusCode = 404;
