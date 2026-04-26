@@ -3,7 +3,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { 
 	Bell, 
 	BellRing, 
-	Check, 
+	Check,
+	CheckCheck,
 	CheckCircle2, 
 	Clock, 
 	Filter, 
@@ -278,17 +279,24 @@ export default function DashboardAlertsPage() {
 												<Clock size={12} />
 												{new Date(alert.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
 											</p>
-											<button
-												type='button'
-												onClick={(event) => {
-													event.stopPropagation();
-													markAlertRead(alert._id);
-												}}
-												className='flex items-center justify-end gap-1.5 ml-auto text-xs font-bold uppercase tracking-[0.1em] text-(--app-color-primary) hover:bg-(--app-color-primary-soft) px-2 py-1 rounded-lg transition-all'
-											>
-												<Check size={14} />
-												Mark read
-											</button>
+											{alert.read ? (
+												<div className='flex items-center justify-end gap-1 ml-auto text-[10px] font-black uppercase tracking-widest text-emerald-600'>
+													<CheckCheck size={14} strokeWidth={3} />
+													Read
+												</div>
+											) : (
+												<button
+													type='button'
+													onClick={(event) => {
+														event.stopPropagation();
+														markAlertRead(alert._id);
+													}}
+													className='flex items-center justify-end gap-1.5 ml-auto text-xs font-bold uppercase tracking-[0.1em] text-(--app-color-primary) hover:bg-(--app-color-primary-soft) px-2 py-1 rounded-lg transition-all'
+												>
+													<Check size={14} />
+													Mark read
+												</button>
+											)}
 										</div>
 									</div>
 								</button>
@@ -344,9 +352,16 @@ export default function DashboardAlertsPage() {
 						</div>
 
 						<div className='flex justify-end'>
-							<Button onClick={() => markAlertRead(selectedAlert._id)} disabled={selectedAlert.read}>
-								Mark read
-							</Button>
+							{selectedAlert.read ? (
+								<div className='flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-emerald-600 px-4 py-2'>
+									<CheckCheck size={16} strokeWidth={3} />
+									Read
+								</div>
+							) : (
+								<Button onClick={() => markAlertRead(selectedAlert._id)}>
+									Mark read
+								</Button>
+							)}
 						</div>
 					</div>
 				) : null}
