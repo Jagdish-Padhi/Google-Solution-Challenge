@@ -62,10 +62,11 @@ export function inferAssetType(mimeType = '') {
 	return 'highlight';
 }
 
-export async function createAsset({ orgId, title, file, publicUrl }) {
+export async function createAsset({ orgId, title, description, file, publicUrl }) {
 	const asset = await Asset.create({
 		orgId,
 		title,
+		description: description || '',
 		type: inferAssetType(file.mimetype),
 		storageKey: file.filename,
 		gcsUrl: publicUrl,
@@ -172,14 +173,14 @@ export async function getDashboardAssetStats(orgId) {
 		violations: violationsAgg[0]?.totalViolations || 0,
 	};
 }
-export async function updateAsset({ orgId, assetId, title }) {
-const asset = await Asset.findOneAndUpdate(
+export async function updateAsset({ orgId, assetId, updates }) {
+	const asset = await Asset.findOneAndUpdate(
 		{ _id: assetId, orgId, status: { $ne: 'deleted' } },
-{ title },
-{ new: true },
-).lean();
+		{ $set: updates },
+		{ new: true },
+	).lean();
 
-return asset;
+	return asset;
 }
 
 export async function retryFingerprint({ orgId, assetId }) {

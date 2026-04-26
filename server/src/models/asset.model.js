@@ -13,6 +13,11 @@ const assetSchema = new mongoose.Schema(
 			required: true,
 			trim: true,
 		},
+		description: {
+			type: String,
+			trim: true,
+			default: '',
+		},
 		tags: {
 			type: [String],
 			default: [],
@@ -62,7 +67,7 @@ const assetSchema = new mongoose.Schema(
 		},
 		status: {
 			type: String,
-			enum: ['processing', 'active', 'deleted'],
+			enum: ['processing', 'active', 'deleted', 'failed'],
 			default: 'processing',
 		},
 		uploadedAt: {

@@ -3,10 +3,16 @@ import {
 	enrichAssetFingerprint,
 	getAssetById,
 	listAssetsByOrg,
+	retryFingerprint,
 	softDeleteAsset,
 	suggestKeywordsForAsset,
+	updateAsset,
 } from '../services/assets.service.js';
-import { validateAssetUploadPayload, validatePaginationQuery } from '../validators/assets.validator.js';
+import {
+	validateAssetUpdatePayload,
+	validateAssetUploadPayload,
+	validatePaginationQuery,
+} from '../validators/assets.validator.js';
 
 export async function uploadAssetController(req, res, next) {
 	try {
@@ -14,12 +20,13 @@ export async function uploadAssetController(req, res, next) {
 			return res.status(400).json({ message: 'Asset file is required.' });
 		}
 
-		const { title } = validateAssetUploadPayload(req.body);
+		const { title, description } = validateAssetUploadPayload(req.body);
 		const publicUrl = req.file.path; // Cloudinary URL
 
 		const asset = await createAsset({
 			orgId: req.auth.orgId,
 			title,
+			description,
 			file: req.file,
 			publicUrl,
 		});
@@ -98,6 +105,44 @@ export async function suggestAssetKeywordsController(req, res, next) {
 		});
 
 		return res.status(200).json(result);
+	} catch (error) {
+		return next(error);
+	}
+}
+
+export async function updateAssetController(req, res, next) {
+	try {
+		const updates = validateAssetUpdatePayload(req.body);
+		const asset = await updateAsset({
+			orgId: req.auth.orgId,
+			assetId: req.params.id,
+			updates,
+		});
+
+		if (!asset) {
+			return res.status(404).json({ message: 'Asset not found.' });
+		}
+
+		return res.status(200).json({
+			message: 'Asset updated successfully.',
+			asset,
+		});
+	} catch (error) {
+		return next(error);
+	}
+}
+
+export async function retryAssetController(req, res, next) {
+	try {
+		const asset = await retryFingerprint({
+			orgId: req.auth.orgId,
+			assetId: req.params.id,
+		});
+
+		return res.status(200).json({
+			message: 'Fingerprint retry started.',
+			asset,
+		});
 	} catch (error) {
 		return next(error);
 	}

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useSearchParams } from 'react-router-dom';
 
+import { Edit2, RefreshCw, Trash2 } from 'lucide-react';
 import { Badge, Button, Card, EmptyState, Loader, Modal, Spinner } from '../../components';
 import api from '../../services/api.js';
 
@@ -37,9 +38,16 @@ export default function DashboardAssetsPage() {
 	const [viewMode, setViewMode] = useState('grid');
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [uploadProgress, setUploadProgress] = useState(0);
+	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [uploadForm, setUploadForm] = useState({
 		title: '',
+		description: '',
 		file: null,
+	});
+	const [editForm, setEditForm] = useState({
+		id: '',
+		title: '',
+		description: '',
 	});
 
 	const totalAssets = assets.length;
@@ -118,6 +126,7 @@ export default function DashboardAssetsPage() {
 		try {
 			const payload = new FormData();
 			payload.append('title', uploadForm.title.trim());
+			payload.append('description', uploadForm.description.trim());
 			payload.append('file', uploadForm.file);
 
 			await api.post('/assets/upload', payload, {
@@ -132,7 +141,7 @@ export default function DashboardAssetsPage() {
 			});
 
 			setIsUploadModalOpen(false);
-			setUploadForm({ title: '', file: null });
+			setUploadForm({ title: '', description: '', file: null });
 			toast.success('Asset uploaded. Fingerprint processing started.');
 			await loadAssets(true);
 		} catch (requestError) {
@@ -141,6 +150,59 @@ export default function DashboardAssetsPage() {
 		} finally {
 			setIsSubmitting(false);
 			setUploadProgress(0);
+		}
+	};
+
+	const handleDeleteAsset = async (assetId) => {
+		if (!window.confirm('Are you sure you want to delete this asset? This action cannot be undone.')) {
+			return;
+		}
+
+		try {
+			await api.delete(`/assets/${assetId}`);
+			toast.success('Asset deleted successfully.');
+			setAssets((prev) => prev.filter((a) => a._id !== assetId));
+		} catch {
+			toast.error('Failed to delete asset.');
+		}
+	};
+
+	const handleRetryAsset = async (assetId) => {
+		try {
+			await api.post(`/assets/${assetId}/retry`);
+			toast.success('Retry started.');
+			await loadAssets(true);
+		} catch {
+			toast.error('Failed to retry analysis.');
+		}
+	};
+
+	const handleOpenEdit = (asset) => {
+		setEditForm({
+			id: asset._id,
+			title: asset.title,
+			description: asset.description || '',
+		});
+		setIsEditModalOpen(true);
+	};
+
+	const handleEditSubmit = async (event) => {
+		event.preventDefault();
+		setIsSubmitting(true);
+
+		try {
+			await api.patch(`/assets/${editForm.id}/update`, {
+				title: editForm.title.trim(),
+				description: editForm.description.trim(),
+			});
+			toast.success('Asset updated successfully.');
+			setIsEditModalOpen(false);
+			await loadAssets(true);
+		} catch (error) {
+			const message = error.response?.data?.message || 'Update failed.';
+			toast.error(message);
+		} finally {
+			setIsSubmitting(false);
 		}
 	};
 
@@ -230,11 +292,38 @@ export default function DashboardAssetsPage() {
 										<div className='flex items-start justify-between gap-3'>
 											<div className="flex-1 min-w-0">
 												<h3 className='text-base font-semibold text-(--app-color-text) truncate'>{asset.title}</h3>
-												<p className='mt-1 text-xs uppercase tracking-[0.16em] text-(--app-color-text-muted)'>{asset.type}</p>
+												<p className='mt-0.5 text-[10px] text-(--app-color-text-muted) line-clamp-1 h-4'>{asset.description || 'No description'}</p>
 											</div>
-											<Badge variant={getStatusBadgeVariant(asset.status)} size='sm'>
-												{asset.status}
-											</Badge>
+											<div className="flex flex-col items-end gap-2">
+												<Badge variant={getStatusBadgeVariant(asset.status)} size='sm'>
+													{asset.status}
+												</Badge>
+												<div className="flex items-center gap-1.5 mt-1">
+													{isFailed && (
+														<button
+															onClick={(e) => { e.stopPropagation(); handleRetryAsset(asset._id); }}
+															className="p-1.5 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors"
+															title="Retry Analysis"
+														>
+															<RefreshCw size={14} />
+														</button>
+													)}
+													<button
+														onClick={(e) => { e.stopPropagation(); handleOpenEdit(asset); }}
+														className="p-1.5 rounded-lg bg-(--app-color-surface-elevated) text-(--app-color-text-muted) hover:text-(--app-color-text) hover:bg-(--app-color-border) transition-colors"
+														title="Edit Asset"
+													>
+														<Edit2 size={14} />
+													</button>
+													<button
+														onClick={(e) => { e.stopPropagation(); handleDeleteAsset(asset._id); }}
+														className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
+														title="Delete Asset"
+													>
+														<Trash2 size={14} />
+													</button>
+												</div>
+											</div>
 										</div>
 
 										{isProcessing ? (
@@ -253,18 +342,17 @@ export default function DashboardAssetsPage() {
 													{timeSinceUpload > expectedTime ? 'Analysis taking longer than usual...' : `Estimated completion in ~${timeRemaining}s`}
 												</p>
 											</div>
-										) : isFailed ? (
-											<div className="mt-4 p-2 rounded bg-red-500/5 border border-red-500/10 text-[10px] text-red-500 text-center uppercase tracking-wider">
-												Analysis Failed • Try re-uploading
-											</div>
 										) : (
-											<>
-												<p className='mt-4 text-sm text-(--app-color-text-muted)'>Fingerprint: {getFingerprintShortValue(asset.fingerprint?.pHash)}</p>
-												<div className="mt-2 flex items-center justify-between">
-													<p className='text-xs text-(--app-color-text-muted)'>Violations: <span className="text-(--app-color-text) font-medium">{asset.violationsFound || 0}</span></p>
+											<div className="mt-4 pt-4 border-t border-(--app-color-border)">
+												<div className="flex items-center justify-between">
+													<span className='text-[10px] uppercase tracking-wider text-(--app-color-text-muted)'>{asset.type}</span>
 													<span className="text-[10px] text-(--app-color-text-muted)">{new Date(asset.uploadedAt).toLocaleDateString()}</span>
 												</div>
-											</>
+												<div className="mt-2 flex items-center justify-between">
+													<p className='text-xs text-(--app-color-text-muted)'>Violations: <span className="text-red-400 font-medium">{asset.violationsFound || 0}</span></p>
+													<p className='text-xs text-(--app-color-text-muted)'>PHash: <span className="text-(--app-color-text)">{getFingerprintShortValue(asset.fingerprint?.pHash)}</span></p>
+												</div>
+											</div>
 										)}
 									</Card>
 								);
@@ -285,6 +373,18 @@ export default function DashboardAssetsPage() {
 							onChange={handleUploadFormChange}
 							placeholder='Example: Matchday Highlight Reel'
 							required
+							className='w-full rounded-lg border border-(--app-color-border) bg-(--app-color-surface) px-3 py-2 text-sm text-(--app-color-text) focus:border-(--app-color-primary) focus:outline-none'
+						/>
+					</div>
+
+					<div>
+						<label className='mb-1 block text-sm font-medium text-(--app-color-text)'>Description</label>
+						<textarea
+							name='description'
+							value={uploadForm.description}
+							onChange={handleUploadFormChange}
+							placeholder='Add context about this asset...'
+							rows={3}
 							className='w-full rounded-lg border border-(--app-color-border) bg-(--app-color-surface) px-3 py-2 text-sm text-(--app-color-text) focus:border-(--app-color-primary) focus:outline-none'
 						/>
 					</div>
@@ -315,11 +415,48 @@ export default function DashboardAssetsPage() {
 				</form>
 			</Modal>
 
+			<Modal isOpen={isEditModalOpen} onClose={() => !isSubmitting && setIsEditModalOpen(false)} title='Edit Asset' size='md'>
+				<form className='space-y-4' onSubmit={handleEditSubmit}>
+					<div>
+						<label className='mb-1 block text-sm font-medium text-(--app-color-text)'>Asset title</label>
+						<input
+							type='text'
+							value={editForm.title}
+							onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))}
+							required
+							className='w-full rounded-lg border border-(--app-color-border) bg-(--app-color-surface) px-3 py-2 text-sm text-(--app-color-text) focus:border-(--app-color-primary) focus:outline-none'
+						/>
+					</div>
+
+					<div>
+						<label className='mb-1 block text-sm font-medium text-(--app-color-text)'>Description</label>
+						<textarea
+							value={editForm.description}
+							onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))}
+							rows={3}
+							className='w-full rounded-lg border border-(--app-color-border) bg-(--app-color-surface) px-3 py-2 text-sm text-(--app-color-text) focus:border-(--app-color-primary) focus:outline-none'
+						/>
+					</div>
+
+					<div className='flex justify-end gap-2 pt-2'>
+						<Button type='button' variant='secondary' onClick={() => setIsEditModalOpen(false)} disabled={isSubmitting}>
+							Cancel
+						</Button>
+						<Button type='submit' loading={isSubmitting} disabled={isSubmitting}>
+							Save changes
+						</Button>
+					</div>
+				</form>
+			</Modal>
+
 			<Modal isOpen={isDetailModalOpen} onClose={() => setIsDetailModalOpen(false)} title='Asset Details' size='lg'>
 				{selectedAsset ? (
 					<div className='space-y-3 text-sm text-(--app-color-text-muted)'>
 						<p>
 							<span className='font-semibold text-(--app-color-text)'>Title:</span> {selectedAsset.title}
+						</p>
+						<p>
+							<span className='font-semibold text-(--app-color-text)'>Description:</span> {selectedAsset.description || 'N/A'}
 						</p>
 						<p>
 							<span className='font-semibold text-(--app-color-text)'>Type:</span> {selectedAsset.type}

@@ -7,7 +7,9 @@ import {
 	deleteAssetController,
 	getAssetByIdController,
 	listAssetsController,
+	retryAssetController,
 	suggestAssetKeywordsController,
+	updateAssetController,
 	uploadAssetController,
 } from '../controllers/assets.controller.js';
 import { verifyToken } from '../middlewares/verifyToken.js';
@@ -45,7 +47,9 @@ router.use(verifyToken);
 router.post('/upload', upload.single('file'), uploadAssetController);
 router.get('/', listAssetsController);
 router.post('/:id/suggest-keywords', suggestAssetKeywordsController);
+router.post('/:id/retry', retryAssetController);
 router.get('/:id', getAssetByIdController);
+router.patch('/:id/update', updateAssetController);
 router.delete('/:id', deleteAssetController);
 
 export default router;
