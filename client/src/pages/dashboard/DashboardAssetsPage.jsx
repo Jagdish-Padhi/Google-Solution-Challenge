@@ -2,7 +2,25 @@ import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useSearchParams } from 'react-router-dom';
 
-import { Edit2, RefreshCw, Trash2 } from 'lucide-react';
+import { 
+	Activity, 
+	AlertTriangle, 
+	Box, 
+	Calendar, 
+	Edit2, 
+	FileCheck, 
+	FileVideo, 
+	Fingerprint, 
+	Grid, 
+	Image as ImageIcon, 
+	LayoutGrid, 
+	List, 
+	Plus, 
+	RefreshCw, 
+	Save, 
+	Trash2, 
+	UploadCloud 
+} from 'lucide-react';
 import { Badge, Button, Card, EmptyState, Loader, Modal, Spinner } from '../../components';
 import api from '../../services/api.js';
 
@@ -208,18 +226,42 @@ export default function DashboardAssetsPage() {
 
 	return (
 		<div className='space-y-8'>
-			<section className='grid gap-4 sm:grid-cols-3'>
-				<Card className='border-(--app-color-border) shadow-lg shadow-slate-900/5' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
-					<p className='text-xs uppercase tracking-[0.16em] text-(--app-color-text-muted)'>Total assets</p>
-					<p className='mt-2 text-3xl font-semibold text-(--app-color-text)'>{totalAssets}</p>
+			<section className='grid gap-6 sm:grid-cols-3'>
+				<Card className='border-(--app-color-border) shadow-sm group hover:border-(--app-color-primary)/50 transition-all duration-300' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
+					<div className="flex items-center justify-between">
+						<div className="space-y-1">
+							<p className='text-[10px] font-black uppercase tracking-[0.2em] text-(--app-color-text-muted)'>Total assets</p>
+							<p className='text-3xl font-black text-(--app-color-text) tabular-nums'>{totalAssets}</p>
+						</div>
+						<div className="h-12 w-12 rounded-2xl bg-(--app-color-primary-soft) flex items-center justify-center text-(--app-color-primary) group-hover:scale-110 transition-transform">
+							<Box size={22} />
+						</div>
+					</div>
 				</Card>
-				<Card className='border-(--app-color-border) shadow-lg shadow-slate-900/5' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
-					<p className='text-xs uppercase tracking-[0.16em] text-(--app-color-text-muted)'>Processing now</p>
-					<p className='mt-2 text-3xl font-semibold text-(--app-color-text)'>{processingCount}</p>
+				<Card className='border-(--app-color-border) shadow-sm group hover:border-emerald-500/50 transition-all duration-300' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
+					<div className="flex items-center justify-between">
+						<div className="space-y-1">
+							<p className='text-[10px] font-black uppercase tracking-[0.2em] text-(--app-color-text-muted)'>Processing now</p>
+							<p className='text-3xl font-black text-(--app-color-text) tabular-nums'>{processingCount}</p>
+						</div>
+						<div className="h-12 w-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
+							<Activity size={22} className={processingCount > 0 ? 'animate-pulse' : ''} />
+						</div>
+					</div>
 				</Card>
-				<Card className='border-(--app-color-border) shadow-lg shadow-slate-900/5' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
-					<p className='text-xs uppercase tracking-[0.16em] text-(--app-color-text-muted)'>Supported formats</p>
-					<p className='mt-2 text-sm text-(--app-color-text)'>MP4, MOV, JPEG, PNG</p>
+				<Card className='border-(--app-color-border) shadow-sm group hover:border-(--app-color-primary)/50 transition-all duration-300' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
+					<div className="flex items-center justify-between">
+						<div className="space-y-1">
+							<p className='text-[10px] font-black uppercase tracking-[0.2em] text-(--app-color-text-muted)'>System status</p>
+							<p className='text-xs font-bold text-(--app-color-success) flex items-center gap-1.5'>
+								<div className="w-1.5 h-1.5 rounded-full bg-(--app-color-success) animate-pulse" />
+								Active Discovery
+							</p>
+						</div>
+						<div className="h-12 w-12 rounded-2xl bg-(--app-color-primary-soft) flex items-center justify-center text-(--app-color-primary) group-hover:scale-110 transition-transform">
+							<FileCheck size={22} />
+						</div>
+					</div>
 				</Card>
 			</section>
 
@@ -231,13 +273,16 @@ export default function DashboardAssetsPage() {
 					</div>
 
 					<div className='flex flex-wrap items-center gap-2'>
-						<Button variant={viewMode === 'grid' ? 'primary' : 'secondary'} size='sm' onClick={() => setViewMode('grid')}>
+						<Button variant={viewMode === 'grid' ? 'primary' : 'secondary'} size='sm' onClick={() => setViewMode('grid')} className="flex items-center gap-2">
+							<LayoutGrid size={14} />
 							Grid
 						</Button>
-						<Button variant={viewMode === 'list' ? 'primary' : 'secondary'} size='sm' onClick={() => setViewMode('list')}>
+						<Button variant={viewMode === 'list' ? 'primary' : 'secondary'} size='sm' onClick={() => setViewMode('list')} className="flex items-center gap-2">
+							<List size={14} />
 							List
 						</Button>
-						<Button size='sm' onClick={() => setIsUploadModalOpen(true)}>
+						<Button size='sm' onClick={() => setIsUploadModalOpen(true)} className="flex items-center gap-2 ml-2">
+							<Plus size={16} />
 							Upload asset
 						</Button>
 					</div>
@@ -275,7 +320,7 @@ export default function DashboardAssetsPage() {
 								return (
 									<Card
 										key={asset._id}
-										className={`border-(--app-color-border) shadow-sm transition-all duration-300 ${isProcessing ? 'opacity-80' : ''}`}
+										className={`border-(--app-color-border) shadow-sm transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-md hover:border-(--app-color-primary)/30 ${isProcessing ? 'opacity-80' : ''}`}
 										style={{ backgroundColor: 'var(--app-color-surface)' }}
 										onClick={() => !isProcessing && handleOpenDetail(asset)}
 									>
@@ -343,14 +388,26 @@ export default function DashboardAssetsPage() {
 												</p>
 											</div>
 										) : (
-											<div className="mt-4 pt-4 border-t border-(--app-color-border)">
-												<div className="flex items-center justify-between">
-													<span className='text-[10px] uppercase tracking-wider text-(--app-color-text-muted)'>{asset.type}</span>
-													<span className="text-[10px] text-(--app-color-text-muted)">{new Date(asset.uploadedAt).toLocaleDateString()}</span>
+											<div className="mt-4 pt-4 border-t border-(--app-color-border)/50 space-y-3">
+												<div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-(--app-color-text-muted)">
+													<span className="flex items-center gap-1.5 font-bold">
+														{asset.type === 'image' ? <ImageIcon size={12} /> : <FileVideo size={12} />}
+														{asset.type}
+													</span>
+													<span className="flex items-center gap-1.5">
+														<Calendar size={12} />
+														{new Date(asset.uploadedAt).toLocaleDateString()}
+													</span>
 												</div>
-												<div className="mt-2 flex items-center justify-between">
-													<p className='text-xs text-(--app-color-text-muted)'>Violations: <span className="text-red-400 font-medium">{asset.violationsFound || 0}</span></p>
-													<p className='text-xs text-(--app-color-text-muted)'>PHash: <span className="text-(--app-color-text)">{getFingerprintShortValue(asset.fingerprint?.pHash)}</span></p>
+												<div className="flex items-center justify-between">
+													<p className='text-xs text-(--app-color-text-muted) flex items-center gap-1.5'>
+														<AlertTriangle size={14} className={asset.violationsFound > 0 ? 'text-red-500' : 'text-emerald-500'} />
+														Violations: <span className={asset.violationsFound > 0 ? 'text-red-500 font-bold' : 'text-(--app-color-text) font-bold'}>{asset.violationsFound || 0}</span>
+													</p>
+													<p className='text-xs text-(--app-color-text-muted) flex items-center gap-1.5'>
+														<Fingerprint size={14} className="text-(--app-color-primary)" />
+														PHash: <span className="text-(--app-color-text) font-mono">{getFingerprintShortValue(asset.fingerprint?.pHash)}</span>
+													</p>
 												</div>
 											</div>
 										)}
@@ -408,7 +465,8 @@ export default function DashboardAssetsPage() {
 						<Button type='button' variant='secondary' onClick={() => setIsUploadModalOpen(false)} disabled={isSubmitting}>
 							Cancel
 						</Button>
-						<Button type='submit' loading={isSubmitting} disabled={isSubmitting}>
+						<Button type='submit' loading={isSubmitting} disabled={isSubmitting} className="flex items-center gap-2">
+							<UploadCloud size={16} />
 							Upload and fingerprint
 						</Button>
 					</div>
@@ -442,45 +500,93 @@ export default function DashboardAssetsPage() {
 						<Button type='button' variant='secondary' onClick={() => setIsEditModalOpen(false)} disabled={isSubmitting}>
 							Cancel
 						</Button>
-						<Button type='submit' loading={isSubmitting} disabled={isSubmitting}>
+						<Button type='submit' loading={isSubmitting} disabled={isSubmitting} className="flex items-center gap-2">
+							<Save size={16} />
 							Save changes
 						</Button>
 					</div>
 				</form>
 			</Modal>
 
-			<Modal isOpen={isDetailModalOpen} onClose={() => setIsDetailModalOpen(false)} title='Asset Details' size='lg'>
+			<Modal isOpen={isDetailModalOpen} onClose={() => setIsDetailModalOpen(false)} title='Asset Discovery Record' size='lg'>
 				{selectedAsset ? (
-					<div className='space-y-3 text-sm text-(--app-color-text-muted)'>
-						<p>
-							<span className='font-semibold text-(--app-color-text)'>Title:</span> {selectedAsset.title}
-						</p>
-						<p>
-							<span className='font-semibold text-(--app-color-text)'>Description:</span> {selectedAsset.description || 'N/A'}
-						</p>
-						<p>
-							<span className='font-semibold text-(--app-color-text)'>Type:</span> {selectedAsset.type}
-						</p>
-						<p>
-							<span className='font-semibold text-(--app-color-text)'>Status:</span> {selectedAsset.status}
-						</p>
-						<p>
-							<span className='font-semibold text-(--app-color-text)'>Fingerprint (last 8):</span>{' '}
-							{getFingerprintShortValue(selectedAsset.fingerprint?.pHash)}
-						</p>
-						<p>
-							<span className='font-semibold text-(--app-color-text)'>Video hash:</span>{' '}
-							{getFingerprintShortValue(selectedAsset.fingerprint?.videoHash)}
-						</p>
-						<p>
-							<span className='font-semibold text-(--app-color-text)'>Violations found:</span>{' '}
-							{selectedAsset.violationsFound || 0}
-						</p>
+					<div className='space-y-6'>
+						<div className="flex items-start gap-4 pb-6 border-b border-(--app-color-border)/50">
+							<div className="h-16 w-16 rounded-xl bg-(--app-color-primary-soft) flex items-center justify-center text-(--app-color-primary) shrink-0">
+								{selectedAsset.type === 'image' ? <ImageIcon size={32} /> : <FileVideo size={32} />}
+							</div>
+							<div className="min-w-0">
+								<h3 className="text-lg font-bold text-(--app-color-text) truncate">{selectedAsset.title}</h3>
+								<p className="text-sm text-(--app-color-text-muted) mt-1">{selectedAsset.description || 'No description provided for this asset.'}</p>
+							</div>
+						</div>
+
+						<div className="grid grid-cols-2 gap-x-8 gap-y-6">
+							<div className="space-y-1">
+								<p className="text-[10px] font-black uppercase tracking-widest text-(--app-color-text-muted) flex items-center gap-1.5">
+									<Activity size={12} className="text-emerald-500" />
+									Status
+								</p>
+								<Badge variant={getStatusBadgeVariant(selectedAsset.status)} size="sm">
+									{selectedAsset.status}
+								</Badge>
+							</div>
+
+							<div className="space-y-1">
+								<p className="text-[10px] font-black uppercase tracking-widest text-(--app-color-text-muted) flex items-center gap-1.5">
+									<AlertTriangle size={12} className={selectedAsset.violationsFound > 0 ? 'text-red-500' : 'text-emerald-500'} />
+									Violations Found
+								</p>
+								<p className={`text-sm font-bold ${selectedAsset.violationsFound > 0 ? 'text-red-500' : 'text-(--app-color-text)'}`}>
+									{selectedAsset.violationsFound || 0} detections
+								</p>
+							</div>
+
+							<div className="space-y-1">
+								<p className="text-[10px] font-black uppercase tracking-widest text-(--app-color-text-muted) flex items-center gap-1.5">
+									<Fingerprint size={12} className="text-(--app-color-primary)" />
+									PHash (Image)
+								</p>
+								<p className="text-sm font-mono text-(--app-color-text) bg-(--app-color-surface-elevated) px-2 py-1 rounded-md inline-block">
+									{selectedAsset.fingerprint?.pHash || 'Pending'}
+								</p>
+							</div>
+
+							<div className="space-y-1">
+								<p className="text-[10px] font-black uppercase tracking-widest text-(--app-color-text-muted) flex items-center gap-1.5">
+									<Activity size={12} className="text-(--app-color-primary)" />
+									Video DNA
+								</p>
+								<p className="text-sm font-mono text-(--app-color-text) bg-(--app-color-surface-elevated) px-2 py-1 rounded-md inline-block">
+									{selectedAsset.fingerprint?.videoHash || 'N/A'}
+								</p>
+							</div>
+
+							<div className="space-y-1">
+								<p className="text-[10px] font-black uppercase tracking-widest text-(--app-color-text-muted) flex items-center gap-1.5">
+									<Calendar size={12} />
+									Ingestion Date
+								</p>
+								<p className="text-sm font-bold text-(--app-color-text)">
+									{new Date(selectedAsset.uploadedAt).toLocaleString()}
+								</p>
+							</div>
+
+							<div className="space-y-1">
+								<p className="text-[10px] font-black uppercase tracking-widest text-(--app-color-text-muted) flex items-center gap-1.5">
+									<Box size={12} />
+									Asset Type
+								</p>
+								<p className="text-sm font-bold text-(--app-color-text) capitalize">
+									{selectedAsset.type}
+								</p>
+							</div>
+						</div>
 					</div>
 				) : (
-					<div className='flex items-center gap-2 text-sm text-(--app-color-text-muted)'>
-						<Spinner size='sm' />
-						Loading asset detail...
+					<div className='flex flex-col items-center justify-center py-12 gap-4 text-sm text-(--app-color-text-muted)'>
+						<Spinner size='md' />
+						<p className="font-bold uppercase tracking-widest animate-pulse">Retrieving Asset DNA...</p>
 					</div>
 				)}
 			</Modal>

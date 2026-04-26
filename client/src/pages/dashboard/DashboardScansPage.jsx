@@ -1,8 +1,24 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Link, useSearchParams } from 'react-router-dom';
+import { 
+	Activity, 
+	AlertCircle, 
+	CalendarClock, 
+	CheckCircle2, 
+	Clock, 
+	Eye, 
+	Globe, 
+	Layers, 
+	Play, 
+	Plus, 
+	RotateCcw, 
+	Search, 
+	Sparkles,
+	Target
+} from 'lucide-react';
 
-import { Badge, Button, Card, EmptyState, Loader, Modal, Pagination, Spinner } from '../../components';
+import { Badge, Button, Card, EmptyState, Loader, Modal, Pagination, Select, Spinner } from '../../components';
 import api from '../../services/api.js';
 
 const defaultPlatforms = ['youtube', 'web'];
@@ -10,44 +26,12 @@ const supportedPlatforms = ['youtube', 'twitter', 'telegram', 'web'];
 const scanStatusFilters = ['', 'queued', 'running', 'completed', 'failed'];
 const scanPlatformFilters = ['', 'youtube', 'twitter', 'telegram', 'web'];
 
-function statusLabel(job) {
-	if (job.status === 'running') {
-		return 'Scanning';
-	}
-
-	if (job.status === 'completed' && Number(job.violationsCount || 0) > 0) {
-		return 'Violations Found';
-	}
-
-	if (job.status === 'completed') {
-		return 'Complete';
-	}
-
-	if (job.status === 'failed') {
-		return 'Failed';
-	}
-
-	return 'Queued';
-}
-
-function statusVariant(job) {
-	if (job.status === 'running') {
-		return 'warning';
-	}
-
-	if (job.status === 'completed' && Number(job.violationsCount || 0) > 0) {
-		return 'danger';
-	}
-
-	if (job.status === 'completed') {
-		return 'success';
-	}
-
-	if (job.status === 'failed') {
-		return 'danger';
-	}
-
-	return 'info';
+function statusDisplay(job) {
+	if (job.status === 'running') return { label: 'Scanning', icon: Activity, variant: 'warning' };
+	if (job.status === 'completed' && Number(job.violationsCount || 0) > 0) return { label: 'Violations Found', icon: AlertCircle, variant: 'danger' };
+	if (job.status === 'completed') return { label: 'Complete', icon: CheckCircle2, variant: 'success' };
+	if (job.status === 'failed') return { label: 'Failed', icon: AlertCircle, variant: 'danger' };
+	return { label: 'Queued', icon: Clock, variant: 'info' };
 }
 
 export default function DashboardScansPage() {
@@ -300,25 +284,50 @@ export default function DashboardScansPage() {
 					<p className='text-sm text-(--app-color-text-muted)'>Queue scans, monitor progress, and review discovered results.</p>
 				</div>
 				<div className='flex items-center gap-2'>
-					<Button variant='secondary' onClick={handleRunScheduledNow} loading={isRunningScheduled} disabled={isRunningScheduled}>
+					<Button variant='secondary' onClick={handleRunScheduledNow} loading={isRunningScheduled} disabled={isRunningScheduled} className="flex items-center gap-2">
+						<CalendarClock size={16} />
 						Run Scheduled Now
 					</Button>
-					<Button onClick={() => setIsModalOpen(true)}>Start New Scan</Button>
+					<Button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2">
+						<Play size={16} fill="currentColor" />
+						Start New Scan
+					</Button>
 				</div>
 			</div>
 
-			<section className='grid gap-4 sm:grid-cols-3'>
-				<Card className='border-(--app-color-border) shadow-sm' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
-					<p className='text-xs uppercase tracking-[0.16em] text-(--app-color-text-muted)'>Total scans</p>
-					<p className='mt-2 text-3xl font-semibold text-(--app-color-text)'>{scanJobs.length}</p>
+			<section className='grid gap-6 sm:grid-cols-3'>
+				<Card className='border-(--app-color-border) shadow-sm group hover:border-(--app-color-primary)/50 transition-all duration-300' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
+					<div className="flex items-center justify-between">
+						<div className="space-y-1">
+							<p className='text-[10px] font-black uppercase tracking-[0.2em] text-(--app-color-text-muted)'>Total scans</p>
+							<p className='text-3xl font-black text-(--app-color-text) tabular-nums'>{scanJobs.length}</p>
+						</div>
+						<div className="h-12 w-12 rounded-2xl bg-(--app-color-primary-soft) flex items-center justify-center text-(--app-color-primary) group-hover:scale-110 transition-transform">
+							<Search size={22} />
+						</div>
+					</div>
 				</Card>
-				<Card className='border-(--app-color-border) shadow-sm' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
-					<p className='text-xs uppercase tracking-[0.16em] text-(--app-color-text-muted)'>Active scans</p>
-					<p className='mt-2 text-3xl font-semibold text-(--app-color-text)'>{runningCount}</p>
+				<Card className='border-(--app-color-border) shadow-sm group hover:border-emerald-500/50 transition-all duration-300' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
+					<div className="flex items-center justify-between">
+						<div className="space-y-1">
+							<p className='text-[10px] font-black uppercase tracking-[0.2em] text-(--app-color-text-muted)'>Active scans</p>
+							<p className='text-3xl font-black text-(--app-color-text) tabular-nums'>{runningCount}</p>
+						</div>
+						<div className="h-12 w-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
+							<Activity size={22} className={runningCount > 0 ? 'animate-pulse' : ''} />
+						</div>
+					</div>
 				</Card>
-				<Card className='border-(--app-color-border) shadow-sm' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
-					<p className='text-xs uppercase tracking-[0.16em] text-(--app-color-text-muted)'>Assets available</p>
-					<p className='mt-2 text-3xl font-semibold text-(--app-color-text)'>{assets.length}</p>
+				<Card className='border-(--app-color-border) shadow-sm group hover:border-(--app-color-primary)/50 transition-all duration-300' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
+					<div className="flex items-center justify-between">
+						<div className="space-y-1">
+							<p className='text-[10px] font-black uppercase tracking-[0.2em] text-(--app-color-text-muted)'>Assets available</p>
+							<p className='text-3xl font-black text-(--app-color-text) tabular-nums'>{assets.length}</p>
+						</div>
+						<div className="h-12 w-12 rounded-2xl bg-(--app-color-primary-soft) flex items-center justify-center text-(--app-color-primary) group-hover:scale-110 transition-transform">
+							<Layers size={22} />
+						</div>
+					</div>
 				</Card>
 			</section>
 
@@ -328,39 +337,31 @@ export default function DashboardScansPage() {
 				title='Scan jobs'
 				subtitle='Statuses auto-refresh every 5 seconds while scanning.'
 			>
-				<div className='mb-4 grid gap-3 sm:grid-cols-3'>
-					<div>
-						<label className='mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-(--app-color-text-muted)'>Status</label>
-						<select
-							value={filters.status}
-							onChange={(event) => handleFilterChange('status', event.target.value)}
-							className='w-full rounded-lg border border-(--app-color-border) bg-(--app-color-surface) px-3 py-2 text-sm text-(--app-color-text) focus:border-(--app-color-primary) focus:outline-none'
-						>
-							{scanStatusFilters.map((status) => (
-								<option key={status || 'all'} value={status}>
-									{status ? status.charAt(0).toUpperCase() + status.slice(1) : 'All statuses'}
-								</option>
-							))}
-						</select>
-					</div>
-					<div>
-						<label className='mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-(--app-color-text-muted)'>Platform</label>
-						<select
-							value={filters.platform}
-							onChange={(event) => handleFilterChange('platform', event.target.value)}
-							className='w-full rounded-lg border border-(--app-color-border) bg-(--app-color-surface) px-3 py-2 text-sm text-(--app-color-text) focus:border-(--app-color-primary) focus:outline-none'
-						>
-							{scanPlatformFilters.map((platform) => (
-								<option key={platform || 'all'} value={platform}>
-									{platform ? platform.charAt(0).toUpperCase() + platform.slice(1) : 'All platforms'}
-								</option>
-							))}
-						</select>
-					</div>
-					<div className='flex items-end'>
+				<div className='mb-6 grid gap-6 sm:grid-cols-3 items-end'>
+					<Select
+						label='Status'
+						value={filters.status}
+						onChange={(event) => handleFilterChange('status', event.target.value)}
+						options={scanStatusFilters.map(s => ({
+							label: s ? s.charAt(0).toUpperCase() + s.slice(1) : 'All statuses',
+							value: s
+						}))}
+					/>
+					<Select
+						label='Platform'
+						value={filters.platform}
+						onChange={(event) => handleFilterChange('platform', event.target.value)}
+						options={scanPlatformFilters.map(p => ({
+							label: p ? p.charAt(0).toUpperCase() + p.slice(1) : 'All platforms',
+							value: p
+						}))}
+					/>
+					<div className='pb-0.5'>
 						<Button
 							type='button'
 							variant='secondary'
+							fullWidth
+							className="h-[42px]"
 							onClick={() => {
 								handleFilterChange('status', '');
 								handleFilterChange('platform', '');
@@ -383,35 +384,58 @@ export default function DashboardScansPage() {
 				) : (
 					<div className='space-y-3'>
 						{scanJobs.map((job) => (
-							<div key={job._id} className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) px-4 py-3'>
+							<div 
+								key={job._id} 
+								onClick={() => (window.location.href = `/dashboard/scans/${job._id}`)}
+								className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) px-4 py-4 cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-(--app-color-primary)/30 group/scan'
+							>
 								<div className='flex flex-wrap items-center justify-between gap-3'>
 									<div>
 										<p className='text-sm font-semibold text-(--app-color-text)'>Scan {job._id.slice(-8)}</p>
 										<p className='text-xs text-(--app-color-text-muted)'>Asset: {job.assetId}</p>
 									</div>
-									<Badge variant={statusVariant(job)} size='sm'>
-										{statusLabel(job)}
+									<Badge variant={statusDisplay(job).variant} size='sm' className="flex items-center gap-1.5 font-bold uppercase tracking-wider">
+										{(() => {
+											const StatusIcon = statusDisplay(job).icon;
+											return <StatusIcon size={12} />;
+										})()}
+										{statusDisplay(job).label}
 									</Badge>
 								</div>
 
-								<div className='mt-3 grid gap-2 text-xs text-(--app-color-text-muted) sm:grid-cols-3'>
-									<p>Platforms: {job.platforms?.join(', ') || '-'}</p>
-									<p>Results: {job.resultsCount || 0}</p>
-									<p>Violations: {job.violationsCount || 0}</p>
+								<div className='mt-4 grid gap-4 text-xs text-(--app-color-text-muted) sm:grid-cols-3 border-t border-(--app-color-border)/50 pt-3'>
+									<div className="flex items-center gap-2">
+										<Globe size={14} className="text-(--app-color-primary)" />
+										<span>Platforms: <span className="font-bold text-(--app-color-text)">{job.platforms?.join(', ') || '-'}</span></span>
+									</div>
+									<div className="flex items-center gap-2">
+										<Target size={14} className="text-(--app-color-primary)" />
+										<span>Results: <span className="font-bold text-(--app-color-text)">{job.resultsCount || 0}</span></span>
+									</div>
+									<div className="flex items-center gap-2">
+										<AlertCircle size={14} className="text-red-500" />
+										<span>Violations: <span className="font-bold text-(--app-color-text)">{job.violationsCount || 0}</span></span>
+									</div>
 								</div>
 								{job.lastError ? (
 									<p className='mt-2 text-xs text-red-600'>Last error: {job.lastError}</p>
 								) : null}
-								<div className='mt-3'>
-									<Link to={`/dashboard/scans/${job._id}`} className='text-xs font-semibold uppercase tracking-[0.12em] text-(--app-color-primary) hover:underline'>
+								<div className='mt-4 flex items-center gap-6'>
+									<Link 
+										to={`/dashboard/scans/${job._id}`} 
+										onClick={(e) => e.stopPropagation()}
+										className='flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-(--app-color-primary) hover:bg-(--app-color-primary-soft) px-2 py-1 -ml-2 rounded-lg transition-all duration-200'
+									>
+										<Eye size={14} />
 										View results
 									</Link>
 									{job.status === 'failed' ? (
 										<button
 											type='button'
-											onClick={() => handleRetry(job._id)}
-											className='ml-4 text-xs font-semibold uppercase tracking-[0.12em] text-red-600 hover:underline'
+											onClick={(e) => { e.stopPropagation(); handleRetry(job._id); }}
+											className='flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-red-600 hover:opacity-80 transition-opacity'
 										>
+											<RotateCcw size={14} />
 											Retry
 										</button>
 									) : null}

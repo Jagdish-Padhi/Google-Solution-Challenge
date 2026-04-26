@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Globe, Radio, Send, Video } from 'lucide-react';
+import { ArrowLeft, Globe, Radio, Send, Video } from 'lucide-react';
 
-import { Badge, Button, Card, EmptyState, Loader, Pagination, Spinner } from '../../components';
+import { Badge, Button, Card, EmptyState, Loader, Pagination, Select, Spinner } from '../../components';
 import api from '../../services/api.js';
 
 const resultPlatformFilters = ['', 'youtube', 'twitter', 'telegram', 'web'];
@@ -22,6 +22,13 @@ function statusVariant(status) {
 	}
 
 	return 'info';
+}
+
+function resultStatusVariant(status) {
+	if (status === 'matched') return 'danger';
+	if (status === 'no_match') return 'success';
+	if (status === 'pending_match') return 'warning';
+	return 'secondary';
 }
 
 function platformIcon(platform) {
@@ -126,7 +133,10 @@ export default function DashboardScanResultsPage() {
 					<p className='text-sm text-(--app-color-text-muted)'>Review discovered URLs and platform metadata for this scan job.</p>
 				</div>
 				<Link to='/dashboard/scans'>
-					<Button variant='secondary'>Back to scans</Button>
+					<Button variant='secondary' className='flex items-center gap-2'>
+						<ArrowLeft size={16} />
+						Back to scans
+					</Button>
 				</Link>
 			</div>
 
@@ -155,39 +165,31 @@ export default function DashboardScanResultsPage() {
 				title='Discovered results'
 				subtitle='Rows update as scans complete.'
 			>
-				<div className='mb-4 grid gap-3 sm:grid-cols-3'>
-					<div>
-						<label className='mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-(--app-color-text-muted)'>Platform</label>
-						<select
-							value={filters.platform}
-							onChange={(event) => handleFilterChange('platform', event.target.value)}
-							className='w-full rounded-lg border border-(--app-color-border) bg-(--app-color-surface) px-3 py-2 text-sm text-(--app-color-text) focus:border-(--app-color-primary) focus:outline-none'
-						>
-							{resultPlatformFilters.map((platform) => (
-								<option key={platform || 'all'} value={platform}>
-									{platform ? platform.charAt(0).toUpperCase() + platform.slice(1) : 'All platforms'}
-								</option>
-							))}
-						</select>
-					</div>
-					<div>
-						<label className='mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-(--app-color-text-muted)'>Match status</label>
-						<select
-							value={filters.status}
-							onChange={(event) => handleFilterChange('status', event.target.value)}
-							className='w-full rounded-lg border border-(--app-color-border) bg-(--app-color-surface) px-3 py-2 text-sm text-(--app-color-text) focus:border-(--app-color-primary) focus:outline-none'
-						>
-							{resultStatusFilters.map((status) => (
-								<option key={status || 'all'} value={status}>
-									{status ? status.replace('_', ' ') : 'All result statuses'}
-								</option>
-							))}
-						</select>
-					</div>
-					<div className='flex items-end'>
+				<div className='mb-6 grid gap-6 sm:grid-cols-3 items-end'>
+					<Select
+						label='Platform'
+						value={filters.platform}
+						onChange={(event) => handleFilterChange('platform', event.target.value)}
+						options={resultPlatformFilters.map(p => ({
+							label: p ? p.charAt(0).toUpperCase() + p.slice(1) : 'All platforms',
+							value: p
+						}))}
+					/>
+					<Select
+						label='Match Status'
+						value={filters.status}
+						onChange={(event) => handleFilterChange('status', event.target.value)}
+						options={resultStatusFilters.map(s => ({
+							label: s ? s.replace('_', ' ').charAt(0).toUpperCase() + s.replace('_', ' ').slice(1) : 'All result statuses',
+							value: s
+						}))}
+					/>
+					<div className='pb-0.5'>
 						<Button
 							type='button'
 							variant='secondary'
+							fullWidth
+							className="h-[42px]"
 							onClick={() => {
 								handleFilterChange('platform', '');
 								handleFilterChange('status', '');
@@ -222,13 +224,19 @@ export default function DashboardScanResultsPage() {
 										</td>
 										<td className='px-2 py-3 text-(--app-color-text)'>{result.pageTitle || '-'}</td>
 										<td className='px-2 py-3'>
-											<a href={result.sourceUrl} target='_blank' rel='noreferrer' className='text-(--app-color-primary) hover:underline'>
+											<a 
+												href={result.sourceUrl} 
+												target='_blank' 
+												rel='noreferrer' 
+												className='relative inline-block text-(--app-color-primary) font-semibold group/link'
+											>
 												Open source
+												<span className="absolute bottom-0 left-0 w-0 h-0.5 bg-(--app-color-primary) transition-all duration-300 group-hover/link:w-full"></span>
 											</a>
 										</td>
 										<td className='px-2 py-3'>
-											<Badge variant='secondary' size='sm'>
-												{result.status}
+											<Badge variant={resultStatusVariant(result.status)} size='sm' className="font-bold uppercase tracking-wider">
+												{result.status.replace('_', ' ')}
 											</Badge>
 										</td>
 									</tr>
