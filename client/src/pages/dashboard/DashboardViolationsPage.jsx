@@ -1,7 +1,31 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
-import { Badge, Button, Card, EmptyState, Loader, Modal, Pagination, Spinner } from '../../components';
+import { 
+	AlertTriangle, 
+	Camera, 
+	CheckCircle, 
+	CheckCircle2, 
+	Clock, 
+	ExternalLink, 
+	Eye, 
+	Filter, 
+	FolderOpen, 
+	Gavel, 
+	Globe, 
+	Hammer, 
+	History, 
+	Mail, 
+	MessageSquare, 
+	Send, 
+	ShieldCheck, 
+	Sparkles, 
+	Target, 
+	Share2,
+	Video, 
+	Globe as WebIcon 
+} from 'lucide-react';
+import { Badge, Button, Card, EmptyState, Loader, Modal, Pagination, Select, Spinner } from '../../components';
 import api from '../../services/api.js';
 
 const statusFilters = ['', 'open', 'reported', 'resolved', 'false_positive'];
@@ -158,20 +182,41 @@ export default function DashboardViolationsPage() {
 				<Badge variant='outline'>Open cases: {openCount}</Badge>
 			</div>
 
-			<section className='grid gap-4 sm:grid-cols-3'>
-				<Card className='border-(--app-color-border) shadow-sm' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
-					<p className='text-xs uppercase tracking-[0.16em] text-(--app-color-text-muted)'>Total listed</p>
-					<p className='mt-2 text-3xl font-semibold text-(--app-color-text)'>{violations.length}</p>
+			<section className='grid gap-6 sm:grid-cols-3'>
+				<Card className='border-(--app-color-border) shadow-sm group hover:border-(--app-color-primary)/50 transition-all duration-300' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
+					<div className="flex items-center justify-between">
+						<div className="space-y-1">
+							<p className='text-[10px] font-black uppercase tracking-[0.2em] text-(--app-color-text-muted)'>Total listed</p>
+							<p className='text-3xl font-black text-(--app-color-text) tabular-nums'>{violations.length}</p>
+						</div>
+						<div className="h-12 w-12 rounded-2xl bg-(--app-color-primary-soft) flex items-center justify-center text-(--app-color-primary) group-hover:scale-110 transition-transform">
+							<Gavel size={22} />
+						</div>
+					</div>
 				</Card>
-				<Card className='border-(--app-color-border) shadow-sm' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
-					<p className='text-xs uppercase tracking-[0.16em] text-(--app-color-text-muted)'>Open</p>
-					<p className='mt-2 text-3xl font-semibold text-(--app-color-text)'>{openCount}</p>
+				<Card className='border-(--app-color-border) shadow-sm group hover:border-red-500/50 transition-all duration-300' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
+					<div className="flex items-center justify-between">
+						<div className="space-y-1">
+							<p className='text-[10px] font-black uppercase tracking-[0.2em] text-(--app-color-text-muted)'>Open cases</p>
+							<p className='text-3xl font-black text-(--app-color-text) tabular-nums'>{openCount}</p>
+						</div>
+						<div className="h-12 w-12 rounded-2xl bg-red-50 flex items-center justify-center text-red-600 group-hover:scale-110 transition-transform">
+							<FolderOpen size={22} />
+						</div>
+					</div>
 				</Card>
-				<Card className='border-(--app-color-border) shadow-sm' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
-					<p className='text-xs uppercase tracking-[0.16em] text-(--app-color-text-muted)'>Resolved</p>
-					<p className='mt-2 text-3xl font-semibold text-(--app-color-text)'>
-						{violations.filter((item) => item.status === 'resolved').length}
-					</p>
+				<Card className='border-(--app-color-border) shadow-sm group hover:border-emerald-500/50 transition-all duration-300' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
+					<div className="flex items-center justify-between">
+						<div className="space-y-1">
+							<p className='text-[10px] font-black uppercase tracking-[0.2em] text-(--app-color-text-muted)'>Resolved</p>
+							<p className='text-3xl font-black text-(--app-color-text) tabular-nums'>
+								{violations.filter((item) => item.status === 'resolved').length}
+							</p>
+						</div>
+						<div className="h-12 w-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
+							<ShieldCheck size={22} />
+						</div>
+					</div>
 				</Card>
 			</section>
 
@@ -181,56 +226,49 @@ export default function DashboardViolationsPage() {
 				title='Detected violations'
 				subtitle='Confidence-scored matches from completed scan jobs.'
 			>
-				<div className='mb-4 grid gap-3 sm:grid-cols-4'>
-					<div>
-						<label className='mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-(--app-color-text-muted)'>Status</label>
-						<select
-							value={filters.status}
-							onChange={(event) => handleFilterChange('status', event.target.value)}
-							className='w-full rounded-lg border border-(--app-color-border) bg-(--app-color-surface) px-3 py-2 text-sm text-(--app-color-text) focus:border-(--app-color-primary) focus:outline-none'
-						>
-							{statusFilters.map((status) => (
-								<option key={status || 'all'} value={status}>
-									{status ? status.replace('_', ' ') : 'All statuses'}
-								</option>
-							))}
-						</select>
-					</div>
-					<div>
-						<label className='mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-(--app-color-text-muted)'>Platform</label>
-						<select
-							value={filters.platform}
-							onChange={(event) => handleFilterChange('platform', event.target.value)}
-							className='w-full rounded-lg border border-(--app-color-border) bg-(--app-color-surface) px-3 py-2 text-sm text-(--app-color-text) focus:border-(--app-color-primary) focus:outline-none'
-						>
-							{platformFilters.map((platform) => (
-								<option key={platform || 'all'} value={platform}>
-									{platform ? platform.charAt(0).toUpperCase() + platform.slice(1) : 'All platforms'}
-								</option>
-							))}
-						</select>
-					</div>
-					<div>
-						<label className='mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-(--app-color-text-muted)'>Min confidence</label>
+				<div className='mb-6 grid gap-6 sm:grid-cols-4 items-end'>
+					<Select
+						label='Status'
+						value={filters.status}
+						onChange={(event) => handleFilterChange('status', event.target.value)}
+						options={statusFilters.map(s => ({
+							label: s ? s.replace('_', ' ').charAt(0).toUpperCase() + s.replace('_', ' ').slice(1) : 'All statuses',
+							value: s
+						}))}
+					/>
+					<Select
+						label='Platform'
+						value={filters.platform}
+						onChange={(event) => handleFilterChange('platform', event.target.value)}
+						options={platformFilters.map(p => ({
+							label: p ? p.charAt(0).toUpperCase() + p.slice(1) : 'All platforms',
+							value: p
+						}))}
+					/>
+					<div className="space-y-1">
+						<label className='block text-xs font-black uppercase tracking-widest text-(--app-color-text-muted)'>Min confidence (%)</label>
 						<input
 							type='number'
 							min='0'
 							max='100'
 							value={filters.minConfidence}
 							onChange={(event) => handleFilterChange('minConfidence', Number(event.target.value || 0))}
-							className='w-full rounded-lg border border-(--app-color-border) bg-(--app-color-surface) px-3 py-2 text-sm text-(--app-color-text) focus:border-(--app-color-primary) focus:outline-none'
+							className='w-full rounded-lg border border-(--app-color-border) bg-(--app-color-surface) px-3 py-2 text-sm text-(--app-color-text) focus:border-(--app-color-primary) focus:outline-none h-[42px] font-bold'
 						/>
 					</div>
-					<div className='flex items-end'>
+					<div className='pb-0.5'>
 						<Button
 							type='button'
 							variant='secondary'
+							fullWidth
+							className="h-[42px] flex items-center justify-center gap-2"
 							onClick={() => {
 								handleFilterChange('status', '');
 								handleFilterChange('platform', '');
 								handleFilterChange('minConfidence', 0);
 							}}
 						>
+							<Filter size={14} />
 							Clear filters
 						</Button>
 					</div>
@@ -258,48 +296,61 @@ export default function DashboardViolationsPage() {
 								</tr>
 							</thead>
 							<tbody className='divide-y divide-(--app-color-border)'>
-								{violations.map((item) => (
-									<tr key={item._id}>
-										<td className='px-2 py-3 capitalize'>{item.platform}</td>
-										<td className='px-2 py-3'>
-											<a href={item.sourceUrl} target='_blank' rel='noreferrer' className='text-(--app-color-primary) hover:underline'>
-												Open source
-											</a>
-										</td>
-										<td className='px-2 py-3'>
-											<Badge variant={confidenceVariant(Number(item.matchConfidence || 0))} size='sm'>
-												{item.matchConfidence || 0}%
-											</Badge>
-										</td>
-										<td className='px-2 py-3'>
-											<Badge variant='secondary' size='sm'>
-												{item.status}
-											</Badge>
-										</td>
-										<td className='px-2 py-3'>
-											<div className='flex items-center gap-2'>
-												<button
-													type='button'
-													onClick={() => openDetails(item._id)}
-													className='text-xs font-semibold uppercase tracking-[0.12em] text-(--app-color-primary) hover:underline'
-												>
-													View evidence
-												</button>
-												<select
-													value={item.status}
-													onChange={(event) => updateStatus(item._id, event.target.value)}
-													className='rounded-md border border-(--app-color-border) bg-(--app-color-surface) px-2 py-1 text-xs'
-												>
-													{statusOptions.map((status) => (
-														<option key={status} value={status}>
-															{status}
-														</option>
-													))}
-												</select>
-											</div>
-										</td>
-									</tr>
-								))}
+								{violations.map((item) => {
+									const PlatformIcon = item.platform === 'youtube' ? Video : (item.platform === 'twitter' ? Share2 : (item.platform === 'telegram' ? MessageSquare : Globe));
+									return (
+										<tr key={item._id} className="hover:bg-slate-50 transition-colors group">
+											<td className='px-2 py-4'>
+												<div className="flex items-center gap-2.5">
+													<div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-white group-hover:shadow-sm transition-all">
+														<PlatformIcon size={16} />
+													</div>
+													<span className="font-bold capitalize text-(--app-color-text)">{item.platform}</span>
+												</div>
+											</td>
+											<td className='px-2 py-4'>
+												<a href={item.sourceUrl} target='_blank' rel='noreferrer' className='flex items-center gap-1.5 text-(--app-color-primary) font-bold hover:underline group/link'>
+													<ExternalLink size={14} className="opacity-0 group-hover/link:opacity-100 transition-opacity" />
+													Open source
+												</a>
+											</td>
+											<td className='px-2 py-4'>
+												<Badge variant={confidenceVariant(Number(item.matchConfidence || 0))} size='sm' className="font-bold tracking-wider">
+													{item.matchConfidence || 0}%
+												</Badge>
+											</td>
+											<td className='px-2 py-4'>
+												<Badge variant='outline' size='sm' className="font-bold uppercase tracking-widest text-[10px]">
+													<div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${item.status === 'resolved' ? 'bg-emerald-500' : (item.status === 'reported' ? 'bg-amber-500' : 'bg-red-500')}`} />
+													{item.status.replace('_', ' ')}
+												</Badge>
+											</td>
+											<td className='px-2 py-4'>
+												<div className='flex items-center gap-3'>
+													<button
+														type='button'
+														onClick={() => openDetails(item._id)}
+														className='flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-(--app-color-primary) hover:bg-(--app-color-primary-soft) px-2 py-1 rounded-lg transition-all'
+													>
+														<Eye size={14} />
+														View
+													</button>
+													<select
+														value={item.status}
+														onChange={(event) => updateStatus(item._id, event.target.value)}
+														className='rounded-lg border border-(--app-color-border) bg-(--app-color-surface) px-2 py-1 text-[10px] font-bold uppercase tracking-wider focus:border-(--app-color-primary) focus:outline-none'
+													>
+														{statusOptions.map((status) => (
+															<option key={status} value={status}>
+																{status.replace('_', ' ')}
+															</option>
+														))}
+													</select>
+												</div>
+											</td>
+										</tr>
+									);
+								})}
 							</tbody>
 						</table>
 					</div>
@@ -373,19 +424,25 @@ export default function DashboardViolationsPage() {
 							<div className='pt-4'>
 								<p className='mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-(--app-color-text-muted)'>Actions</p>
 								<div className='flex flex-wrap items-center gap-2'>
-									<Button variant='secondary' onClick={captureScreenshot} loading={isCapturing} disabled={isCapturing}>
+									<Button variant='secondary' onClick={captureScreenshot} loading={isCapturing} disabled={isCapturing} className="flex items-center gap-2">
+										<Camera size={16} />
 										Capture screenshot
 									</Button>
-									<Button variant='secondary' onClick={handleDraftDmca} loading={isDraftingDmca} disabled={isDraftingDmca} className='border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-400 dark:hover:bg-purple-900/30'>
-										✨ Draft DMCA Notice
+									<Button variant='secondary' onClick={handleDraftDmca} loading={isDraftingDmca} disabled={isDraftingDmca} className='border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-400 dark:hover:bg-purple-900/30 flex items-center gap-2'>
+										<Sparkles size={16} />
+										Draft DMCA Notice
 									</Button>
+									<div className="h-8 w-px bg-(--app-color-border) mx-2 hidden sm:block" />
 									{statusOptions.map((status) => (
 										<Button
 											key={status}
+											size="sm"
 											variant={selectedViolation.status === status ? 'primary' : 'secondary'}
 											onClick={() => updateStatus(selectedViolation._id, status)}
+											className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-[10px]"
 										>
-											Mark {status}
+											{status === 'resolved' ? <CheckCircle2 size={12} /> : (status === 'reported' ? <Mail size={12} /> : <AlertTriangle size={12} />)}
+											Mark {status.replace('_', ' ')}
 										</Button>
 									))}
 								</div>

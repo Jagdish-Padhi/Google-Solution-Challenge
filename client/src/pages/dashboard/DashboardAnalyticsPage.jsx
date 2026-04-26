@@ -1,6 +1,27 @@
 import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { 
+	Activity, 
+	AlertTriangle, 
+	BarChart3, 
+	Clock, 
+	Download, 
+	FileCheck, 
+	FileText, 
+	Fingerprint, 
+	Globe, 
+	History, 
+	IndianRupee, 
+	PieChart, 
+	Search, 
+	ShieldAlert, 
+	ShieldCheck, 
+	Target, 
+	TrendingDown, 
+	TrendingUp, 
+	Zap 
+} from 'lucide-react';
 import { Badge, Button, Card, EmptyState, Loader } from '../../components';
 import api from '../../services/api.js';
 
@@ -191,38 +212,66 @@ function KPIMetricsGrid({ kpis }) {
 	const { detectionTime, repeatOffenderRatio, falsePositiveRate, resolutionSLA } = kpis;
 
 	return (
-		<section className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
-			<Card className='border-(--app-color-border) shadow-sm' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
-				<p className='text-xs uppercase tracking-[0.16em] text-(--app-color-text-muted)'>Avg Detection Time</p>
-				<p className='mt-2 text-3xl font-semibold text-(--app-color-text)'>
-					{detectionTime.meanTimeHours > 24 ? `${Math.round(detectionTime.meanTimeHours / 24)}d` : `${detectionTime.meanTimeHours}h`}
-				</p>
-				<p className='mt-2 text-sm text-(--app-color-text-muted)'>
-					From upload to first detection ({detectionTime.count} assets tracked)
-				</p>
-			</Card>
-
-			<Card className='border-(--app-color-border) shadow-sm' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
-				<p className='text-xs uppercase tracking-[0.16em] text-(--app-color-text-muted)'>Repeat Offenders</p>
-				<p className='mt-2 text-3xl font-semibold text-(--app-color-text)'>{repeatOffenderRatio.ratio}%</p>
-				<p className='mt-2 text-sm text-(--app-color-text-muted)'>
-					{repeatOffenderRatio.repeatOffenderCount} of {repeatOffenderRatio.totalDomains} domains
-				</p>
-			</Card>
-
-			<Card className='border-(--app-color-border) shadow-sm' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
-				<p className='text-xs uppercase tracking-[0.16em] text-(--app-color-text-muted)'>False Positive Rate</p>
-				<p className='mt-2 text-3xl font-semibold text-(--app-color-text)'>{falsePositiveRate.rate}%</p>
-				<p className='mt-2 text-sm text-(--app-color-text-muted)'>
-					{falsePositiveRate.falsePositiveCount} of {falsePositiveRate.totalViolations} violations
+		<section className='grid gap-6 md:grid-cols-2 xl:grid-cols-4'>
+			<Card className='border-(--app-color-border) shadow-sm group hover:border-(--app-color-primary)/50 transition-all duration-300' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
+				<div className="flex items-center justify-between">
+					<div className="space-y-1">
+						<p className='text-[10px] font-black uppercase tracking-[0.2em] text-(--app-color-text-muted)'>Detection Time</p>
+						<p className='text-3xl font-black text-(--app-color-text) tabular-nums'>
+							{detectionTime.meanTimeHours > 24 ? `${Math.round(detectionTime.meanTimeHours / 24)}d` : `${detectionTime.meanTimeHours}h`}
+						</p>
+					</div>
+					<div className="h-12 w-12 rounded-2xl bg-(--app-color-primary-soft) flex items-center justify-center text-(--app-color-primary) group-hover:scale-110 transition-transform">
+						<Zap size={22} />
+					</div>
+				</div>
+				<p className='mt-4 text-[10px] text-(--app-color-text-muted) border-t border-(--app-color-border)/50 pt-2'>
+					{detectionTime.count} assets tracked
 				</p>
 			</Card>
 
-			<Card className='border-(--app-color-border) shadow-sm' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
-				<p className='text-xs uppercase tracking-[0.16em] text-(--app-color-text-muted)'>Resolution SLA (24h)</p>
-				<p className='mt-2 text-3xl font-semibold text-(--app-color-text)'>{resolutionSLA.slaCompliancePercentage}%</p>
-				<p className='mt-2 text-sm text-(--app-color-text-muted)'>
-					Avg time: {resolutionSLA.avgTimeHours}h ({resolutionSLA.totalResolved} resolved)
+			<Card className='border-(--app-color-border) shadow-sm group hover:border-red-500/50 transition-all duration-300' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
+				<div className="flex items-center justify-between">
+					<div className="space-y-1">
+						<p className='text-[10px] font-black uppercase tracking-[0.2em] text-(--app-color-text-muted)'>Repeat Offenders</p>
+						<p className='text-3xl font-black text-(--app-color-text) tabular-nums'>{repeatOffenderRatio.ratio}%</p>
+					</div>
+					<div className="h-12 w-12 rounded-2xl bg-red-50 flex items-center justify-center text-red-600 group-hover:scale-110 transition-transform">
+						<ShieldAlert size={22} />
+					</div>
+				</div>
+				<p className='mt-4 text-[10px] text-(--app-color-text-muted) border-t border-(--app-color-border)/50 pt-2'>
+					{repeatOffenderRatio.repeatOffenderCount} identified domains
+				</p>
+			</Card>
+
+			<Card className='border-(--app-color-border) shadow-sm group hover:border-amber-500/50 transition-all duration-300' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
+				<div className="flex items-center justify-between">
+					<div className="space-y-1">
+						<p className='text-[10px] font-black uppercase tracking-[0.2em] text-(--app-color-text-muted)'>False Positives</p>
+						<p className='text-3xl font-black text-(--app-color-text) tabular-nums'>{falsePositiveRate.rate}%</p>
+					</div>
+					<div className="h-12 w-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform">
+						<Target size={22} />
+					</div>
+				</div>
+				<p className='mt-4 text-[10px] text-(--app-color-text-muted) border-t border-(--app-color-border)/50 pt-2'>
+					{falsePositiveRate.falsePositiveCount} of {falsePositiveRate.totalViolations}
+				</p>
+			</Card>
+
+			<Card className='border-(--app-color-border) shadow-sm group hover:border-emerald-500/50 transition-all duration-300' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
+				<div className="flex items-center justify-between">
+					<div className="space-y-1">
+						<p className='text-[10px] font-black uppercase tracking-[0.2em] text-(--app-color-text-muted)'>SLA Compliance</p>
+						<p className='text-3xl font-black text-(--app-color-text) tabular-nums'>{resolutionSLA.slaCompliancePercentage}%</p>
+					</div>
+					<div className="h-12 w-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
+						<ShieldCheck size={22} />
+					</div>
+				</div>
+				<p className='mt-4 text-[10px] text-(--app-color-text-muted) border-t border-(--app-color-border)/50 pt-2'>
+					Avg Resolution: {resolutionSLA.avgTimeHours}h
 				</p>
 			</Card>
 		</section>
@@ -363,10 +412,10 @@ export default function DashboardAnalyticsPage() {
 
 	const statCards = overview
 		? [
-				{ label: 'Total violations', value: overview.totalViolations, subtitle: overview.rangeLabel },
-				{ label: 'Revenue at risk', value: `₹${(overview.estimatedRevenueLoss || 0).toLocaleString()}`, subtitle: 'Est. value of stolen media' },
-				{ label: 'Resolved', value: overview.resolvedViolations, subtitle: `${Math.round((overview.resolutionRate || 0) * 100)}% resolution rate` },
-				{ label: 'Avg confidence', value: `${overview.avgConfidenceScore}%`, subtitle: 'Across detected matches' },
+				{ label: 'Total violations', value: overview.totalViolations, subtitle: overview.rangeLabel, icon: AlertTriangle, color: 'text-red-500', bg: 'bg-red-50' },
+				{ label: 'Revenue at risk', value: `₹${(overview.estimatedRevenueLoss || 0).toLocaleString()}`, subtitle: 'Est. value of stolen media', icon: IndianRupee, color: 'text-(--app-color-primary)', bg: 'bg-(--app-color-primary-soft)' },
+				{ label: 'Resolved', value: overview.resolvedViolations, subtitle: `${Math.round((overview.resolutionRate || 0) * 100)}% resolution rate`, icon: ShieldCheck, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+				{ label: 'Avg confidence', value: `${overview.avgConfidenceScore}%`, subtitle: 'Across detected matches', icon: Activity, color: 'text-(--app-color-primary)', bg: 'bg-(--app-color-primary-soft)' },
 			]
 		: [];
 
@@ -419,27 +468,33 @@ export default function DashboardAnalyticsPage() {
 						</>
 					) : null}
 
-					<Button onClick={handleGenerateReport} loading={isGeneratingReport} disabled={isGeneratingReport}>
+					<Button onClick={handleGenerateReport} loading={isGeneratingReport} disabled={isGeneratingReport} className="flex items-center gap-2">
+						<FileText size={16} />
 						Generate report
 					</Button>
 				</div>
 			</div>
 
 			{overview?.trend ? (
-				<Card className='border-(--app-color-border) shadow-sm' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
+				<Card className='border-(--app-color-border) shadow-sm group hover:border-(--app-color-primary)/50 transition-all duration-300' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
 					<div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
-						<div>
-							<p className='text-xs uppercase tracking-[0.16em] text-(--app-color-text-muted)'>Trend signal</p>
-							<p className='mt-1 text-lg font-semibold text-(--app-color-text)'>
-								{overview.trend.currentWindowViolations} violations in {overview.rangeLabel}
-							</p>
-							<p className='mt-1 text-sm text-(--app-color-text-muted)'>
-								Compared with {overview.trend.previousWindowViolations} in the previous equivalent window.
-							</p>
+						<div className="flex items-start gap-4">
+							<div className="mt-1 h-10 w-10 rounded-xl bg-(--app-color-primary-soft) flex items-center justify-center text-(--app-color-primary)">
+								<Activity size={20} className="animate-pulse" />
+							</div>
+							<div>
+								<p className='text-xs uppercase tracking-[0.16em] text-(--app-color-text-muted) font-black'>Trend signal</p>
+								<p className='mt-1 text-lg font-black text-(--app-color-text)'>
+									{overview.trend.currentWindowViolations} violations in {overview.rangeLabel}
+								</p>
+								<p className='mt-1 text-xs text-(--app-color-text-muted)'>
+									Compared with {overview.trend.previousWindowViolations} in the previous equivalent window.
+								</p>
+							</div>
 						</div>
-						<Badge variant={trendBadgeVariant(overview.trend.direction)} size='sm'>
-							{overview.trend.direction === 'up' ? '+' : ''}
-							{overview.trend.changePercentage}% vs previous window
+						<Badge variant={trendBadgeVariant(overview.trend.direction)} size='sm' className="flex items-center gap-1.5 font-bold tracking-wider">
+							{overview.trend.direction === 'up' ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+							{overview.trend.changePercentage}% vs previous
 						</Badge>
 					</div>
 				</Card>
@@ -458,12 +513,21 @@ export default function DashboardAnalyticsPage() {
 				<>
 					{kpis ? <KPIMetricsGrid kpis={kpis} /> : null}
 
-					<section className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
+					<section className='grid gap-6 md:grid-cols-2 xl:grid-cols-4'>
 						{statCards.map((item) => (
-							<Card key={item.label} className='border-(--app-color-border) shadow-sm' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
-								<p className='text-xs uppercase tracking-[0.16em] text-(--app-color-text-muted)'>{item.label}</p>
-								<p className='mt-2 text-3xl font-semibold text-(--app-color-text)'>{item.value}</p>
-								<p className='mt-2 text-sm text-(--app-color-text-muted)'>{item.subtitle}</p>
+							<Card key={item.label} className='border-(--app-color-border) shadow-sm group hover:border-(--app-color-primary)/50 transition-all duration-300' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
+								<div className="flex items-center justify-between">
+									<div className="space-y-1">
+										<p className='text-[10px] font-black uppercase tracking-[0.2em] text-(--app-color-text-muted)'>{item.label}</p>
+										<p className='text-3xl font-black text-(--app-color-text) tabular-nums'>{item.value}</p>
+									</div>
+									<div className={`h-12 w-12 rounded-2xl ${item.bg} flex items-center justify-center ${item.color} group-hover:scale-110 transition-transform`}>
+										<item.icon size={22} />
+									</div>
+								</div>
+								<p className='mt-4 text-[10px] text-(--app-color-text-muted) border-t border-(--app-color-border)/50 pt-2'>
+									{item.subtitle}
+								</p>
 							</Card>
 						))}
 					</section>
@@ -472,7 +536,12 @@ export default function DashboardAnalyticsPage() {
 						<Card
 							className='border-(--app-color-border) shadow-sm'
 							style={{ backgroundColor: 'var(--app-color-surface-panel)' }}
-							title='Violations over time'
+							title={
+								<div className="flex items-center gap-2">
+									<BarChart3 size={18} className="text-(--app-color-primary)" />
+									Violations over time
+								</div>
+							}
 							subtitle='Daily counts across the selected reporting window.'
 						>
 							<TrendLineChart items={timeline} />
@@ -481,7 +550,12 @@ export default function DashboardAnalyticsPage() {
 						<Card
 							className='border-(--app-color-border) shadow-sm'
 							style={{ backgroundColor: 'var(--app-color-surface-panel)' }}
-							title='Platform distribution'
+							title={
+								<div className="flex items-center gap-2">
+									<PieChart size={18} className="text-(--app-color-primary)" />
+									Platform distribution
+								</div>
+							}
 							subtitle='Which surfaces are producing the most detected misuse.'
 						>
 							<PlatformBars items={platforms} />
@@ -553,22 +627,29 @@ export default function DashboardAnalyticsPage() {
 						{reports.length ? (
 							<div className='space-y-3'>
 								{reports.map((report) => (
-									<div key={report._id} className='flex flex-col gap-3 rounded-xl border border-(--app-color-border) bg-(--app-color-surface) px-4 py-4 sm:flex-row sm:items-center sm:justify-between'>
-										<div>
-											<p className='font-semibold text-(--app-color-text)'>{report.title}</p>
-											<p className='text-sm text-(--app-color-text-muted)'>
-												{report.rangeLabel} • {new Date(report.generatedAt).toLocaleString()}
-											</p>
+									<div key={report._id} className='flex flex-col gap-3 rounded-xl border border-(--app-color-border) bg-(--app-color-surface) px-4 py-4 sm:flex-row sm:items-center sm:justify-between group/report hover:border-(--app-color-primary)/30 transition-colors'>
+										<div className="flex items-start gap-3">
+											<div className="mt-1 h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 group-hover/report:bg-(--app-color-primary-soft) group-hover/report:text-(--app-color-primary) transition-colors">
+												<FileText size={20} />
+											</div>
+											<div>
+												<p className='font-bold text-(--app-color-text)'>{report.title}</p>
+												<p className='text-[10px] uppercase tracking-wider text-(--app-color-text-muted) flex items-center gap-1.5'>
+													<Clock size={12} />
+													{report.rangeLabel} • {new Date(report.generatedAt).toLocaleString()}
+												</p>
+											</div>
 										</div>
-										<div className='flex items-center gap-2'>
-											<Badge variant='outline' size='sm'>
-												{report.stats?.totalViolations || 0} violations
+										<div className='flex items-center gap-4'>
+											<Badge variant='outline' size='sm' className="font-bold tracking-wider">
+												{report.stats?.totalViolations || 0} VIOLATIONS
 											</Badge>
 											<button
 												type='button'
 												onClick={() => handleDownloadReport(report)}
-												className='inline-flex items-center justify-center rounded-lg bg-(--app-color-primary) px-4 py-2 text-sm font-medium text-white transition hover:bg-(--app-color-primary-hover)'
+												className='inline-flex items-center justify-center gap-2 rounded-lg bg-(--app-color-primary) px-4 py-2 text-xs font-bold uppercase tracking-widest text-white transition hover:bg-(--app-color-primary-hover) shadow-sm active:scale-95'
 											>
+												<Download size={14} />
 												Download PDF
 											</button>
 										</div>

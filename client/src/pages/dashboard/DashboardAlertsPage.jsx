@@ -1,6 +1,19 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { Badge, Button, Card, EmptyState, Loader, Modal, Pagination, Spinner } from '../../components';
+import { 
+	Bell, 
+	BellRing, 
+	Check, 
+	CheckCircle2, 
+	Clock, 
+	Filter, 
+	Info, 
+	MailOpen, 
+	Shield, 
+	ShieldAlert, 
+	Zap 
+} from 'lucide-react';
+import { Badge, Button, Card, EmptyState, Loader, Modal, Pagination, Select, Spinner } from '../../components';
 import api from '../../services/api.js';
 
 const severityFilters = ['', 'low', 'medium', 'high', 'critical'];
@@ -128,81 +141,94 @@ export default function DashboardAlertsPage() {
 					<p className='text-sm text-(--app-color-text-muted)'>Track fresh violations and alert status across the organization.</p>
 				</div>
 				<div className='flex items-center gap-2'>
-					<Button variant='secondary' onClick={markAllRead} disabled={alerts.length === 0}>
+					<Button variant='secondary' onClick={markAllRead} disabled={alerts.length === 0} className="flex items-center gap-2">
+						<CheckCircle2 size={16} />
 						Mark all read
 					</Button>
 				</div>
 			</div>
 
-			<section className='grid gap-4 sm:grid-cols-3'>
-				<Card className='border-(--app-color-border) shadow-sm' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
-					<p className='text-xs uppercase tracking-[0.16em] text-(--app-color-text-muted)'>Total alerts</p>
-					<p className='mt-2 text-3xl font-semibold text-(--app-color-text)'>{alerts.length}</p>
+			<section className='grid gap-6 sm:grid-cols-3'>
+				<Card className='border-(--app-color-border) shadow-sm group hover:border-(--app-color-primary)/50 transition-all duration-300' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
+					<div className="flex items-center justify-between">
+						<div className="space-y-1">
+							<p className='text-[10px] font-black uppercase tracking-[0.2em] text-(--app-color-text-muted)'>Total alerts</p>
+							<p className='text-3xl font-black text-(--app-color-text) tabular-nums'>{alerts.length}</p>
+						</div>
+						<div className="h-12 w-12 rounded-2xl bg-(--app-color-primary-soft) flex items-center justify-center text-(--app-color-primary) group-hover:scale-110 transition-transform">
+							<Bell size={22} />
+						</div>
+					</div>
 				</Card>
-				<Card className='border-(--app-color-border) shadow-sm' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
-					<p className='text-xs uppercase tracking-[0.16em] text-(--app-color-text-muted)'>Unread</p>
-					<p className='mt-2 text-3xl font-semibold text-(--app-color-text)'>{alerts.filter((alert) => !alert.read).length}</p>
+				<Card className='border-(--app-color-border) shadow-sm group hover:border-(--app-color-primary)/50 transition-all duration-300' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
+					<div className="flex items-center justify-between">
+						<div className="space-y-1">
+							<p className='text-[10px] font-black uppercase tracking-[0.2em] text-(--app-color-text-muted)'>Unread</p>
+							<p className='text-3xl font-black text-(--app-color-text) tabular-nums'>{alerts.filter((alert) => !alert.read).length}</p>
+						</div>
+						<div className="h-12 w-12 rounded-2xl bg-(--app-color-primary-soft) flex items-center justify-center text-(--app-color-primary) group-hover:scale-110 transition-transform">
+							<MailOpen size={22} />
+						</div>
+					</div>
 				</Card>
-				<Card className='border-(--app-color-border) shadow-sm' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
-					<p className='text-xs uppercase tracking-[0.16em] text-(--app-color-text-muted)'>High severity</p>
-					<p className='mt-2 text-3xl font-semibold text-(--app-color-text)'>
-						{alerts.filter((alert) => ['high', 'critical'].includes(alert.severity)).length}
-					</p>
+				<Card className='border-(--app-color-border) shadow-sm group hover:border-red-500/50 transition-all duration-300' style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
+					<div className="flex items-center justify-between">
+						<div className="space-y-1">
+							<p className='text-[10px] font-black uppercase tracking-[0.2em] text-(--app-color-text-muted)'>High severity</p>
+							<p className='text-3xl font-black text-(--app-color-text) tabular-nums'>
+								{alerts.filter((alert) => ['high', 'critical'].includes(alert.severity)).length}
+							</p>
+						</div>
+						<div className="h-12 w-12 rounded-2xl bg-red-50 flex items-center justify-center text-red-600 group-hover:scale-110 transition-transform">
+							<ShieldAlert size={22} />
+						</div>
+					</div>
 				</Card>
 			</section>
 
 			<Card className='border-(--app-color-border) shadow-sm' style={{ backgroundColor: 'var(--app-color-surface-panel)' }} title='Notification feed' subtitle='Read and manage live alerts from the violation engine.'>
-				<div className='mb-4 grid gap-3 sm:grid-cols-4'>
-					<div>
-						<label className='mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-(--app-color-text-muted)'>Severity</label>
-						<select
-							value={filters.severity}
-							onChange={(event) => handleFilterChange('severity', event.target.value)}
-							className='w-full rounded-lg border border-(--app-color-border) bg-(--app-color-surface) px-3 py-2 text-sm text-(--app-color-text) focus:border-(--app-color-primary) focus:outline-none'
-						>
-							{severityFilters.map((severity) => (
-								<option key={severity || 'all'} value={severity}>
-									{severity ? severity : 'All severities'}
-								</option>
-							))}
-						</select>
-					</div>
-					<div>
-						<label className='mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-(--app-color-text-muted)'>Type</label>
-						<select
-							value={filters.type}
-							onChange={(event) => handleFilterChange('type', event.target.value)}
-							className='w-full rounded-lg border border-(--app-color-border) bg-(--app-color-surface) px-3 py-2 text-sm text-(--app-color-text) focus:border-(--app-color-primary) focus:outline-none'
-						>
-							{typeFilters.map((type) => (
-								<option key={type || 'all'} value={type}>
-									{type ? typeLabel(type) : 'All types'}
-								</option>
-							))}
-						</select>
-					</div>
-					<div>
-						<label className='mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-(--app-color-text-muted)'>Read state</label>
-						<select
-							value={filters.read}
-							onChange={(event) => handleFilterChange('read', event.target.value)}
-							className='w-full rounded-lg border border-(--app-color-border) bg-(--app-color-surface) px-3 py-2 text-sm text-(--app-color-text) focus:border-(--app-color-primary) focus:outline-none'
-						>
-							<option value=''>All alerts</option>
-							<option value='false'>Unread only</option>
-							<option value='true'>Read only</option>
-						</select>
-					</div>
-					<div className='flex items-end'>
+				<div className='mb-6 grid gap-6 sm:grid-cols-4 items-end'>
+					<Select
+						label='Severity'
+						value={filters.severity}
+						onChange={(event) => handleFilterChange('severity', event.target.value)}
+						options={severityFilters.map(s => ({
+							label: s ? s.charAt(0).toUpperCase() + s.slice(1) : 'All severities',
+							value: s
+						}))}
+					/>
+					<Select
+						label='Type'
+						value={filters.type}
+						onChange={(event) => handleFilterChange('type', event.target.value)}
+						options={typeFilters.map(t => ({
+							label: t ? typeLabel(t).charAt(0).toUpperCase() + typeLabel(t).slice(1) : 'All types',
+							value: t
+						}))}
+					/>
+					<Select
+						label='Read state'
+						value={filters.read}
+						onChange={(event) => handleFilterChange('read', event.target.value)}
+						options={[
+							{ label: 'All alerts', value: '' },
+							{ label: 'Unread only', value: 'false' },
+							{ label: 'Read only', value: 'true' },
+						]}
+					/>
+					<div className='pb-0.5'>
 						<Button
 							type='button'
 							variant='secondary'
+							fullWidth
+							className="h-[42px] flex items-center justify-center gap-2"
 							onClick={() => {
 								handleFilterChange('severity', '');
 								handleFilterChange('type', '');
 								handleFilterChange('read', '');
 							}}
 						>
+							<Filter size={14} />
 							Clear filters
 						</Button>
 					</div>
@@ -219,43 +245,55 @@ export default function DashboardAlertsPage() {
 					<EmptyState title='No alerts yet' message='The alert engine will populate this feed when violations are detected.' />
 				) : (
 					<div className='space-y-3'>
-						{alerts.map((alert) => (
-							<button
-								key={alert._id}
-								type='button'
-								onClick={() => openAlert(alert)}
-								className={`w-full rounded-2xl border px-4 py-4 text-left transition hover:shadow-sm ${alert.read ? 'border-(--app-color-border) bg-(--app-color-surface)' : 'border-[color-mix(in_srgb,var(--app-color-primary)_28%,var(--app-color-border))] bg-white'}`}
-							>
-								<div className='flex flex-wrap items-start justify-between gap-3'>
-									<div className='space-y-1'>
-										<div className='flex flex-wrap items-center gap-2'>
-											<Badge variant={severityVariant(alert.severity)} size='sm'>
-												{alert.severity}
-											</Badge>
-											<Badge variant='outline' size='sm'>
-												{typeLabel(alert.type)}
-											</Badge>
-											{!alert.read ? <Badge variant='primary' size='sm'>Unread</Badge> : null}
+						{alerts.map((alert) => {
+							const isHigh = ['high', 'critical'].includes(alert.severity);
+							return (
+								<button
+									key={alert._id}
+									type='button'
+									onClick={() => openAlert(alert)}
+									className={`w-full rounded-2xl border px-4 py-4 text-left transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md group/alert ${alert.read ? 'border-(--app-color-border) bg-(--app-color-surface)' : 'border-[color-mix(in_srgb,var(--app-color-primary)_35%,var(--app-color-border))] bg-white ring-1 ring-(--app-color-primary)/5'}`}
+								>
+									<div className='flex flex-wrap items-start justify-between gap-4'>
+										<div className='flex items-start gap-4 flex-1'>
+											<div className={`mt-1 h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${isHigh ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-500'}`}>
+												{isHigh ? <ShieldAlert size={20} /> : <Info size={20} />}
+											</div>
+											<div className='space-y-1 flex-1'>
+												<div className='flex flex-wrap items-center gap-2'>
+													<Badge variant={severityVariant(alert.severity)} size='sm' className="font-bold uppercase tracking-wider">
+														{alert.severity}
+													</Badge>
+													<Badge variant='outline' size='sm' className="font-bold uppercase tracking-wider">
+														{typeLabel(alert.type)}
+													</Badge>
+													{!alert.read ? <Badge variant='primary' size='sm' className="font-bold tracking-wider">NEW</Badge> : null}
+												</div>
+												<p className='text-base font-bold text-(--app-color-text)'>{alert.title}</p>
+												<p className='text-sm text-(--app-color-text-muted) line-clamp-1'>{alert.message}</p>
+											</div>
 										</div>
-										<p className='text-base font-semibold text-(--app-color-text)'>{alert.title}</p>
-										<p className='text-sm text-(--app-color-text-muted)'>{alert.message}</p>
+										<div className='text-right space-y-3'>
+											<p className="flex items-center justify-end gap-1.5 text-[10px] font-bold uppercase tracking-wider text-(--app-color-text-muted)">
+												<Clock size={12} />
+												{new Date(alert.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+											</p>
+											<button
+												type='button'
+												onClick={(event) => {
+													event.stopPropagation();
+													markAlertRead(alert._id);
+												}}
+												className='flex items-center justify-end gap-1.5 ml-auto text-xs font-bold uppercase tracking-[0.1em] text-(--app-color-primary) hover:bg-(--app-color-primary-soft) px-2 py-1 rounded-lg transition-all'
+											>
+												<Check size={14} />
+												Mark read
+											</button>
+										</div>
 									</div>
-									<div className='text-right text-xs text-(--app-color-text-muted)'>
-										<p>{new Date(alert.createdAt).toLocaleString()}</p>
-										<button
-											type='button'
-											onClick={(event) => {
-											event.stopPropagation();
-											markAlertRead(alert._id);
-										}}
-											className='mt-2 font-semibold uppercase tracking-[0.12em] text-(--app-color-primary) hover:underline'
-										>
-											Mark read
-										</button>
-									</div>
-								</div>
-							</button>
-						))}
+								</button>
+							);
+						})}
 					</div>
 				)}
 
