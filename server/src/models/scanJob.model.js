@@ -41,6 +41,12 @@ const scanJobSchema = new mongoose.Schema(
       keywordsUsed: { type: Number, default: 0 },
       geminiQueriesAdded: { type: Number, default: 0 },
     },
+    progress: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+    },
     startedAt: {
       type: Date,
       default: null,

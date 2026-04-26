@@ -23,11 +23,14 @@ PLATFORM_HANDLERS = {
 }
 
 
-def _run_with_retry(handler, keyword: str) -> list[dict]:
+def _run_with_retry(handler, keyword: str, max_results: int | None = None) -> list[dict]:
     last_error = None
     for attempt in range(1, SCRAPER_MAX_RETRIES + 1):
         try:
-            results = handler(keyword)
+            if max_results is not None:
+                results = handler(keyword, max_results=max_results)
+            else:
+                results = handler(keyword)
             time.sleep(SCRAPER_DELAY_SECONDS)
             return results
         except Exception as error:
@@ -74,12 +77,24 @@ def run_scrape_job(
 
     # Use a higher number of workers to handle keywords and platforms in parallel
     max_concurrency = min(20, len(valid_platforms) * len(all_keywords))
+    import random
     with ThreadPoolExecutor(max_workers=max_concurrency) as executor:
         for platform in valid_platforms:
             handler = PLATFORM_HANDLERS[platform]
+            
+            # Platform specific realistic limits
+            limits = {
+                "youtube": (6, 14),
+                "twitter": (4, 10),
+                "web": (5, 12),
+                "telegram": (None, None)
+            }
+            low, high = limits.get(platform, (5, 10))
+
             for keyword in all_keywords:
+                m_res = random.randint(low, high) if low else None
                 tasks.append(
-                    (platform, keyword, executor.submit(_run_with_retry, handler, keyword))
+                    (platform, keyword, executor.submit(_run_with_retry, handler, keyword, m_res))
                 )
 
         for platform, keyword, future in tasks:

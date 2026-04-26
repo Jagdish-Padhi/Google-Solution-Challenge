@@ -149,12 +149,57 @@ export default function DashboardScanResultsPage() {
 						<p className="font-bold uppercase tracking-widest animate-pulse">Fetching discovery details...</p>
 					</div>
 				) : scanJob ? (
-					<div className='flex flex-wrap items-center justify-between gap-3'>
-						<div>
-							<p className='text-sm font-semibold text-(--app-color-text)'>Scan ID: {scanJob._id}</p>
-							<p className='text-xs text-(--app-color-text-muted)'>Platforms: {scanJob.platforms?.join(', ') || '-'}</p>
+					<div className='space-y-4'>
+						<div className='flex flex-wrap items-center justify-between gap-3'>
+							<div>
+								<p className='text-xl font-bold text-(--app-color-text) uppercase tracking-tight'>{scanJob.assetId?.title || 'System Asset'}</p>
+								<p className='text-[10px] text-(--app-color-text-muted) font-mono uppercase tracking-widest'>Discovery Window: {new Date(scanJob.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</p>
+							</div>
+							<Badge variant={statusVariant(scanJob.status)} size="sm" className="font-black uppercase tracking-widest">{scanJob.status}</Badge>
 						</div>
-						<Badge variant={statusVariant(scanJob.status)}>{scanJob.status}</Badge>
+
+						{scanJob.status === 'running' && (
+							<div className="space-y-2 border-t border-(--app-color-border)/50 pt-4">
+								<div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-(--app-color-primary)">
+									<span>Intelligence Discovery Progress</span>
+									<span>{scanJob.progress || 0}%</span>
+								</div>
+								<div className="h-1.5 w-full overflow-hidden rounded-full bg-(--app-color-primary-soft)">
+									<div 
+										className="h-full bg-(--app-color-primary) transition-all duration-500 ease-out rounded-full shadow-[0_0_8px_rgba(var(--app-color-primary-rgb),0.3)]" 
+										style={{ width: `${scanJob.progress || 0}%` }}
+									/>
+								</div>
+							</div>
+						)}
+						
+						{scanJob.lastError && (
+							<div className="rounded-lg bg-red-50 border border-red-100 p-3 mt-2">
+								<p className='text-xs font-bold text-red-600 uppercase tracking-widest mb-1'>Diagnostic Report</p>
+								<p className='text-sm text-red-800'>{scanJob.lastError}</p>
+							</div>
+						)}
+
+						<div className='grid grid-cols-2 sm:grid-cols-4 gap-4 border-t border-(--app-color-border)/50 pt-4'>
+							<div>
+								<p className='text-[10px] font-black uppercase tracking-widest text-(--app-color-text-muted) mb-1'>Platforms</p>
+								<p className='text-xs font-bold text-(--app-color-text)'>{scanJob.platforms?.join(', ') || '-'}</p>
+							</div>
+							<div>
+								<p className='text-[10px] font-black uppercase tracking-widest text-(--app-color-text-muted) mb-1'>Candidates</p>
+								<p className='text-xs font-bold text-(--app-color-text)'>{scanJob.resultsCount || 0}</p>
+							</div>
+							<div>
+								<p className='text-[10px] font-black uppercase tracking-widest text-(--app-color-text-muted) mb-1'>Violations</p>
+								<p className='text-xs font-bold text-red-600'>{scanJob.violationsCount || 0}</p>
+							</div>
+							<div>
+								<p className='text-[10px] font-black uppercase tracking-widest text-(--app-color-text-muted) mb-1'>Elapsed</p>
+								<p className='text-xs font-bold text-(--app-color-text)'>
+									{scanJob.startedAt ? new Date(new Date(scanJob.completedAt || Date.now()) - new Date(scanJob.startedAt)).toISOString().substr(14, 5) : '--:--'}
+								</p>
+							</div>
+						</div>
 					</div>
 				) : null}
 			</Card>

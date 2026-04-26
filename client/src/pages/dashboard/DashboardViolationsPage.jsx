@@ -289,6 +289,7 @@ export default function DashboardViolationsPage() {
 							<thead>
 								<tr className='text-left text-xs uppercase tracking-[0.14em] text-(--app-color-text-muted)'>
 									<th className='px-2 py-2'>Platform</th>
+									<th className='px-2 py-2'>Asset</th>
 									<th className='px-2 py-2'>Source</th>
 									<th className='px-2 py-2'>Confidence</th>
 									<th className='px-2 py-2'>Status</th>
@@ -306,6 +307,11 @@ export default function DashboardViolationsPage() {
 														<PlatformIcon size={16} />
 													</div>
 													<span className="font-bold capitalize text-(--app-color-text)">{item.platform}</span>
+												</div>
+											</td>
+											<td className='px-2 py-4'>
+												<div className='flex flex-col'>
+													<span className="font-bold text-(--app-color-text) uppercase tracking-tight line-clamp-1">{item.assetId?.title || 'System Asset'}</span>
 												</div>
 											</td>
 											<td className='px-2 py-4'>

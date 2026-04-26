@@ -115,8 +115,8 @@ def _scrape_via_html(keyword: str, max_results: int = 8) -> list[dict]:
     return results
 
 
-def scrape_youtube(keyword: str) -> list[dict]:
+def scrape_youtube(keyword: str, max_results: int = 8) -> list[dict]:
     """Entry point called by scraper_service. Auto-selects API or HTML fallback."""
     if YOUTUBE_API_KEY:
-        return _scrape_via_api(keyword)
-    return _scrape_via_html(keyword)
+        return _scrape_via_api(keyword, max_results=max_results)
+    return _scrape_via_html(keyword, max_results=max_results)

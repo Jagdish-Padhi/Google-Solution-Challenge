@@ -109,8 +109,8 @@ def _scrape_via_googlesearch(keyword: str, max_results: int = 6) -> list[dict]:
     return results
 
 
-def scrape_web(keyword: str) -> list[dict]:
+def scrape_web(keyword: str, max_results: int = 6) -> list[dict]:
     """Entry point called by scraper_service. Auto-selects CSE or fallback."""
     if GOOGLE_CSE_KEY and GOOGLE_CSE_ID:
-        return _scrape_via_cse(keyword)
-    return _scrape_via_googlesearch(keyword)
+        return _scrape_via_cse(keyword, max_results=max_results)
+    return _scrape_via_googlesearch(keyword, max_results=max_results)

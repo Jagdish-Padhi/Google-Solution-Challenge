@@ -70,8 +70,12 @@ async function requestScan(payload) {
 		clearTimeout(timeoutId);
 
 		if (!response.ok) {
+			const contentType = response.headers.get('content-type');
+			if (contentType && contentType.includes('text/html')) {
+				throw new Error(`ML scan service is currently unavailable (${response.status}).`);
+			}
 			const errorText = await response.text();
-			throw new Error(`ML scan request failed (${response.status}): ${errorText.slice(0, 200)}`);
+			throw new Error(`ML scan request failed (${response.status}): ${errorText.slice(0, 100)}`);
 		}
 
 		return response.json();
@@ -155,8 +159,12 @@ async function requestMatch(payload) {
 	});
 
 	if (!response.ok) {
+		const contentType = response.headers.get('content-type');
+		if (contentType && contentType.includes('text/html')) {
+			throw new Error(`ML matching engine is currently unavailable (${response.status}).`);
+		}
 		const errorText = await response.text();
-		throw new Error(`ML match request failed (${response.status}): ${errorText}`);
+		throw new Error(`ML match request failed (${response.status}): ${errorText.slice(0, 100)}`);
 	}
 
 	return response.json();
@@ -176,8 +184,12 @@ async function requestVisionVerify({ referenceUrl, candidateUrl, baseConfidence 
 	});
 
 	if (!response.ok) {
+		const contentType = response.headers.get('content-type');
+		if (contentType && contentType.includes('text/html')) {
+			throw new Error(`ML vision engine is currently unavailable (${response.status}).`);
+		}
 		const errorText = await response.text();
-		throw new Error(`ML vision verify request failed (${response.status}): ${errorText}`);
+		throw new Error(`ML vision verify request failed (${response.status}): ${errorText.slice(0, 100)}`);
 	}
 
 	return response.json();
@@ -211,8 +223,13 @@ async function runMatchingForScan({ scanJob, results }) {
 	}
 
 	let violationsCount = 0;
+	const totalResults = results.length;
+	for (let i = 0; i < totalResults; i++) {
+		const scanResult = results[i];
+		// Update progress from 40% to 95% during matching
+		const currentProgress = Math.floor(40 + ((i + 1) / totalResults) * 55);
+		await ScanJob.findByIdAndUpdate(scanJob._id, { progress: currentProgress });
 
-	for (const scanResult of results) {
 		const compareUrl = scanResult.thumbnailUrl || scanResult.videoUrl || scanResult.sourceUrl;
 		const sourceDomain = getSourceDomain(scanResult.sourceUrl);
 
@@ -351,9 +368,9 @@ async function runMatchingForScan({ scanJob, results }) {
 					sourceUrl: scanResult.sourceUrl,
 				});
 			}
-		} catch {
+		} catch (error) {
+			console.error(`Matching failed for result ${scanResult._id}:`, error);
 			await ScanResult.findByIdAndUpdate(scanResult._id, {
-							sourceUrl: scanResult.sourceUrl,
 				status: 'no_match',
 				matchConfidence: 0,
 				matchType: null,
@@ -402,16 +419,32 @@ export async function dispatchScanJob(scanJobId) {
 		}
 
 		scanJob.status = 'running';
+		scanJob.progress = 10; // Started
 		scanJob.startedAt = new Date();
 		scanJob.lastError = null;
 		await scanJob.save();
 
-		const scanResponse = await requestScan({
-			scanJobId: scanJob._id.toString(),
-			assetId: scanJob.assetId.toString(),
-			keywords: scanJob.keywords,
-			platforms: scanJob.platforms,
-		});
+		let scanResponse;
+		try {
+			scanResponse = await requestScan({
+				scanJobId: scanJob._id.toString(),
+				assetId: scanJob.assetId.toString(),
+				keywords: scanJob.keywords,
+				platforms: scanJob.platforms,
+			});
+		} catch (error) {
+			// Specific handling for 502/timeout jargon
+			let cleanMessage = error.message;
+			if (error.message.includes('502')) {
+				cleanMessage = 'ML service is temporarily overloaded. Retrying might help.';
+			} else if (error.message.includes('timed out')) {
+				cleanMessage = 'Discovery phase took too long. Please try again.';
+			}
+			throw new Error(cleanMessage);
+		}
+
+		scanJob.progress = 40; // Scraping complete
+		await scanJob.save();
 
 		const results = Array.isArray(scanResponse.results) ? scanResponse.results : [];
 
@@ -441,6 +474,7 @@ export async function dispatchScanJob(scanJobId) {
 		const violationsCount = await runMatchingForScan({ scanJob, results: persistedResults });
 
 		scanJob.status = 'completed';
+		scanJob.progress = 100;
 		scanJob.resultsCount = results.length;
 		scanJob.violationsCount = violationsCount;
 		scanJob.completedAt = new Date();
@@ -468,6 +502,7 @@ export async function listScanJobsByOrg({ orgId, page = 1, limit = 10, status = 
 
 	const [items, total] = await Promise.all([
 		ScanJob.find(query)
+			.populate('assetId', 'title')
 			.sort({ createdAt: -1 })
 			.skip(skip)
 			.limit(limit)
@@ -485,7 +520,7 @@ export async function listScanJobsByOrg({ orgId, page = 1, limit = 10, status = 
 }
 
 export async function getScanJobById({ orgId, scanJobId }) {
-	return ScanJob.findOne({ _id: scanJobId, orgId }).lean();
+	return ScanJob.findOne({ _id: scanJobId, orgId }).populate('assetId', 'title').lean();
 }
 
 export async function retryScanJob({ orgId, scanJobId }) {

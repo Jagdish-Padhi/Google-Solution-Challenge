@@ -21,6 +21,7 @@ export async function listViolationsByOrg({ orgId, page = 1, limit = 10, status 
 
 	const [items, total] = await Promise.all([
 		Violation.find(query)
+			.populate('assetId', 'title')
 			.sort({ detectedAt: -1, createdAt: -1 })
 			.skip(skip)
 			.limit(limit)

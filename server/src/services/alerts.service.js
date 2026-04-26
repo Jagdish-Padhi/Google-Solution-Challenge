@@ -15,6 +15,9 @@ export async function createAlertFromViolation({
   platform,
   matchConfidence,
 }) {
+  const violation = await Violation.findById(violationId).populate('assetId', 'title').lean();
+  const assetTitle = violation?.assetId?.title || 'Unknown Asset';
+
   const alerts = [
     {
       orgId,
@@ -22,7 +25,7 @@ export async function createAlertFromViolation({
       type: 'new_violation',
       severity: 'medium',
       title: 'New violation detected',
-      message: `A new violation was detected on ${platform}.`,
+      message: `Unauthorized use of "${assetTitle}" was detected on ${platform}.`,
       channels: ['in-app'],
     },
   ];
@@ -34,7 +37,7 @@ export async function createAlertFromViolation({
       type: 'high_confidence',
       severity: 'high',
       title: 'High-confidence violation',
-      message: `A high-confidence match (${matchConfidence}%) was found on ${platform}.`,
+      message: `A high-confidence match (${matchConfidence}%) for "${assetTitle}" was found on ${platform}.`,
       channels: ['in-app', 'email'],
     });
   }
@@ -53,7 +56,6 @@ export async function createAlertFromViolation({
         org?.notificationPrefs?.emailOnHighConfidence ?? true;
 
       if (emailEnabled && org?.email) {
-        const violation = await Violation.findById(violationId).lean();
         if (violation) {
           await sendViolationAlertEmail(org.email, violation);
         }

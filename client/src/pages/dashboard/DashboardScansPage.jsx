@@ -391,8 +391,8 @@ export default function DashboardScansPage() {
 							>
 								<div className='flex flex-wrap items-center justify-between gap-3'>
 									<div>
-										<p className='text-sm font-semibold text-(--app-color-text)'>Scan {job._id.slice(-8)}</p>
-										<p className='text-xs text-(--app-color-text-muted)'>Asset: {job.assetId}</p>
+										<p className='text-base font-bold text-(--app-color-text) uppercase tracking-tight'>{job.assetId?.title || 'System Asset'}</p>
+										<p className='text-[10px] text-(--app-color-text-muted) font-mono uppercase tracking-widest'>Last Updated: {new Date(job.updatedAt || job.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</p>
 									</div>
 									<Badge variant={statusDisplay(job).variant} size='sm' className="flex items-center gap-1.5 font-bold uppercase tracking-wider">
 										{(() => {
@@ -402,6 +402,21 @@ export default function DashboardScansPage() {
 										{statusDisplay(job).label}
 									</Badge>
 								</div>
+
+								{job.status === 'running' && (
+									<div className="mt-3 space-y-1.5">
+										<div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-(--app-color-primary)">
+											<span>Intelligence Discovery</span>
+											<span>{job.progress || 0}%</span>
+										</div>
+										<div className="h-1.5 w-full overflow-hidden rounded-full bg-(--app-color-primary-soft)">
+											<div 
+												className="h-full bg-(--app-color-primary) transition-all duration-500 ease-out rounded-full shadow-[0_0_8px_rgba(var(--app-color-primary-rgb),0.5)]" 
+												style={{ width: `${job.progress || 0}%` }}
+											/>
+										</div>
+									</div>
+								)}
 
 								<div className='mt-4 grid gap-4 text-xs text-(--app-color-text-muted) sm:grid-cols-3 border-t border-(--app-color-border)/50 pt-3'>
 									<div className="flex items-center gap-2">
@@ -418,7 +433,13 @@ export default function DashboardScansPage() {
 									</div>
 								</div>
 								{job.lastError ? (
-									<p className='mt-2 text-xs text-red-600'>Last error: {job.lastError}</p>
+									<div className="mt-3 rounded-lg bg-red-50/50 border border-red-100 p-2.5">
+										<div className="flex items-center gap-2 mb-1">
+											<AlertCircle size={12} className="text-red-600" />
+											<span className="text-[10px] font-black uppercase tracking-widest text-red-600">Diagnostic Report</span>
+										</div>
+										<p className='text-xs text-red-800 line-clamp-2'>{job.lastError}</p>
+									</div>
 								) : null}
 								<div className='mt-4 flex items-center gap-6'>
 									<Link 
