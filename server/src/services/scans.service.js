@@ -54,20 +54,34 @@ function scorePersistence({ domainPriorViolations, urlSeenCount }) {
 }
 
 async function requestScan(payload) {
-	const response = await fetch(`${ML_SERVICE_URL}/ml/scan`, {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-		body: JSON.stringify(payload),
-	});
+	const controller = new AbortController();
+	const timeoutId = setTimeout(() => controller.abort(), 28000); // 28s timeout
 
-	if (!response.ok) {
-		const errorText = await response.text();
-		throw new Error(`ML scan request failed (${response.status}): ${errorText}`);
+	try {
+		const response = await fetch(`${ML_SERVICE_URL}/ml/scan`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify(payload),
+			signal: controller.signal,
+		});
+
+		clearTimeout(timeoutId);
+
+		if (!response.ok) {
+			const errorText = await response.text();
+			throw new Error(`ML scan request failed (${response.status}): ${errorText.slice(0, 200)}`);
+		}
+
+		return response.json();
+	} catch (error) {
+		clearTimeout(timeoutId);
+		if (error.name === 'AbortError') {
+			throw new Error('ML scan request timed out after 28s');
+		}
+		throw error;
 	}
-
-	return response.json();
 }
 
 async function requestTranslations({ keyword, targetLanguage, apiKey }) {

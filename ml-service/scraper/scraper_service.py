@@ -72,7 +72,9 @@ def run_scrape_job(
     results = []
     errors = []
 
-    with ThreadPoolExecutor(max_workers=max(1, len(valid_platforms))) as executor:
+    # Use a higher number of workers to handle keywords and platforms in parallel
+    max_concurrency = min(20, len(valid_platforms) * len(all_keywords))
+    with ThreadPoolExecutor(max_workers=max_concurrency) as executor:
         for platform in valid_platforms:
             handler = PLATFORM_HANDLERS[platform]
             for keyword in all_keywords:

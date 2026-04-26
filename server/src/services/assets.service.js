@@ -3,20 +3,29 @@ import Asset from '../models/asset.model.js';
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://localhost:8000';
 
 async function requestFingerprint(sourceUrl) {
-	const response = await fetch(`${ML_SERVICE_URL}/ml/fingerprint`, {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-		body: JSON.stringify({ sourceUrl }),
-	});
+	const controller = new AbortController();
+	const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout
 
-	if (!response.ok) {
-		const errorText = await response.text();
-		throw new Error(`Fingerprint service failed (${response.status}): ${errorText}`);
+	try {
+		const response = await fetch(`${ML_SERVICE_URL}/ml/fingerprint`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ sourceUrl }),
+			signal: controller.signal,
+		});
+
+		clearTimeout(timeoutId);
+
+		if (!response.ok) {
+			const errorText = await response.text();
+			throw new Error(`Fingerprint service failed (${response.status}): ${errorText}`);
+		}
+
+		return response.json();
+	} catch (error) {
+		clearTimeout(timeoutId);
+		throw error;
 	}
-
-	return response.json();
 }
 
 async function requestSuggestedKeywords({ title, assetType, sourceUrl, count = 10 }) {
@@ -84,6 +93,7 @@ export async function enrichAssetFingerprint({ assetId, sourceUrl }) {
 		});
 	} catch (error) {
 		console.error('[ASSET_FINGERPRINT_ERROR]', error.message);
+		await Asset.findByIdAndUpdate(assetId, { status: 'failed' });
 	}
 }
 
@@ -161,4 +171,33 @@ export async function getDashboardAssetStats(orgId) {
 		activeScans,
 		violations: violationsAgg[0]?.totalViolations || 0,
 	};
+}
+export async function updateAsset({ orgId, assetId, title }) {
+const asset = await Asset.findOneAndUpdate(
+		{ _id: assetId, orgId, status: { $ne: 'deleted' } },
+{ title },
+{ new: true },
+).lean();
+
+return asset;
+}
+
+export async function retryFingerprint({ orgId, assetId }) {
+	const asset = await Asset.findOne({ _id: assetId, orgId, status: { $ne: 'deleted' } });
+
+	if (!asset) {
+		const error = new Error('Asset not found.');
+		error.statusCode = 404;
+		throw error;
+	}
+
+	asset.status = 'processing';
+	await asset.save();
+
+	void enrichAssetFingerprint({
+		assetId: asset._id.toString(),
+		sourceUrl: asset.gcsUrl,
+	});
+
+	return asset;
 }

@@ -96,12 +96,13 @@ SportShield is designed to be deployed across **Render** (Backends) and **Vercel
   - `BREVO_API_KEY`, `BREVO_SENDER_EMAIL`.
 
 ### 3. Frontend (Vercel)
+- **Root Directory:** `client`
 - **Framework Preset:** Vite
 - **Build Command:** `npm run build`
 - **Output Directory:** `dist`
 - **Env Vars:**
-  - `VITE_API_URL` (URL of your deployed Backend API).
-  - `VITE_FIREBASE_API_KEY`, etc.
+  - `VITE_API_BASE_URL`: `https://your-backend.render.com/api`
+  - `VITE_SOCKET_URL`: `https://your-backend.render.com`
 
 ---
 

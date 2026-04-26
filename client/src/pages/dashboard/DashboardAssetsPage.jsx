@@ -45,17 +45,17 @@ export default function DashboardAssetsPage() {
 	const totalAssets = assets.length;
 	const processingCount = useMemo(() => assets.filter((asset) => asset.status === 'processing').length, [assets]);
 
-	async function loadAssets() {
-		setIsLoading(true);
+	async function loadAssets(isBackground = false) {
+		if (!isBackground) setIsLoading(true);
 		setError('');
 
 		try {
 			const response = await api.get('/assets?page=1&limit=24');
 			setAssets(response.data.items || []);
 		} catch {
-			setError('Unable to load assets right now.');
+			if (!isBackground) setError('Unable to load assets right now.');
 		} finally {
-			setIsLoading(false);
+			if (!isBackground) setIsLoading(false);
 		}
 	}
 
@@ -76,8 +76,8 @@ export default function DashboardAssetsPage() {
 		}
 
 		const timer = setInterval(() => {
-			loadAssets();
-		}, 8000);
+			loadAssets(true);
+		}, 4000);
 
 		return () => clearInterval(timer);
 	}, [processingCount]);
@@ -131,10 +131,10 @@ export default function DashboardAssetsPage() {
 				},
 			});
 
-			toast.success('Asset uploaded. Fingerprint processing started.');
 			setIsUploadModalOpen(false);
 			setUploadForm({ title: '', file: null });
-			await loadAssets();
+			toast.success('Asset uploaded. Fingerprint processing started.');
+			await loadAssets(true);
 		} catch (requestError) {
 			const message = requestError.response?.data?.message || 'Asset upload failed.';
 			toast.error(message);
@@ -200,31 +200,75 @@ export default function DashboardAssetsPage() {
 						<EmptyState title='No assets yet' message='Upload your first image or video to create its fingerprint.' />
 					) : (
 						<div className={viewMode === 'grid' ? 'grid gap-4 md:grid-cols-2 xl:grid-cols-3' : 'space-y-3'}>
-							{assets.map((asset) => (
-								<Card
-									key={asset._id}
-									className='border-(--app-color-border) shadow-sm'
-									style={{ backgroundColor: 'var(--app-color-surface)' }}
-									onClick={() => handleOpenDetail(asset)}
-								>
-									{asset.type === 'image' && asset.gcsUrl ? (
-										<img src={asset.gcsUrl} alt={asset.title} className='mb-4 h-36 w-full rounded-lg object-cover' />
-									) : null}
+							{assets.map((asset) => {
+								const isProcessing = asset.status === 'processing';
+								const isFailed = asset.status === 'failed';
+								
+								// Simulate a realistic progress based on upload time
+								const timeSinceUpload = (Date.now() - new Date(asset.uploadedAt).getTime()) / 1000;
+								const expectedTime = asset.type === 'video' ? 15 : 4;
+								const progress = Math.min(Math.round((timeSinceUpload / expectedTime) * 100), 98);
+								const timeRemaining = Math.max(Math.round(expectedTime - timeSinceUpload), 1);
 
-									<div className='flex items-start justify-between gap-3'>
-										<div>
-											<h3 className='text-base font-semibold text-(--app-color-text)'>{asset.title}</h3>
-											<p className='mt-1 text-xs uppercase tracking-[0.16em] text-(--app-color-text-muted)'>{asset.type}</p>
+								return (
+									<Card
+										key={asset._id}
+										className={`border-(--app-color-border) shadow-sm transition-all duration-300 ${isProcessing ? 'opacity-80' : ''}`}
+										style={{ backgroundColor: 'var(--app-color-surface)' }}
+										onClick={() => !isProcessing && handleOpenDetail(asset)}
+									>
+										{asset.type === 'image' && asset.gcsUrl ? (
+											<div className="overflow-hidden rounded-lg">
+												<img 
+													src={asset.gcsUrl} 
+													alt={asset.title} 
+													className="mb-4 h-36 w-full object-cover" 
+												/>
+											</div>
+										) : null}
+
+										<div className='flex items-start justify-between gap-3'>
+											<div className="flex-1 min-w-0">
+												<h3 className='text-base font-semibold text-(--app-color-text) truncate'>{asset.title}</h3>
+												<p className='mt-1 text-xs uppercase tracking-[0.16em] text-(--app-color-text-muted)'>{asset.type}</p>
+											</div>
+											<Badge variant={getStatusBadgeVariant(asset.status)} size='sm'>
+												{asset.status}
+											</Badge>
 										</div>
-										<Badge variant={getStatusBadgeVariant(asset.status)} size='sm'>
-											{asset.status}
-										</Badge>
-									</div>
 
-									<p className='mt-4 text-sm text-(--app-color-text-muted)'>Fingerprint: {getFingerprintShortValue(asset.fingerprint?.pHash)}</p>
-									<p className='mt-2 text-xs text-(--app-color-text-muted)'>Violations: {asset.violationsFound || 0}</p>
-								</Card>
-							))}
+										{isProcessing ? (
+											<div className="mt-4 space-y-2">
+												<div className="flex justify-between text-[10px] uppercase tracking-widest text-(--app-color-text-muted)">
+													<span>{timeSinceUpload > expectedTime ? 'Finalizing...' : 'AI Fingerprinting...'}</span>
+													<span>{progress}%</span>
+												</div>
+												<div className="h-1.5 w-full overflow-hidden rounded-full bg-(--app-color-surface-elevated)">
+													<div 
+														className="h-full bg-linear-to-r from-(--app-color-primary) to-emerald-400 transition-all duration-1000 ease-out" 
+														style={{ width: `${progress}%` }} 
+													/>
+												</div>
+												<p className="text-[10px] text-center text-(--app-color-text-muted)">
+													{timeSinceUpload > expectedTime ? 'Analysis taking longer than usual...' : `Estimated completion in ~${timeRemaining}s`}
+												</p>
+											</div>
+										) : isFailed ? (
+											<div className="mt-4 p-2 rounded bg-red-500/5 border border-red-500/10 text-[10px] text-red-500 text-center uppercase tracking-wider">
+												Analysis Failed • Try re-uploading
+											</div>
+										) : (
+											<>
+												<p className='mt-4 text-sm text-(--app-color-text-muted)'>Fingerprint: {getFingerprintShortValue(asset.fingerprint?.pHash)}</p>
+												<div className="mt-2 flex items-center justify-between">
+													<p className='text-xs text-(--app-color-text-muted)'>Violations: <span className="text-(--app-color-text) font-medium">{asset.violationsFound || 0}</span></p>
+													<span className="text-[10px] text-(--app-color-text-muted)">{new Date(asset.uploadedAt).toLocaleDateString()}</span>
+												</div>
+											</>
+										)}
+									</Card>
+								);
+							})}
 						</div>
 					)}
 				</div>

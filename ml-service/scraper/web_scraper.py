@@ -71,12 +71,12 @@ def _scrape_via_googlesearch(keyword: str, max_results: int = 6) -> list[dict]:
     except Exception:
         return []
 
-    for url in urls:
-        try:
-            resp = requests.get(url, headers=_HEADERS, timeout=8)
-            soup = BeautifulSoup(resp.text, "html.parser")
+    from concurrent.futures import ThreadPoolExecutor
 
-            # Try og:image first, fall back to first <img> with src
+    def _fetch_page_metadata(url):
+        try:
+            resp = requests.get(url, headers=_HEADERS, timeout=10)
+            soup = BeautifulSoup(resp.text, "html.parser")
             og_img = soup.find("meta", property="og:image")
             thumbnail = og_img["content"] if og_img and og_img.get("content") else ""
 
@@ -87,20 +87,24 @@ def _scrape_via_googlesearch(keyword: str, max_results: int = 6) -> list[dict]:
             title_tag = soup.find("title")
             title = title_tag.get_text(strip=True) if title_tag else url
 
-            results.append(
-                {
-                    "platform": "web",
-                    "sourceUrl": url,
-                    "thumbnailUrl": thumbnail,
-                    "videoUrl": None,
-                    "pageTitle": title,
-                    "status": "pending_match",
-                    "scrapedAt": now,
-                }
-            )
+            return {
+                "platform": "web",
+                "sourceUrl": url,
+                "thumbnailUrl": thumbnail,
+                "videoUrl": None,
+                "pageTitle": title,
+                "status": "pending_match",
+                "scrapedAt": now,
+            }
         except Exception:
-            # Skip pages that time out or block us
-            continue
+            return None
+
+    with ThreadPoolExecutor(max_workers=max_results) as executor:
+        future_to_url = {executor.submit(_fetch_page_metadata, url): url for url in urls}
+        for future in future_to_url:
+            metadata = future.result()
+            if metadata:
+                results.append(metadata)
 
     return results
 
