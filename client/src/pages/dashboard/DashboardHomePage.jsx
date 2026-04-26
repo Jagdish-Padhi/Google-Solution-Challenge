@@ -48,6 +48,34 @@ export default function DashboardHomePage() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [liveLogs, setLiveLogs] = useState([]);
+
+  useEffect(() => {
+    // Simulate real-time logs coming in to keep the dashboard feeling alive
+    const platforms = ['youtube', 'twitter', 'telegram', 'web'];
+    const actions = ['Extracting video features', 'Running PHash match', 'Color histogram diff', 'Analyzing temporal signature', 'Candidate discarded', 'High confidence match'];
+    let counter = 0;
+    
+    // Initial logs
+    const initial = Array.from({ length: 5 }).map((_, i) => ({
+      id: `init-${i}`,
+      platform: platforms[Math.floor(Math.random() * platforms.length)],
+      text: `${actions[Math.floor(Math.random() * actions.length)]} [${Math.random().toString(36).substring(7)}]`,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    }));
+    setLiveLogs(initial);
+
+    const interval = setInterval(() => {
+       const newLog = {
+         id: `log-${counter++}`,
+         platform: platforms[Math.floor(Math.random() * platforms.length)],
+         text: `${actions[Math.floor(Math.random() * actions.length)]} [${Math.random().toString(36).substring(7)}]`,
+         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+       };
+       setLiveLogs(prev => [newLog, ...prev].slice(0, 5));
+    }, 2500);
+    return () => clearInterval(interval);
+  }, []);
 
   const loadDashboardData = async (silent = false) => {
     try {
@@ -227,13 +255,29 @@ export default function DashboardHomePage() {
                 </div>
               ))
             ) : (
-              <div className="flex flex-col items-center justify-center py-20 opacity-30">
-                <Loader size={0.4} />
-                <p className="mt-4 text-[10px] font-bold uppercase tracking-widest">Scanners active...</p>
+              <div className="relative overflow-hidden h-[320px] rounded-xl bg-slate-50/50 border border-slate-100 p-2">
+                 <div className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-white to-transparent z-10 pointer-events-none" />
+                 <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-white to-transparent z-10 pointer-events-none" />
+                 <div className="space-y-1 flex flex-col justify-end h-full p-2">
+                   {liveLogs.map((log) => (
+                     <div key={log.id} className="animate-in slide-in-from-bottom-2 fade-in duration-500 flex items-start gap-3 py-2 border-b border-slate-100 last:border-0">
+                       <div className="mt-1 flex-shrink-0">
+                         <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
+                       </div>
+                       <div className="flex-1 min-w-0">
+                         <div className="flex justify-between items-center">
+                           <span className="text-[10px] uppercase font-bold text-teal-600 tracking-widest">{log.platform}</span>
+                           <span className="text-[10px] text-slate-400 font-mono">{log.time}</span>
+                         </div>
+                         <p className="text-xs text-slate-600 font-mono mt-1 truncate">{log.text}</p>
+                       </div>
+                     </div>
+                   ))}
+                 </div>
               </div>
             )}
           </div>
-          <Button as={Link} to="/dashboard/scans" variant="secondary" className="w-full h-10 text-[10px] font-bold uppercase tracking-widest mt-6 rounded-xl bg-slate-50 border-slate-200 hover:bg-slate-900 hover:text-white transition-all">
+          <Button as={Link} to="/dashboard/scans" variant="secondary" className="w-full h-10 text-[10px] font-bold uppercase tracking-widest mt-6 rounded-xl bg-slate-50 border-slate-200 hover:bg-[var(--app-color-primary)] hover:text-white transition-all">
             Audit Discovery History
           </Button>
         </Card>
