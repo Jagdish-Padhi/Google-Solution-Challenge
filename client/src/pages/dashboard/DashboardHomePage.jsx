@@ -17,7 +17,8 @@ import {
   Share2,
   Send,
   Layout,
-  RefreshCw
+  RefreshCw,
+  FileText
 } from 'lucide-react';
 
 import { Card, Badge, Button, Loader } from '../../components';
@@ -141,6 +142,17 @@ export default function DashboardHomePage() {
           >
             <RefreshCw className={`w-3.5 h-3.5 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
             Refresh
+          </Button>
+
+          <Button
+            as={Link}
+            to="/dashboard/analytics"
+            variant="secondary"
+            size="sm"
+            className="h-9 px-4 rounded-xl text-xs font-bold bg-white border-slate-200 hover:bg-slate-50 active:scale-95 transition-all"
+          >
+            <FileText className="w-3.5 h-3.5 mr-2" />
+            Reports
           </Button>
         </div>
       </header>

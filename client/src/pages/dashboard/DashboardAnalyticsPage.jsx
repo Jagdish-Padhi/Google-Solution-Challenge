@@ -1,12 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
-import toast from 'react-hot-toast';
-
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { 
 	Activity, 
 	AlertTriangle, 
 	BarChart3, 
 	Clock, 
-	Download, 
+	Download,
+	ExternalLink,
 	FileCheck, 
 	FileText, 
 	Fingerprint, 
@@ -24,6 +23,7 @@ import {
 } from 'lucide-react';
 import { Badge, Button, Card, EmptyState, Loader } from '../../components';
 import api from '../../services/api.js';
+import useReportStore from '../../store/report.store.js';
 
 const rangeOptions = [
 	{ value: '7d', label: 'Last 7 days' },
@@ -405,7 +405,7 @@ export default function DashboardAnalyticsPage() {
 	const [kpis, setKpis] = useState(null);
 	const [reports, setReports] = useState([]);
 	const [isLoading, setIsLoading] = useState(true);
-	const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+	const { startGeneration, isGenerating, generatedReport } = useReportStore();
 	const [error, setError] = useState('');
 
 	const queryParams = useMemo(() => {
@@ -423,80 +423,57 @@ export default function DashboardAnalyticsPage() {
 		return params;
 	}, [customDates.endDate, customDates.startDate, range]);
 
-	useEffect(() => {
-		let isMounted = true;
-
-		async function loadAnalytics() {
-			if (range === 'custom' && (!customDates.startDate || !customDates.endDate)) {
-				setIsLoading(false);
-				setOverview(null);
-				setTimeline([]);
-				setPlatforms([]);
-				setKpis(null);
-				return;
-			}
-
-			setIsLoading(true);
-			setError('');
-
-			try {
-				const [overviewResponse, timelineResponse, platformsResponse, kpisResponse, reportsResponse] = await Promise.all([
-					api.get('/analytics/overview', { params: queryParams }),
-					api.get('/analytics/timeline', { params: queryParams }),
-					api.get('/analytics/platforms', { params: queryParams }),
-					api.get('/analytics/kpis', { params: queryParams }),
-					api.get('/reports', { params: { page: 1, limit: 5 } }),
-				]);
-
-				if (!isMounted) {
-					return;
-				}
-
-				setOverview(overviewResponse.data);
-				setTimeline(timelineResponse.data.items || []);
-				setPlatforms(platformsResponse.data.items || []);
-				setKpis(kpisResponse.data.kpis || null);
-				setReports(reportsResponse.data.items || []);
-			} catch {
-				if (isMounted) {
-					setError('Unable to load analytics right now.');
-				}
-			} finally {
-				if (isMounted) {
-					setIsLoading(false);
-				}
-			}
+	const loadData = useCallback(async () => {
+		if (range === 'custom' && (!customDates.startDate || !customDates.endDate)) {
+			setOverview(null);
+			setTimeline([]);
+			setPlatforms([]);
+			setKpis(null);
+			return;
 		}
 
-		loadAnalytics();
+		try {
+			setIsLoading(true);
+			const [overviewResponse, timelineResponse, platformsResponse, kpisResponse, reportsResponse] = await Promise.all([
+				api.get('/analytics/overview', { params: queryParams }),
+				api.get('/analytics/timeline', { params: queryParams }),
+				api.get('/analytics/platforms', { params: queryParams }),
+				api.get('/analytics/kpis', { params: queryParams }),
+				api.get('/reports', { params: { limit: 5 } }),
+			]);
 
-		return () => {
-			isMounted = false;
-		};
-	}, [customDates.endDate, customDates.startDate, queryParams, range]);
+			setOverview(overviewResponse.data);
+			setTimeline(timelineResponse.data.items || []);
+			setPlatforms(platformsResponse.data.items || []);
+			setKpis(kpisResponse.data.kpis || null);
+			setReports(reportsResponse.data?.items || []);
+		} catch {
+			setError('Unable to load analytics right now.');
+		} finally {
+			setIsLoading(false);
+		}
+	}, [queryParams, range, customDates]);
+
+	useEffect(() => {
+		loadData();
+	}, [loadData]);
+
+	useEffect(() => {
+		if (generatedReport) {
+			setReports((current) => {
+				if (current.some(r => r._id === generatedReport._id)) return current;
+				return [generatedReport, ...current].slice(0, 5);
+			});
+		}
+	}, [generatedReport]);
 
 	const handleGenerateReport = async () => {
 		if (range === 'custom' && (!customDates.startDate || !customDates.endDate)) {
 			toast.error('Select both custom dates before generating a report.');
 			return;
 		}
-
-		setIsGeneratingReport(true);
-
-		try {
-			const response = await api.post('/reports/generate', queryParams);
-			const generatedReport = response.data?.report;
-			toast.success('Report generated successfully.');
-
-			if (generatedReport) {
-				setReports((current) => [generatedReport, ...current].slice(0, 5));
-			}
-		} catch (requestError) {
-			const message = requestError.response?.data?.message || 'Unable to generate report.';
-			toast.error(message);
-		} finally {
-			setIsGeneratingReport(false);
-		}
+		
+		await startGeneration(queryParams);
 	};
 
 	const handleDownloadReport = async (report) => {
@@ -583,7 +560,7 @@ export default function DashboardAnalyticsPage() {
 						</>
 					) : null}
 
-					<Button onClick={handleGenerateReport} loading={isGeneratingReport} disabled={isGeneratingReport} className="flex items-center gap-2">
+					<Button onClick={handleGenerateReport} loading={isGenerating} disabled={isGenerating} className="flex items-center gap-2">
 						<FileText size={16} />
 						Generate report
 					</Button>

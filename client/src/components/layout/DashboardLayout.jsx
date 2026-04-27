@@ -7,6 +7,8 @@ import Container from '../Container';
 import api from '../../services/api.js';
 import { connectRealtime, disconnectRealtime } from '../../services/realtime.js';
 import useAuthStore from '../../store/auth.store.js';
+import useReportStore from '../../store/report.store.js';
+import ReportGenerationModal from '../ReportGenerationModal';
 
 import {
 	BarChart3,
@@ -108,8 +110,51 @@ export default function DashboardLayout() {
 		}
 	};
 
+	const { isGenerating, progress, generatedReport, dismissModal, hideGenerating } = useReportStore();
+
+	const handleDownloadReport = async (report) => {
+		if (!report.fileUrl) return toast.error('Download link not available.');
+		
+		try {
+			// Resolve absolute URL
+			let downloadUrl = report.fileUrl;
+			if (!/^https?:\/\//i.test(downloadUrl)) {
+				const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+				const apiOrigin = new URL(apiBaseUrl).origin;
+				downloadUrl = `${apiOrigin}${downloadUrl.startsWith('/') ? '' : '/'}${downloadUrl}`;
+			}
+
+			const response = await api.get(downloadUrl, {
+				responseType: 'blob',
+			});
+
+			const blobUrl = window.URL.createObjectURL(new Blob([response.data]));
+			const anchor = document.createElement('a');
+			anchor.href = blobUrl;
+			anchor.download = `SportShield_Report_${report._id || 'Generated'}.pdf`;
+			document.body.appendChild(anchor);
+			anchor.click();
+			anchor.remove();
+			window.URL.revokeObjectURL(blobUrl);
+		} catch (error) {
+			console.error('Download error:', error);
+			// Fallback
+			window.open(report.fileUrl, '_blank');
+		}
+	};
+
 	return (
 		<div className={`min-h-screen text-(--app-color-text) ${isTransitioning ? 'animate-dashboard-exit' : 'animate-dashboard-land'}`} style={shellBackground}>
+			{(isGenerating || generatedReport) && (
+				<ReportGenerationModal
+					isGenerating={isGenerating}
+					progress={progress}
+					report={generatedReport}
+					onClose={dismissModal}
+					onBackground={hideGenerating}
+					onDownload={handleDownloadReport}
+				/>
+			)}
 			<header className='sticky top-0 z-20 border-b border-white/60 bg-white/75 backdrop-blur-xl'>
 				<Container className='flex min-h-20 items-center justify-between gap-4 py-4'>
 					<Link to='/' className='flex items-center gap-3 group'>

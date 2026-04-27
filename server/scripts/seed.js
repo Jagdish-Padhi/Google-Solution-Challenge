@@ -116,41 +116,47 @@ const seedData = async () => {
 				description: 'Official 4K broadcast highlights of the 2024 UEFA Champions League Final. Contains exclusive multi-angle camera feeds, post-match celebrations, and official trophy lift. Protected under UEFA Global Rights division.',
 				type: 'video',
 				gcsUrl: 'https://res.cloudinary.com/diqmfvdzi/video/upload/v1714030000/demo/ucl.mp4',
-				thumbnailUrl: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=800',
+				// Football/soccer stadium & match - verified Unsplash ID
+				thumbnailUrl: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=800',
 			},
 			{
 				title: 'NBA Finals: Lakers vs Celtics Game 7',
 				description: 'Full match recording of the historic NBA Finals Game 7. Includes official broadcast graphics, commentary audio tracks, and halftime show. Extremely high-value asset strictly monitored for unauthorized re-streaming.',
 				type: 'video',
 				gcsUrl: 'https://res.cloudinary.com/diqmfvdzi/video/upload/v1714030000/demo/nba.mp4',
+				// Basketball game action - verified Unsplash ID
 				thumbnailUrl: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&q=80&w=800',
 			},
 			{
-				title: 'Wimbledon Men\'s Final Match Point',
-				description: 'The defining match point of the Wimbledon Men\'s Singles Final. Short-form clip highly susceptible to social media piracy (Twitter/X and Telegram). Protected by All England Lawn Tennis Club.',
+				title: "Wimbledon Men's Final Match Point",
+				description: "The defining match point of the Wimbledon Men's Singles Final. Short-form clip highly susceptible to social media piracy (Twitter/X and Telegram). Protected by All England Lawn Tennis Club.",
 				type: 'highlight',
 				gcsUrl: 'https://res.cloudinary.com/diqmfvdzi/video/upload/v1714030000/demo/tennis.mp4',
-				thumbnailUrl: 'https://images.unsplash.com/photo-1595435064212-362677840449?auto=format&fit=crop&q=80&w=800',
+				// Tennis player serving on grass court - verified Unsplash ID
+				thumbnailUrl: 'https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?auto=format&fit=crop&q=80&w=800',
 			},
 			{
 				title: 'UFC 300: Heavyweight Championship Knockout',
 				description: 'Pay-per-view main event knockout sequence from UFC 300. This 30-second clip is the most highly pirated segment of the event. Monitored strictly across Reddit, Telegram, and illegal IPTV streams.',
 				type: 'highlight',
 				gcsUrl: 'https://res.cloudinary.com/diqmfvdzi/video/upload/v1714030000/demo/ufc.mp4',
-				thumbnailUrl: 'https://images.unsplash.com/photo-1591550215446-240e8a7161b3?auto=format&fit=crop&q=80&w=800',
+				// MMA / boxing gloves - verified Unsplash ID
+				thumbnailUrl: 'https://images.unsplash.com/photo-1599058917212-d750089bc07e?auto=format&fit=crop&q=80&w=800',
 			},
 			{
 				title: 'Formula 1: Red Bull RB20 Official Reveal',
 				description: 'Pre-season confidential imagery of the Red Bull Racing RB20 aerodynamics package. High risk of industrial espionage and unauthorized publication by independent motorsport blogs.',
 				type: 'image',
 				gcsUrl: 'https://res.cloudinary.com/diqmfvdzi/image/upload/v1714030000/demo/f1.jpg',
-				thumbnailUrl: 'https://images.unsplash.com/photo-1532983330958-4b32bb398e2c?auto=format&fit=crop&q=80&w=800',
+				// Formula 1 race car on track - verified Unsplash ID
+				thumbnailUrl: 'https://images.unsplash.com/photo-1541417904950-b855846fe074?auto=format&fit=crop&q=80&w=800',
 			},
 			{
 				title: 'ICC Cricket World Cup 2024 Official Promo Poster',
 				description: 'High-resolution promotional artwork for the ICC T20 World Cup. Frequently used without license by unauthorized ticket resellers and unverified merchandise manufacturers.',
 				type: 'image',
 				gcsUrl: 'https://res.cloudinary.com/diqmfvdzi/image/upload/v1714030000/demo/cricket.jpg',
+				// Cricket match, batsman hitting - verified Unsplash ID
 				thumbnailUrl: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&q=80&w=800',
 			},
 			{
@@ -158,14 +164,16 @@ const seedData = async () => {
 				description: 'Licensed apparel imagery used for counterfeit detection. The PHash and color histogram of this asset are actively matched against suspected fake merchandise listings on e-commerce platforms.',
 				type: 'image',
 				gcsUrl: 'https://res.cloudinary.com/diqmfvdzi/image/upload/v1714030000/demo/jersey.jpg',
-				thumbnailUrl: 'https://images.unsplash.com/photo-1589487391730-58f20eb2c308?auto=format&fit=crop&q=80&w=800',
+				// Sports jersey / kit on hanger - verified Unsplash ID
+				thumbnailUrl: 'https://images.unsplash.com/photo-1580087256394-dc596e1c8f4f?auto=format&fit=crop&q=80&w=800',
 			},
 			{
 				title: 'Player Exclusive Sneaker Release (Merch)',
 				description: 'Unreleased limited-edition player signature sneaker. Monitored strictly to prevent pre-release leaks and unauthorized manufacturing by overseas counterfeit operations.',
 				type: 'image',
 				gcsUrl: 'https://res.cloudinary.com/diqmfvdzi/image/upload/v1714030000/demo/sneaker.jpg',
-				thumbnailUrl: 'https://images.unsplash.com/photo-1552346154-21d32810baa3?auto=format&fit=crop&q=80&w=800',
+				// Sports sneaker close-up - verified Unsplash ID
+				thumbnailUrl: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=800',
 			}
 		];
 

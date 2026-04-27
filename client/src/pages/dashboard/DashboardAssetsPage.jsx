@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useSearchParams } from 'react-router-dom';
 
@@ -82,6 +82,8 @@ export default function DashboardAssetsPage() {
 		description: '',
 		file: null,
 	});
+	const [isDragging, setIsDragging] = useState(false);
+	const fileInputRef = useRef(null);
 	const [editForm, setEditForm] = useState({
 		id: '',
 		title: '',
@@ -149,6 +151,20 @@ export default function DashboardAssetsPage() {
 		const file = event.target.files?.[0] || null;
 		setUploadForm((current) => ({ ...current, file }));
 	};
+
+	const handleFileDrop = useCallback((event) => {
+		event.preventDefault();
+		setIsDragging(false);
+		const file = event.dataTransfer.files?.[0] || null;
+		if (file) {
+			const accepted = ['video/mp4', 'video/quicktime', 'image/jpeg', 'image/png'];
+			if (!accepted.includes(file.type)) {
+				toast.error('Unsupported file type. Please use MP4, MOV, JPEG, or PNG.');
+				return;
+			}
+			setUploadForm((current) => ({ ...current, file }));
+		}
+	}, []);
 
 	const handleUploadSubmit = async (event) => {
 		event.preventDefault();
@@ -460,11 +476,49 @@ export default function DashboardAssetsPage() {
 						/>
 					</div>
 
-					<div className='rounded-xl border border-dashed border-(--app-color-border) bg-(--app-color-surface) p-5'>
-						<label className='mb-2 block text-sm font-medium text-(--app-color-text)'>Select file</label>
-						<input type='file' accept={acceptedFileTypes} onChange={handleFileSelect} required className='w-full text-sm text-(--app-color-text-muted)' />
-						<p className='mt-2 text-xs text-(--app-color-text-muted)'>Accepted formats: MP4, MOV, JPEG, PNG.</p>
+				<div
+					className={`rounded-xl border-2 border-dashed transition-all duration-200 cursor-pointer ${
+						isDragging
+							? 'border-(--app-color-primary) bg-blue-50/50 scale-[1.01]'
+							: uploadForm.file
+								? 'border-emerald-400 bg-emerald-50/50'
+								: 'border-(--app-color-border) bg-(--app-color-surface) hover:border-(--app-color-primary)/60 hover:bg-blue-50/20'
+					}`}
+					onDragEnter={(e) => { e.preventDefault(); setIsDragging(true); }}
+					onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+					onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
+					onDrop={handleFileDrop}
+					onClick={() => fileInputRef.current?.click()}
+				>
+					<input
+						ref={fileInputRef}
+						type='file'
+						accept={acceptedFileTypes}
+						onChange={handleFileSelect}
+						className='hidden'
+					/>
+					<div className='flex flex-col items-center justify-center gap-2 py-8 px-4 select-none pointer-events-none'>
+						{uploadForm.file ? (
+							<>
+								<div className='h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center'>
+									<FileCheck className='h-5 w-5 text-emerald-600' />
+								</div>
+								<p className='text-sm font-bold text-emerald-700 text-center truncate max-w-[240px]'>{uploadForm.file.name}</p>
+								<p className='text-xs text-emerald-600/70'>{(uploadForm.file.size / (1024 * 1024)).toFixed(2)} MB &middot; <span className='underline'>Click to change</span></p>
+							</>
+						) : (
+							<>
+								<div className={`h-12 w-12 rounded-full flex items-center justify-center transition-colors ${isDragging ? 'bg-(--app-color-primary) text-white' : 'bg-(--app-color-surface-elevated) text-(--app-color-text-muted)'}`}>
+									<UploadCloud className='h-6 w-6' />
+								</div>
+								<p className='text-sm font-semibold text-(--app-color-text)'>
+									{isDragging ? 'Drop file here!' : 'Drag & drop or click to browse'}
+								</p>
+								<p className='text-xs text-(--app-color-text-muted)'>MP4, MOV, JPEG, PNG &middot; Max 2 GB</p>
+							</>
+						)}
 					</div>
+				</div>
 
 					{isSubmitting && (
 						<div className='space-y-2'>
