@@ -24,6 +24,8 @@ import {
 import { Badge, Button, Card, EmptyState, Loader } from '../../components';
 import api from '../../services/api.js';
 import useReportStore from '../../store/report.store.js';
+import { useLocation } from 'react-router-dom';
+import { useRef } from 'react';
 
 const rangeOptions = [
 	{ value: '7d', label: 'Last 7 days' },
@@ -407,6 +409,17 @@ export default function DashboardAnalyticsPage() {
 	const [isLoading, setIsLoading] = useState(true);
 	const { startGeneration, isGenerating, generatedReport } = useReportStore();
 	const [error, setError] = useState('');
+	const location = useLocation();
+	const reportsRef = useRef(null);
+
+	useEffect(() => {
+		if (location.hash === '#reports-section' && !isLoading && reportsRef.current) {
+			const timer = setTimeout(() => {
+				reportsRef.current.scrollIntoView({ behavior: 'smooth' });
+			}, 500);
+			return () => clearTimeout(timer);
+		}
+	}, [location, isLoading]);
 
 	const queryParams = useMemo(() => {
 		const params = { range };
@@ -711,7 +724,9 @@ export default function DashboardAnalyticsPage() {
 					</section>
 
 					<Card
-						className='border-(--app-color-border) shadow-sm'
+						ref={reportsRef}
+						id="reports-section"
+						className='border-(--app-color-border) shadow-sm scroll-mt-24'
 						style={{ backgroundColor: 'var(--app-color-surface-panel)' }}
 						title='Generated reports'
 						subtitle='Latest downloadable analytics exports.'

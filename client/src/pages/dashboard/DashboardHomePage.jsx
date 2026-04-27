@@ -146,7 +146,7 @@ export default function DashboardHomePage() {
 
           <Button
             as={Link}
-            to="/dashboard/analytics"
+            to="/dashboard/analytics#reports-section"
             variant="secondary"
             size="sm"
             className="h-9 px-4 rounded-xl text-xs font-bold bg-white border-slate-200 hover:bg-slate-50 active:scale-95 transition-all"
