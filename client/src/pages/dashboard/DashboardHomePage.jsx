@@ -237,45 +237,25 @@ export default function DashboardHomePage() {
           title="Discovery Ingestion"
           subtitle="Real-time candidate match logs."
         >
-          <div className="space-y-3 min-h-[320px]">
-            {data.discoveryPulse.length > 0 ? (
-              data.discoveryPulse.map((pulse, i) => (
-                <div key={pulse._id || i} className="group flex items-start gap-4 p-3.5 rounded-xl bg-slate-50 border border-slate-100 hover:border-primary/20 hover:bg-white transition-all">
-                  <div className="mt-1 p-2 rounded-lg bg-white border border-slate-100 text-slate-400 group-hover:bg-primary group-hover:text-white transition-all">
-                    <Search className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-center mb-1">
-                      <p className="text-[10px] font-bold text-primary uppercase tracking-widest">{pulse.platform}</p>
-                      <p className="text-[10px] text-slate-400">{new Date(pulse.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                    </div>
-                    <p className="text-xs font-bold text-slate-700 truncate mb-0.5">{pulse.title || 'Candidate Resource'}</p>
-                    <p className="text-[10px] text-slate-400 truncate italic">{pulse.url}</p>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="relative overflow-hidden h-[320px] rounded-xl bg-slate-50/50 border border-slate-100 p-2">
-                 <div className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-white to-transparent z-10 pointer-events-none" />
-                 <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-white to-transparent z-10 pointer-events-none" />
-                 <div className="space-y-1 flex flex-col justify-end h-full p-2">
-                   {liveLogs.map((log) => (
-                     <div key={log.id} className="animate-in slide-in-from-bottom-2 fade-in duration-500 flex items-start gap-3 py-2 border-b border-slate-100 last:border-0">
-                       <div className="mt-1 flex-shrink-0">
-                         <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
-                       </div>
-                       <div className="flex-1 min-w-0">
-                         <div className="flex justify-between items-center">
-                           <span className="text-[10px] uppercase font-bold text-teal-600 tracking-widest">{log.platform}</span>
-                           <span className="text-[10px] text-slate-400 font-mono">{log.time}</span>
-                         </div>
-                         <p className="text-xs text-slate-600 font-mono mt-1 truncate">{log.text}</p>
-                       </div>
+          <div className="relative overflow-hidden h-[320px] rounded-xl bg-slate-50 border border-slate-100 p-2">
+             <div className="absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-slate-50 to-transparent z-10 pointer-events-none" />
+             <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-slate-50 to-transparent z-10 pointer-events-none" />
+             <div className="space-y-0.5 flex flex-col justify-end h-full p-2">
+               {liveLogs.map((log) => (
+                 <div key={log.id} className="animate-in slide-in-from-bottom-2 fade-in duration-500 flex items-start gap-3 py-2 border-b border-slate-100 last:border-0">
+                   <div className="mt-1 flex-shrink-0">
+                     <div className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
+                   </div>
+                   <div className="flex-1 min-w-0">
+                     <div className="flex justify-between items-center">
+                       <span className="text-[10px] uppercase font-bold text-teal-600 tracking-widest">{log.platform}</span>
+                       <span className="text-[10px] text-slate-400 font-mono">{log.time}</span>
                      </div>
-                   ))}
+                     <p className="text-xs text-slate-500 font-mono mt-0.5 truncate">{log.text}</p>
+                   </div>
                  </div>
-              </div>
-            )}
+               ))}
+             </div>
           </div>
           <Button as={Link} to="/dashboard/scans" variant="secondary" className="w-full h-10 text-[10px] font-bold uppercase tracking-widest mt-6 rounded-xl bg-slate-50 border-slate-200 hover:bg-[var(--app-color-primary)] hover:text-white transition-all">
             Audit Discovery History
