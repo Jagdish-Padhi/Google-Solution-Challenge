@@ -19,7 +19,8 @@ import {
 	RefreshCw, 
 	Save, 
 	Trash2, 
-	UploadCloud 
+	UploadCloud,
+	Layers
 } from 'lucide-react';
 import { Badge, Button, Card, EmptyState, Loader, Modal, Spinner } from '../../components';
 import api from '../../services/api.js';
@@ -116,7 +117,13 @@ export default function DashboardAssetsPage() {
 		if (searchParams.get('openModal') === 'true') {
 			setIsUploadModalOpen(true);
 		}
-	}, [searchParams]);
+		
+		const assetId = searchParams.get('assetId');
+		if (assetId && !isLoading && assets.length > 0) {
+			const asset = assets.find(a => a._id === assetId);
+			if (asset) handleOpenDetail(asset);
+		}
+	}, [searchParams, isLoading, assets]);
 
 	useEffect(() => {
 		if (processingCount === 0) {

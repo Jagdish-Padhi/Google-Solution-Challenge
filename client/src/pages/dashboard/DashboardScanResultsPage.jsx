@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Globe, Radio, Send, Video } from 'lucide-react';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { ArrowLeft, Globe, Radio, Send, Video, Layers } from 'lucide-react';
 
 import { Badge, Button, Card, EmptyState, Loader, Pagination, Select, Spinner } from '../../components';
 import api from '../../services/api.js';
@@ -132,12 +132,22 @@ export default function DashboardScanResultsPage() {
 					<h2 className='text-2xl font-semibold text-(--app-color-text)'>Scan results</h2>
 					<p className='text-sm text-(--app-color-text-muted)'>Review discovered URLs and platform metadata for this scan job.</p>
 				</div>
-				<Link to='/dashboard/scans'>
-					<Button variant='secondary' className='flex items-center gap-2'>
-						<ArrowLeft size={16} />
-						Back to scans
-					</Button>
-				</Link>
+				<div className='flex items-center gap-2'>
+					{scanJob && (
+						<Link to={`/dashboard/assets?assetId=${scanJob.assetId?._id || scanJob.assetId}`}>
+							<Button variant='secondary' className='flex items-center gap-2'>
+								<Layers size={16} />
+								View Asset
+							</Button>
+						</Link>
+					)}
+					<Link to='/dashboard/scans'>
+						<Button variant='secondary' className='flex items-center gap-2'>
+							<ArrowLeft size={16} />
+							Back to scans
+						</Button>
+					</Link>
+				</div>
 			</div>
 
 			{error ? <p className='text-sm text-red-600'>{error}</p> : null}

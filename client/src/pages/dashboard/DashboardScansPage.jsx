@@ -475,6 +475,14 @@ export default function DashboardScansPage() {
 										<Eye size={14} />
 										View results
 									</Link>
+									<Link 
+										to={`/dashboard/assets?assetId=${job.assetId?._id || job.assetId}`} 
+										onClick={(e) => e.stopPropagation()}
+										className='flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500 hover:text-(--app-color-primary) px-2 py-1 rounded-lg transition-all duration-200'
+									>
+										<Layers size={14} />
+										View asset
+									</Link>
 									{job.status === 'failed' ? (
 										<button
 											type='button'
