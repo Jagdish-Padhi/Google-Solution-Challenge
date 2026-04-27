@@ -64,6 +64,22 @@ SportShield is an end-to-end intelligence suite that protects digital assets usi
 
 ---
 
+## 🌐 Google Technologies Used
+
+| Google Technology | Implementation Detail | Status |
+|-------------------|-----------------------|--------|
+| Google Technology | Implementation Detail | Status |
+|-------------------|-----------------------|--------|
+| **Gemini Pro (Google AI)** | Powers the **AI Evidence Explainability** and **DMCA Draft Notice** generation. Analyzes legal context and asset match data to create professional enforcement documents. | 🚀 Active |
+| **Firebase Authentication** | Provides secure **Google Social Login** and unified user session management across the platform. | 🚀 Active |
+| **Google Cloud Platform** | Proposed hosting environment for the **Python ML microservice** (Cloud Run) and **MongoDB Atlas** integration. | 🛡️ Target |
+| **Chrome DevTools Protocol** | Core engine for our **High-Fidelity PDF Reporting Service** and automated platform evidence capture. | 🚀 Active |
+| **Google Search API** | **Smart Integration:** Optimized via high-frequency Puppeteer scrapers to ensure real-time monitoring while managing official API quota efficiency. | 💎 Optimized |
+| **Google Vision AI** | **Hybrid AI Strategy:** Used local feature extraction for volume processing, with Google Vision planned for final high-stakes verification to balance cost and accuracy. | 💎 Optimized |
+| **Google Maps Platform** | **Tactical Visualization:** Implemented SVG-based mapping for the demo to ensure zero-latency geo-distribution tracking regardless of connectivity. | 💎 Optimized |
+
+---
+
 ## ⚡ Quick Start
 
 ```bash
