@@ -3,7 +3,6 @@ import toast from 'react-hot-toast';
 
 import { 
 	AlertTriangle, 
-	Camera, 
 	CheckCircle, 
 	CheckCircle2, 
 	Clock, 
@@ -50,7 +49,6 @@ export default function DashboardViolationsPage() {
 	const [selectedViolation, setSelectedViolation] = useState(null);
 	const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 	const [isLoading, setIsLoading] = useState(true);
-	const [isCapturing, setIsCapturing] = useState(false);
 	const [error, setError] = useState('');
 	const [filters, setFilters] = useState({
 		status: '',
@@ -124,24 +122,7 @@ export default function DashboardViolationsPage() {
 		}
 	};
 
-	const captureScreenshot = async () => {
-		if (!selectedViolation?._id) {
-			return;
-		}
 
-		setIsCapturing(true);
-		try {
-			const response = await api.post(`/violations/${selectedViolation._id}/screenshot`);
-			setSelectedViolation(response.data.violation || selectedViolation);
-			toast.success('Evidence screenshot captured.');
-			await loadViolations();
-		} catch (requestError) {
-			const message = requestError.response?.data?.message || 'Unable to capture screenshot.';
-			toast.error(message);
-		} finally {
-			setIsCapturing(false);
-		}
-	};
 
 	const handleDraftDmca = async () => {
 		if (!selectedViolation?._id) return;
@@ -427,30 +408,37 @@ export default function DashboardViolationsPage() {
 								)}
 							</div>
 
-							<div className='pt-4'>
-								<p className='mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-(--app-color-text-muted)'>Actions</p>
-								<div className='flex flex-wrap items-center gap-2'>
-									<Button variant='secondary' onClick={captureScreenshot} loading={isCapturing} disabled={isCapturing} className="flex items-center gap-2">
-										<Camera size={16} />
-										Capture screenshot
-									</Button>
-									<Button variant='secondary' onClick={handleDraftDmca} loading={isDraftingDmca} disabled={isDraftingDmca} className='border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-400 dark:hover:bg-purple-900/30 flex items-center gap-2'>
-										<Sparkles size={16} />
-										Draft DMCA Notice
-									</Button>
-									<div className="h-8 w-px bg-(--app-color-border) mx-2 hidden sm:block" />
-									{statusOptions.map((status) => (
-										<Button
-											key={status}
-											size="sm"
-											variant={selectedViolation.status === status ? 'primary' : 'secondary'}
-											onClick={() => updateStatus(selectedViolation._id, status)}
-											className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-[10px]"
-										>
-											{status === 'resolved' ? <CheckCircle2 size={12} /> : (status === 'reported' ? <Mail size={12} /> : <AlertTriangle size={12} />)}
-											Mark {status.replace('_', ' ')}
-										</Button>
-									))}
+							<div className='pt-6 border-t border-(--app-color-border)/50 space-y-6'>
+								<div>
+									<p className='mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-(--app-color-text-muted)'>Primary Enforcement</p>
+									<button
+										onClick={handleDraftDmca}
+										disabled={isDraftingDmca}
+										className='group relative flex h-12 items-center justify-center gap-3 overflow-hidden rounded-xl bg-gradient-to-r from-teal-600 to-slate-900 px-8 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-teal-900/20 transition-all hover:scale-[1.02] hover:shadow-teal-900/30 active:scale-95 disabled:opacity-70 whitespace-nowrap'
+									>
+										<div className='absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700' />
+										{isDraftingDmca ? <Spinner size='xs' /> : <Sparkles size={16} className='animate-pulse' />}
+										<span>Draft DMCA Notice</span>
+									</button>
+								</div>
+
+								<div>
+									<p className='mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-(--app-color-text-muted)'>Case Management</p>
+									<div className='inline-flex flex-wrap items-center gap-1 p-1 rounded-xl bg-slate-100 border border-slate-200'>
+										{['open', 'reported', 'resolved'].map((status) => (
+											<button
+												key={status}
+												onClick={() => updateStatus(selectedViolation._id, status)}
+												className={`px-4 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
+													selectedViolation.status === status 
+													? 'bg-teal-600 text-white shadow-md' 
+													: 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
+												}`}
+											>
+												{status.replace('_', ' ')}
+											</button>
+										))}
+									</div>
 								</div>
 							</div>
 						</div>
