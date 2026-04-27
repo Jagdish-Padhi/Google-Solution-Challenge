@@ -480,6 +480,12 @@ export default function DashboardAnalyticsPage() {
 		}
 	}, [generatedReport]);
 
+	const handleViewReport = (report) => {
+		const viewUrl = resolveReportDownloadUrl(report?.fileUrl);
+		if (viewUrl === '#') return toast.error('Report view not available.');
+		window.open(viewUrl, '_blank', 'noopener,noreferrer');
+	};
+
 	const handleGenerateReport = async () => {
 		if (range === 'custom' && (!customDates.startDate || !customDates.endDate)) {
 			toast.error('Select both custom dates before generating a report.');
@@ -751,14 +757,24 @@ export default function DashboardAnalyticsPage() {
 											<Badge variant='outline' size='sm' className="font-bold tracking-wider">
 												{report.stats?.totalViolations || 0} VIOLATIONS
 											</Badge>
-											<button
-												type='button'
-												onClick={() => handleDownloadReport(report)}
-												className='inline-flex items-center justify-center gap-2 rounded-lg bg-(--app-color-primary) px-4 py-2 text-xs font-bold uppercase tracking-widest text-white transition hover:bg-(--app-color-primary-hover) shadow-sm active:scale-95'
-											>
-												<Download size={14} />
-												Download PDF
-											</button>
+											<div className="flex items-center gap-2">
+												<button
+													type='button'
+													onClick={() => handleViewReport(report)}
+													className='inline-flex items-center justify-center gap-2 rounded-lg bg-slate-100 px-4 py-2 text-xs font-bold uppercase tracking-widest text-slate-600 transition hover:bg-slate-200 active:scale-95'
+												>
+													<ExternalLink size={14} />
+													View
+												</button>
+												<button
+													type='button'
+													onClick={() => handleDownloadReport(report)}
+													className='inline-flex items-center justify-center gap-2 rounded-lg bg-(--app-color-primary) px-4 py-2 text-xs font-bold uppercase tracking-widest text-white transition hover:bg-(--app-color-primary-hover) shadow-sm active:scale-95'
+												>
+													<Download size={14} />
+													Download PDF
+												</button>
+											</div>
 										</div>
 									</div>
 								))}
