@@ -1,112 +1,129 @@
-# SportShield 🛡️
-### *AI-Driven Digital Rights Protection & Content Integrity*
+# 🛡️ SportShield : AI-Powered Rights Protection & Intelligence
 
-[![Google Solution Challenge 2024](https://img.shields.io/badge/Google-Solution--Challenge--2024-blue.svg)](https://developers.google.com/community/gdsc-solution-challenge)
-[![Tech Stack](https://img.shields.io/badge/Stack-MERN%20+%20FastAPI%20+%20Google%20AI-orange.svg)]()
+**Hackathon:** Google Solution Challenge 2026 | **Team:** Esc(Reality); | **Track:** Digital Asset Protection
 
----
-
-## 📌 Problem Statement
-Global sports broadcasting and premium content industries lose over **$28 Billion annually** to real-time digital piracy. Traditional manual monitoring is too slow to stop live streams, and simple automated tools are easily bypassed by pirates using visual modifications like cropping, rotation, and color filtering.
-
-**The Impact:**
-- **Economic Loss:** Massive revenue leakage for rights holders and broadcasters.
-- **Brand Integrity:** Lower quality, unofficial streams damage the viewer experience.
-- **Accessibility:** Legitimate fans are often pushed toward high-risk, unverified domains.
+> Transforming reactive piracy monitoring into proactive, AI-driven legal enforcement through real-time fingerprinting and automated DMCA resolution.
 
 ---
 
-## 🚀 The Solution: SportShield
-SportShield is a high-performance, AI-powered digital rights protection ecosystem designed to **Discover, Verify, and Resolve** content infringements in near real-time.
+## 🔗 Quick Links (For Real experience)
 
-### Key Features:
-- **🧠 Gemini-Powered Discovery:** Uses Gemini 1.5 Flash to generate adversarial search keywords, bypassing pirate "obfuscation" tactics.
-- **👁️ AI Vision Tie-Breaker:** Leverages **Google Cloud Vision API** to semantically verify borderline matches, ensuring high accuracy even when hashing fails.
-- **📊 Revenue Impact Analytics:** Real-time dashboard showing "Revenue at Risk" based on detected violations.
-- **⚡ Automated Resolution:** AI-drafted DMCA notices and automated takedown workflows for YouTube, Twitter, and major pirate web domains.
+| 🚀 Live Demo | 🎥 Video Walkthrough | 📊 Presentation |
+|:------------:|:-------------------:|:---------------:|
+| [**Launch App**](https://sportshield-demo.onrender.com/) | [**Watch Demo**](https://youtu.be/example) | [**View PPT**](https://drive.google.com/file/example) |
 
 ---
 
-## 🛠️ Google Technology Stack
-SportShield is built on a foundation of Google's most powerful AI and Infrastructure tools:
+## 🎯 Problem Statement
+Digital piracy in live sports and premium content costs broadcasters billions annually. Current detection methods are fragmented, often failing to track content across diverse platforms like Telegram and Twitter. Even when detected, the legal enforcement process (DMCA filing) is manual, slow, and lacks the hard technical evidence needed for rapid takedowns.
 
-- **Gemini 1.5 Flash:** Powers the "Adversarial Keyword Generator" and "Evidence Reasoning" engine.
-- **Google Cloud Vision API:** Provides the semantic "AI Tie-breaker" for complex visual matching.
-- **Google Cloud Storage (GCS):** Secure, scalable storage for reference assets and violation evidence.
-- **Google Firebase:** Seamless authentication and secure organizational access.
-- **Google Cloud Translate:** Enables multi-language discovery to stop piracy across global markets (Spanish, Arabic, Hindi, etc.).
+## 💡 Solution
+SportShield is an end-to-end intelligence suite that protects digital assets using **AI Video DNA Fingerprinting**. It monitors major social platforms and the open web in real-time, provides deep technical evidence (Hamming distance, frame similarity), and bridges the gap to enforcement with **AI-powered DMCA drafting**, allowing rights holders to go from "detection" to "takedown" in seconds.
 
----
 
-## 🏗️ Technical Architecture
-SportShield uses a modern, high-availability microservices architecture:
 
-- **Frontend:** React + Vite + Vanilla CSS (Premium Dark/Aurora UI)
-- **API Backend:** Node.js (Express) + MongoDB
-- **ML Engine:** Python (FastAPI) + OpenCV + Perceptual Hashing
-- **Scrapers:** Real-time scrapers for YouTube, X (Twitter/Nitter), and Public Web.
+## 🚀 Key Features
 
----
+### ✅ AI Asset Library
+- **Video DNA Ingestion**: Upload match highlights or images to generate a unique digital fingerprint.
+- **Asset Intelligence**: View similarity metrics and tracking history for every protected file.
+- **Cloud Management**: Secure storage and metadata management for corporate rights holders.
 
-## 🚦 Quick Start (Demo Mode)
+### ✅ Intelligent Scan Discovery
+- **Cross-Platform Monitoring**: Scans YouTube, Twitter (X), Telegram, and the open web simultaneously.
+- **AI Auto-Suggest**: Automatically generates search keywords and metadata based on asset context.
+- **Confidence Scoring**: Prioritizes results based on AI-calculated match probability.
 
-To experience SportShield in its fully-featured "Demo State" with realistic sports data:
+### ✅ Violation Command Center (USP)
+- **Evidence Audit**: Deep-dive into match explainability (Color similarity, Hamming distance, Frame match count).
+- **One-Click DMCA Draft**: Instantly generates legally-compliant, platform-specific takedown notices.
+- **Resolution Workflow**: Track cases through `OPEN` → `REPORTED` → `RESOLVED` statuses.
+- **Deep Linking**: Direct navigation from email alerts to specific evidence records.
 
-1. **Clone & Install:**
-   ```bash
-   # Install all dependencies
-   cd server && npm install
-   cd ../client && npm install
-   cd ../ml-service && pip install -r requirements.txt
-   ```
+### ✅ Intelligence Analytics
+- **Professional Reporting**: Generate high-fidelity PDF reports with embedded SVG charts.
+- **Background Ops**: Start complex report generation and continue working; the service follows you globally.
+- **Risk Assessment**: Automated AI insights into piracy hotspots and distribution trends.
 
-2. **Environment Setup:**
-   - Follow the `.env.example` in `server/`, `client/`, and `ml-service/`.
-
-3. **Seed Demo Data:**
-   ```bash
-   cd server
-   node scripts/seed_demo_data.js
-   ```
-
-4. **Launch Dashboard:**
-   - **Login:** `demo@sportshield.ai`
-   - **Password:** `password123`
-   - **URL:** `http://localhost:5173`
+### ✅ Real-Time Alerts
+- **High-Confidence Notifications**: Instant email alerts for matches >85% similarity.
+- **Piracy Surge Alerts**: Automated warnings for coordinated sharing (e.g., 5+ links in 1 hour).
+- **Direct Enforcement Links**: "View Evidence" buttons in emails take you straight to the action.
 
 ---
 
-## 🚀 Deployment Guide
+## 🛠️ Tech Stack
 
-SportShield is designed to be deployed across **Render** (Backends) and **Vercel** (Frontend).
-
-### 1. ML Service (Render)
-- **Service Type:** Web Service
-- **Build Command:** `pip install -r requirements.txt`
-- **Start Command:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-- **Env Vars:** 
-  - `GEMINI_API_KEY`, `VISION_API_KEY`, `GOOGLE_APPLICATION_CREDENTIALS_JSON` (if using file).
-
-### 2. Backend API (Render)
-- **Service Type:** Web Service
-- **Build Command:** `npm install`
-- **Start Command:** `npm start`
-- **Env Vars:** 
-  - `MONGODB_URI`, `JWT_SECRET`, `ML_SERVICE_URL` (URL of your deployed ML Service).
-  - `BREVO_API_KEY`, `BREVO_SENDER_EMAIL`.
-
-### 3. Frontend (Vercel)
-- **Root Directory:** `client`
-- **Framework Preset:** Vite
-- **Build Command:** `npm run build`
-- **Output Directory:** `dist`
-- **Env Vars:**
-  - `VITE_API_BASE_URL`: `https://your-backend.render.com/api`
-  - `VITE_SOCKET_URL`: `https://your-backend.render.com`
+| Layer | Technology |
+|-------|------------|
+| **Frontend** | React 18, Vite, Vanilla CSS (Premium Themes), Lucide Icons, Chart.js |
+| **Backend** | Node.js, Express.js, MongoDB Atlas (Mongoose) |
+| **ML/Scraping** | Python, FastAPI, Puppeteer (PDF Rendering), Image/Video Hashing |
+| **Integrations** | Brevo (Email), Cloudinary (Asset Hosting), Gemini AI (Legal Drafting) |
+| **Auth** | JWT (Access + Refresh Tokens), Firebase (Social Login) |
 
 ---
 
-## 🏁 Ending Note
-SportShield isn't just a tool; it's a shield for the digital economy. By combining Google's cutting-edge Generative AI with high-speed automated detection, we are leveling the playing field for creators and rights holders globally.
+## ⚡ Quick Start
 
-**Built for the Google Solution Challenge 2024.** 🛡️
+```bash
+# Clone repository
+git clone <repo-url>
+cd SportShield
+
+# Backend setup
+cd server
+npm install
+# Configure .env (MONGO_URI, BREVO_API_KEY, etc.)
+npm run dev           # Runs on :5000
+
+# ML/Scraper setup (new terminal)
+cd ml-service
+pip install -r requirements.txt
+uvicorn app.main:app --reload  # Runs on :8000
+
+# Frontend setup (new terminal)
+cd client
+npm install
+npm run dev           # Runs on :5173
+```
+
+### Environment Variables
+
+**Server (.env)**
+```env
+MONGO_URI=your_mongodb_uri
+CLIENT_URL=http://localhost:5173
+BREVO_API_KEY=your_brevo_key
+BREVO_SENDER_EMAIL=your_verified_sender
+CLOUDINARY_CLOUD_NAME=your_name
+GEMINI_API_KEY=your_gemini_key
+```
+
+**Client (.env)**
+```env
+VITE_API_URL=http://localhost:5000/api
+```
+
+---
+
+## 👥 Team InnoBits
+
+| Member | Role |
+|--------|------|
+| [**Jagdish Padhi**](https://github.com/Jagdish-Padhi) | Full Stack Development & Lead |
+| [**Twinkle Gupta**](https://github.com/twinkle-2101) | Research & Demo video |
+| [**Poorvaja Joshi**](https://github.com/poorvaja-1603) | Backend & AI/ML  |
+| [**Krish Bhandari**](https://github.com/krrishbhandari) | PPT & Documentation  |
+
+---
+
+## 🔮 Future Scope
+- **IoT Live Stream Integration**: Direct ingestion from broadcast feeds.
+- **Blockchain Evidence Anchoring**: Immutably record proof of infringement for court cases.
+- **Automated Takedown API**: Direct integration with platform copyright APIs for zero-click resolution.
+- **Predictive Piracy Heatmaps**: AI forecasting of where leaks are likely to occur based on match popularity.
+
+---
+
+**Built with ❤️ by Team Esc(Reality);**
