@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 import { 
@@ -45,6 +46,7 @@ function confidenceVariant(value) {
 }
 
 export default function DashboardViolationsPage() {
+	const { violationId } = useParams();
 	const [violations, setViolations] = useState([]);
 	const [selectedViolation, setSelectedViolation] = useState(null);
 	const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -65,6 +67,12 @@ export default function DashboardViolationsPage() {
 	const [dmcaContactEmail, setDmcaContactEmail] = useState('');
 	const [dmcaSubject, setDmcaSubject] = useState('');
 	const [isDmcaModalOpen, setIsDmcaModalOpen] = useState(false);
+
+	useEffect(() => {
+		if (violationId) {
+			openDetails(violationId);
+		}
+	}, [violationId]);
 
 	const openCount = useMemo(() => violations.filter((item) => item.status === 'open').length, [violations]);
 

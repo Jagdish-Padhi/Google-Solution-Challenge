@@ -69,6 +69,7 @@ export default function AppRoutes() {
 						<Route path='/dashboard/analytics' element={<DashboardAnalyticsPage />} />
 						<Route path='/dashboard/alerts' element={<DashboardAlertsPage />} />
 						<Route path='/dashboard/violations' element={<DashboardViolationsPage />} />
+						<Route path='/dashboard/violations/:violationId' element={<DashboardViolationsPage />} />
 					</Route>
 				</Route>
 				<Route path='*' element={<Navigate to='/' replace />} />
