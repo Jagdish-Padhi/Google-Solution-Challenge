@@ -15,6 +15,36 @@ function formatDateForTitle(date) {
 	}).format(date);
 }
 
+function buildDonutChart(breakdown) {
+	let currentAngle = -90; // Start at top
+	const colors = ['#0f766e', '#14b8a6', '#0ea5e9', '#6366f1'];
+	
+	const segments = breakdown.map((item, i) => {
+		const angle = (item.percentage / 100) * 360;
+		if (angle === 0) return '';
+		
+		const largeArcFlag = angle > 180 ? 1 : 0;
+		
+		const startRad = (Math.PI * currentAngle) / 180;
+		const x1 = 50 + 45 * Math.cos(startRad);
+		const y1 = 50 + 45 * Math.sin(startRad);
+		
+		currentAngle += angle;
+		
+		const endRad = (Math.PI * currentAngle) / 180;
+		const x2 = 50 + 45 * Math.cos(endRad);
+		const y2 = 50 + 45 * Math.sin(endRad);
+		
+		return `<path d="M ${x1} ${y1} A 45 45 0 ${largeArcFlag} 1 ${x2} ${y2}" fill="none" stroke="${colors[i % colors.length]}" stroke-width="10" />`;
+	}).join('');
+
+	return `<svg viewBox="0 0 100 100" style="width:140px;height:140px;display:block;margin:0 auto;">
+		<circle cx="50" cy="50" r="45" fill="none" stroke="#f1f5f9" stroke-width="10" />
+		${segments}
+		<text x="50" y="55" text-anchor="middle" style="font-family:Inter,sans-serif;font-size:10px;font-weight:800;fill:#64748b;text-transform:uppercase;">Volume</text>
+	</svg>`;
+}
+
 function buildReportHtml({ organization, overview, timeline }) {
 	const platformRows = overview.platformBreakdown
 		.map(
@@ -135,12 +165,26 @@ function buildReportHtml({ organization, overview, timeline }) {
   </div>
 
   <div class="two-col">
-    <div>
-      <div class="section-title">Platform Distribution</div>
-      <table>
-        <thead><tr><th>Platform</th><th>Violations</th><th>Share</th></tr></thead>
-        <tbody>${platformRows || '<tr><td colspan="3" style="padding:12px;color:#94a3b8;">No platform data available.</td></tr>'}</tbody>
-      </table>
+    <div style="display:flex;flex-direction:column;gap:15px;">
+      <div>
+        <div class="section-title">Platform Distribution</div>
+        <table style="margin-bottom:15px;">
+          <thead><tr><th>Platform</th><th>Violations</th><th>Share</th></tr></thead>
+          <tbody>${platformRows || '<tr><td colspan="3" style="padding:12px;color:#94a3b8;">No platform data available.</td></tr>'}</tbody>
+        </table>
+      </div>
+      
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+         ${buildDonutChart(overview.platformBreakdown)}
+         <div style="margin-top:15px;text-align:center;">
+           <div style="font-size:10px;font-weight:700;color:#0f766e;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Risk Assessment</div>
+           <div style="font-size:11px;color:#64748b;line-height:1.5;max-width:200px;">
+             ${overview.totalViolations > 50 
+               ? 'Critical concentration detected on high-velocity platforms. Aggressive enforcement recommended.' 
+               : 'Distribution remains within manageable thresholds. Continued monitoring advised.'}
+           </div>
+         </div>
+      </div>
     </div>
     <div>
       <div class="section-title">Daily Violation Log</div>
