@@ -10,7 +10,7 @@
 
 | 🚀 Live Demo | 🎥 Video Walkthrough | 📊 Presentation |
 |:------------:|:-------------------:|:---------------:|
-| [**Launch App**](https://sportshield-ten.vercel.app/) | [**Watch Demo**](https://www.youtube.com/watch?v=LNHvwYCQkd8) | [**View PPT**]([https://drive.google.com/file/example](https://canva.link/wcxppf1vd2k979i)) |
+| [**Launch App**](https://sportshield-ten.vercel.app/) | [**Watch Demo**](https://www.youtube.com/watch?v=LNHvwYCQkd8) | [**View PPT**](https://canva.link/wcxppf1vd2k979i) |
 
 ---
 
