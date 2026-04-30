@@ -123,17 +123,6 @@ VITE_API_URL=http://localhost:5000/api
 
 ---
 
-## 👥 Team InnoBits
-
-| Member | Role |
-|--------|------|
-| [**Jagdish Padhi**](https://github.com/Jagdish-Padhi) | Full Stack Development & Lead |
-| [**Twinkle Gupta**](https://github.com/twinkle-2101) | Research & Demo video |
-| [**Poorvaja Joshi**](https://github.com/poorvaja-1603) | Backend & AI/ML  |
-| [**Krish Bhandari**](https://github.com/krrishbhandari) | PPT & Documentation  |
-
----
-
 ## 🔮 Future Scope
 - **IoT Live Stream Integration**: Direct ingestion from broadcast feeds.
 - **Blockchain Evidence Anchoring**: Immutably record proof of infringement for court cases.
