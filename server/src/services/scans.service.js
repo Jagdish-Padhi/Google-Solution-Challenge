@@ -103,7 +103,10 @@ async function requestTranslations({ keyword, targetLanguage, apiKey }) {
 	});
 
 	if (!response.ok) {
-		return null;
+		const errorText = await response.text();
+
+		throw new Error(
+			`Google Translate API failed (${response.status}): ${errorText}`)
 	}
 
 	const payload = await response.json();
@@ -140,8 +143,11 @@ async function expandKeywordsForMultiLanguage(keywords = [], enabled = false) {
 
 				seen.add(lowered);
 				expanded.push(translated);
-			} catch {
-				// Ignore translation failures and continue with available keywords.
+			} catch(error){
+				console.error(
+					"Google Translation failed. Falling back to original text:",
+					error.message
+				);
 			}
 		}
 	}
@@ -389,7 +395,7 @@ async function runMatchingForScan({ scanJob, results }) {
 	return violationsCount;
 }
 
-export async function createScanJob({ orgId, assetId, keywords, platforms, multiLanguage = false }) {
+export async function createScanJob({ orgId, assetId, keywords, platforms, multiLanguage = true }) {
 	const asset = await Asset.findOne({ _id: assetId, orgId, status: { $ne: 'deleted' } }).lean();
 
 	if (!asset) {
