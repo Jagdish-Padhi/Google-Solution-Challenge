@@ -24,16 +24,24 @@ const assetSchema = new mongoose.Schema(
 		},
 		type: {
 			type: String,
-			enum: ['video', 'image', 'highlight'],
+			enum: ['video', 'image', 'highlight', 'livestream'],
 			required: true,
+		},
+		livestreamUrl: {
+			type: String,
+			default: null,
 		},
 		storageKey: {
 			type: String,
-			required: true,
+			required: function () {
+				return this.type !== 'livestream';
+			},
 		},
 		gcsUrl: {
 			type: String,
-			required: true,
+			required: function () {
+				return this.type !== 'livestream';
+			},
 		},
 		thumbnailUrl: {
 			type: String,
@@ -63,7 +71,9 @@ const assetSchema = new mongoose.Schema(
 		},
 		fileSize: {
 			type: Number,
-			required: true,
+			required: function () {
+				return this.type !== 'livestream';
+			},
 		},
 		status: {
 			type: String,
