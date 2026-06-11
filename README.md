@@ -10,7 +10,7 @@
 
 | 🚀 Live Demo | 🎥 Video Walkthrough | 📊 Presentation |
 |:------------:|:-------------------:|:---------------:|
-| [**Launch App**](https://sportshield-ten.vercel.app/) | [**Watch Demo**](https://youtu.be/example) | [**View PPT**](https://drive.google.com/file/example) |
+| [**Launch App**](https://sportshield-ten.vercel.app/) | [**Watch Demo**](https://www.youtube.com/watch?v=LNHvwYCQkd8) | [**View PPT**](https://canva.link/wcxppf1vd2k979i) |
 
 ---
 
@@ -68,8 +68,6 @@ SportShield is an end-to-end intelligence suite that protects digital assets usi
 
 | Google Technology | Implementation Detail | Status |
 |-------------------|-----------------------|--------|
-| Google Technology | Implementation Detail | Status |
-|-------------------|-----------------------|--------|
 | **Gemini Pro (Google AI)** | **AI Enforcement:** Generates high-accuracy legal context and platform-specific DMCA drafts in <3s using structured JSON outputs. | 🚀 Active |
 | **Firebase Authentication** | **Identity Management:** Seamless Google One-Tap integration for verified rights-holder sessions. | 🚀 Active |
 | **Google Cloud Platform** | **Microservice Target:** Proposed for serverless Cloud Run deployment to handle bursty ML workloads during live match events. | 🛡️ Target |
@@ -120,17 +118,6 @@ GEMINI_API_KEY=your_gemini_key
 ```env
 VITE_API_URL=http://localhost:5000/api
 ```
-
----
-
-## 👥 Team InnoBits
-
-| Member | Role |
-|--------|------|
-| [**Jagdish Padhi**](https://github.com/Jagdish-Padhi) | Full Stack Development & Lead |
-| [**Twinkle Gupta**](https://github.com/twinkle-2101) | Research & Demo video |
-| [**Poorvaja Joshi**](https://github.com/poorvaja-1603) | Backend & AI/ML  |
-| [**Krish Bhandari**](https://github.com/krrishbhandari) | PPT & Documentation  |
 
 ---
 
