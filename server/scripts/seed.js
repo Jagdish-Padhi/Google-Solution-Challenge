@@ -266,8 +266,13 @@ const seedData = async () => {
 				status = 'reported';
 			}
 
-			// Generate screenshots based on asset type
-			const screenshotUrl = asset.thumbnailUrl;
+			// Generate realistic evidence screenshots based on asset type
+			let screenshotUrl = '/evidence/generic.png'; // Generic Sports Piracy
+			if (asset.title.includes('IPL') || asset.title.includes('Cricket')) {
+				screenshotUrl = '/evidence/cricket.png'; // Cricket Piracy
+			} else if (asset.title.includes('Champions League') || asset.title.includes('Football') || asset.title.includes('UFC')) {
+				screenshotUrl = '/evidence/football.png'; // Football Piracy
+			}
 
 			// Pick a real URL from the pool based on platform
 			const urlPool = realViolationUrls[platform] || realViolationUrls.web;
