@@ -111,17 +111,19 @@ export default function DashboardStreamsPage() {
 	const handleAddChange = (e) => {
 		const { name, value } = e.target;
 		setAddForm(prev => {
-			let updatedUrl = prev.livestreamUrl;
-			// Autofill mock URLs for Twitch/Kick to ease user demo
+			// Autofill mock URLs for Twitch/Kick to ease user demo — only when platform changes
 			if (name === 'platform' && value !== 'custom') {
 				const slug = prev.title.trim().toLowerCase().replace(/\s+/g, '-');
+				let autofillUrl = prev.livestreamUrl;
 				if (value === 'twitch') {
-					updatedUrl = `https://www.twitch.tv/${slug || 'demo'}`;
+					autofillUrl = `https://www.twitch.tv/${slug || 'demo'}`;
 				} else if (value === 'kick') {
-					updatedUrl = `https://kick.com/${slug || 'demo'}`;
+					autofillUrl = `https://kick.com/${slug || 'demo'}`;
 				}
+				return { ...prev, platform: value, livestreamUrl: autofillUrl };
 			}
-			return { ...prev, [name]: value, livestreamUrl: name === 'platform' ? updatedUrl : value };
+			// All other fields update only themselves — never touch livestreamUrl
+			return { ...prev, [name]: value };
 		});
 	};
 
