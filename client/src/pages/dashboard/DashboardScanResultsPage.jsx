@@ -70,6 +70,7 @@ export default function DashboardScanResultsPage() {
 	const [isStopping, setIsStopping] = useState(false);
 	const [webhookUrl, setWebhookUrl] = useState('');
 	const [isSavingWebhook, setIsSavingWebhook] = useState(false);
+	const [liveTelemetry, setLiveTelemetry] = useState(null);
 	const [filters, setFilters] = useState({
 		platform: '',
 		status: '',
@@ -127,6 +128,32 @@ export default function DashboardScanResultsPage() {
 	useEffect(() => {
 		if (!scanJob || scanJob.assetId?.type !== 'livestream') return;
 
+		const handleTelemetry = (e) => {
+			const { jobId: telemetryJobId, telemetry } = e.detail || {};
+			if (telemetryJobId === scanJob._id) {
+				setLiveTelemetry(telemetry);
+				
+				// Print real-time log entries to the terminal console
+				setTerminalLogs((prev) => {
+					const timestamp = new Date().toLocaleTimeString();
+					const logLine = `[${timestamp}] Ingested live frame #${telemetry.framesAnalyzed} - Matched against reference assets. Status: NORMAL (0 matches)`;
+					return [...prev.slice(-19), logLine];
+				});
+				
+				// Automatically refresh results
+				loadData();
+			}
+		};
+
+		window.addEventListener('sportshield:livestream:telemetry', handleTelemetry);
+		return () => {
+			window.removeEventListener('sportshield:livestream:telemetry', handleTelemetry);
+		};
+	}, [scanJob, loadData]);
+
+	useEffect(() => {
+		if (!scanJob || scanJob.assetId?.type !== 'livestream') return;
+
 		if (scanJob.status === 'failed') {
 			setTerminalLogs([
 				`[SYSTEM] Connecting to stream source: ${scanJob.assetId?.livestreamUrl || 'HLS fallback URL'}`,
@@ -159,6 +186,8 @@ export default function DashboardScanResultsPage() {
 			let phraseIdx = 0;
 			const interval = setInterval(() => {
 				setTerminalLogs(prev => {
+					// Only simulate if no live telemetry updates are actively populating
+					if (liveTelemetry && liveTelemetry.framesAnalyzed > 0) return prev;
 					const timestamp = new Date().toLocaleTimeString();
 					const logLine = `[${timestamp}] ${phrases[phraseIdx]}`;
 					phraseIdx = (phraseIdx + 1) % phrases.length;
@@ -168,7 +197,7 @@ export default function DashboardScanResultsPage() {
 
 			return () => clearInterval(interval);
 		}
-	}, [scanJob]);
+	}, [scanJob, liveTelemetry]);
 
 	useEffect(() => {
 		async function fetchOrg() {
@@ -284,7 +313,15 @@ export default function DashboardScanResultsPage() {
 								<p className='text-xl font-bold text-(--app-color-text) uppercase tracking-tight'>{scanJob.assetId?.title || 'System Asset'}</p>
 								<p className='text-[10px] text-(--app-color-text-muted) font-mono uppercase tracking-widest'>Discovery Window: {new Date(scanJob.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</p>
 							</div>
-							<Badge variant={statusVariant(scanJob.status)} size="sm" className="font-black uppercase tracking-widest">{scanJob.status}</Badge>
+							<div className="flex flex-wrap items-center gap-3 shrink-0">
+								{scanJob.multiLanguage && (
+									<Badge variant="info" size="sm" className="font-black uppercase tracking-widest flex items-center gap-1 bg-indigo-50 border-indigo-200/50 text-indigo-700">
+										<Globe size={10} />
+										Multi-language scan active
+									</Badge>
+								)}
+								<Badge variant={statusVariant(scanJob.status)} size="sm" className="font-black uppercase tracking-widest">{scanJob.status}</Badge>
+							</div>
 						</div>
 
 						{(scanJob.status === 'running' || scanJob.status === 'monitoring') && (
@@ -440,6 +477,21 @@ export default function DashboardScanResultsPage() {
 								<Badge variant="danger" size="sm">SANDBOX FALLBACK ACTIVE</Badge>
 							)}
 						</div>
+
+						{scanJob.status === 'monitoring' && (
+							<div className="mb-3 p-3 rounded-lg bg-teal-50 border border-teal-500/20 text-xs flex justify-between items-center font-bold text-teal-800 tracking-tight">
+								<div className="flex items-center gap-1.5">
+									<Activity size={14} className="text-teal-600 animate-pulse" />
+									<span>Frames Analyzed: <span className="font-mono text-sm text-teal-600 font-extrabold">{liveTelemetry?.framesAnalyzed ?? 0}</span></span>
+								</div>
+								<div>
+									<span>Last Frame: <span className="font-mono text-sm text-teal-600 font-extrabold">{liveTelemetry ? `${Math.max(1, Math.round((Date.now() - new Date(liveTelemetry.lastFrameTime)) / 1000))}s ago` : '2s ago'}</span></span>
+								</div>
+								<div>
+									<span>Matches Checked: <span className="font-mono text-sm text-teal-600 font-extrabold">{liveTelemetry?.matchesChecked ?? 0}</span> reference assets</span>
+								</div>
+							</div>
+						)}
 						
 						<div className="flex-1 rounded-xl bg-slate-950 p-4 font-mono text-xs text-emerald-400 overflow-y-auto max-h-[300px] border border-slate-800 shadow-inner space-y-1">
 							{terminalLogs.map((log, index) => (

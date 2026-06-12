@@ -45,6 +45,56 @@ function confidenceVariant(value) {
 	return 'secondary';
 }
 
+const getConfidenceBreakdown = (violation) => {
+	const confidence = violation.matchConfidence || 0;
+	const eb = violation.evidenceBundle || {};
+	
+	const hamming = eb.hammingDistance !== null ? eb.hammingDistance : 15;
+	const color = eb.colorSimilarity !== null ? eb.colorSimilarity : 0;
+	const frames = eb.frameMatchCount !== null ? eb.frameMatchCount : 0;
+	const orbVerified = eb.orbVerified || false;
+	const visionBoost = eb.visionConfidenceBoost || 0;
+
+	// Calculate base raw scores matching python weighting
+	const rawHash = Math.max(0, 100 - (hamming * 7.0)) * 0.55;
+	const rawColor = Math.max(0, Math.min(100, color * 100.0)) * 0.30;
+	const rawFrames = frames > 0 ? Math.min(15, 5 + frames * 2) : 0;
+
+	let hashVal = rawHash;
+	let colorVal = rawColor;
+	let frameVal = rawFrames;
+	let orbVal = orbVerified ? 30 : 0;
+	let visionVal = visionBoost;
+
+	// Sum components
+	const totalRaw = hashVal + colorVal + frameVal + orbVal + visionVal;
+	
+	// Scale components to sum up exactly to reported confidence
+	if (totalRaw > 0) {
+		const scale = confidence / totalRaw;
+		hashVal = Math.round(hashVal * scale);
+		colorVal = Math.round(colorVal * scale);
+		frameVal = Math.round(frameVal * scale);
+		orbVal = Math.round(orbVal * scale);
+		visionVal = Math.round(visionVal * scale);
+	} else {
+		hashVal = confidence;
+	}
+
+	// Ensure they sum up exactly to confidence due to rounding
+	const sum = hashVal + colorVal + frameVal + orbVal + visionVal;
+	const diff = confidence - sum;
+	hashVal += diff;
+
+	return {
+		pHash: Math.max(0, hashVal),
+		color: Math.max(0, colorVal),
+		frames: Math.max(0, frameVal),
+		orb: Math.max(0, orbVal),
+		vision: Math.max(0, visionVal)
+	};
+};
+
 export default function DashboardViolationsPage() {
 	const { violationId } = useParams();
 	const [violations, setViolations] = useState([]);
@@ -390,12 +440,88 @@ export default function DashboardViolationsPage() {
 									</div>
 								</div>
 
+								{/* Confidence Breakdown Bar */}
+								<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-4 space-y-3'>
+									<p className='text-xs font-semibold uppercase tracking-[0.14em] text-(--app-color-text-muted)'>Confidence score breakdown</p>
+									{(() => {
+										const breakdown = getConfidenceBreakdown(selectedViolation);
+										return (
+											<div className="space-y-3">
+												<div className="h-3.5 w-full rounded-full bg-slate-100 overflow-hidden flex shadow-inner">
+													{breakdown.pHash > 0 && (
+														<div style={{ width: `${breakdown.pHash}%` }} className="bg-indigo-500 h-full transition-all" title={`pHash DNA: ${breakdown.pHash}%`} />
+													)}
+													{breakdown.color > 0 && (
+														<div style={{ width: `${breakdown.color}%` }} className="bg-teal-500 h-full transition-all" title={`Color Similarity: ${breakdown.color}%`} />
+													)}
+													{breakdown.frames > 0 && (
+														<div style={{ width: `${breakdown.frames}%` }} className="bg-amber-500 h-full transition-all" title={`Frame Analysis: ${breakdown.frames}%`} />
+													)}
+													{breakdown.orb > 0 && (
+														<div style={{ width: `${breakdown.orb}%` }} className="bg-purple-500 h-full transition-all" title={`ORB Homography Boost: ${breakdown.orb}%`} />
+													)}
+													{breakdown.vision > 0 && (
+														<div style={{ width: `${breakdown.vision}%` }} className="bg-emerald-500 h-full transition-all" title={`Vision AI Boost: ${breakdown.vision}%`} />
+													)}
+												</div>
+												<div className="flex flex-wrap gap-x-4 gap-y-2 text-[10px] font-bold text-slate-500">
+													<div className="flex items-center gap-1">
+														<span className="w-2.5 h-2.5 rounded bg-indigo-500" />
+														<span>pHash DNA ({breakdown.pHash}%)</span>
+													</div>
+													<div className="flex items-center gap-1">
+														<span className="w-2.5 h-2.5 rounded bg-teal-500" />
+														<span>Color Match ({breakdown.color}%)</span>
+													</div>
+													{breakdown.frames > 0 && (
+														<div className="flex items-center gap-1">
+															<span className="w-2.5 h-2.5 rounded bg-amber-500" />
+															<span>Frame DNA ({breakdown.frames}%)</span>
+														</div>
+													)}
+													{breakdown.orb > 0 && (
+														<div className="flex items-center gap-1">
+															<span className="w-2.5 h-2.5 rounded bg-purple-500 animate-pulse" />
+															<span>ORB Boost ({breakdown.orb}%)</span>
+														</div>
+													)}
+													{breakdown.vision > 0 && (
+														<div className="flex items-center gap-1">
+															<span className="w-2.5 h-2.5 rounded bg-emerald-500 animate-pulse" />
+															<span>Vision AI Boost ({breakdown.vision}%)</span>
+														</div>
+													)}
+												</div>
+											</div>
+										);
+									})()}
+								</div>
+
 								<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-4'>
 									<p className='text-xs font-semibold uppercase tracking-[0.14em] text-(--app-color-text-muted)'>Evidence explainability</p>
 									<div className='mt-3 grid gap-2 sm:grid-cols-3'>
 										<p className='text-(--app-color-text-muted)'>Hamming: <span className='font-semibold text-(--app-color-text)'>{selectedViolation.evidenceBundle?.hammingDistance ?? '-'}</span></p>
 										<p className='text-(--app-color-text-muted)'>Color: <span className='font-semibold text-(--app-color-text)'>{selectedViolation.evidenceBundle?.colorSimilarity ?? '-'}</span></p>
 										<p className='text-(--app-color-text-muted)'>Frames: <span className='font-semibold text-(--app-color-text)'>{selectedViolation.evidenceBundle?.frameMatchCount ?? '-'}</span></p>
+									</div>
+									
+									<div className="mt-4 pt-3 border-t border-(--app-color-border)/40 flex flex-wrap gap-2 items-center">
+										{selectedViolation.evidenceBundle?.isMirrored && (
+											<Badge variant="warning" size="xs" className="font-bold uppercase tracking-wider bg-amber-50 border-amber-200/50 text-amber-700">
+												Mirror Piracy Detected
+											</Badge>
+										)}
+										{selectedViolation.evidenceBundle?.orbVerified && (
+											<Badge variant="success" size="xs" className="font-bold uppercase tracking-wider bg-emerald-50 border-emerald-200/50 text-emerald-700">
+												ORB Homography Verified
+											</Badge>
+										)}
+										<div className="text-[10px] font-bold text-slate-500 flex items-center gap-1 mt-0.5 ml-auto">
+											<span>Vision API:</span>
+											<span className={selectedViolation.evidenceBundle?.visionAvailable === true ? 'text-emerald-600' : (selectedViolation.evidenceBundle?.visionAvailable === false ? 'text-red-500' : 'text-slate-400')}>
+												{selectedViolation.evidenceBundle?.visionAvailable === true ? 'Active' : (selectedViolation.evidenceBundle?.visionAvailable === false ? 'Unavailable' : 'Not Evaluated')}
+											</span>
+										</div>
 									</div>
 								</div>
 

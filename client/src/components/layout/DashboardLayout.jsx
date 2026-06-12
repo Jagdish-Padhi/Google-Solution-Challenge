@@ -85,9 +85,14 @@ export default function DashboardLayout() {
 				window.dispatchEvent(new CustomEvent('sportshield:alerts:updated', { detail: payload }));
 			};
 
+			const handleLivestreamTelemetry = (payload) => {
+				window.dispatchEvent(new CustomEvent('sportshield:livestream:telemetry', { detail: payload }));
+			};
+
 			socket?.on('alerts:unread-count', updateUnreadCount);
 			socket?.on('alerts:new', handleAlertCreated);
 			socket?.on('alerts:updated', handleAlertsUpdated);
+			socket?.on('livestream:telemetry', handleLivestreamTelemetry);
 		}
 
 		return () => {
@@ -97,6 +102,7 @@ export default function DashboardLayout() {
 				socket.off('alerts:unread-count');
 				socket.off('alerts:new');
 				socket.off('alerts:updated');
+				socket.off('livestream:telemetry');
 				disconnectRealtime();
 			}
 		};
