@@ -223,12 +223,11 @@ export async function loginOrganization(payload = {}) {
 		}
 	}
 
-	// Temporarily override email to generate legal token
+	// Override email for legal token, revert before DB save
 	if (isLegalDemo) organization.email = 'legal@sportshield.ai';
 	
 	const authPayload = createAuthPayload(organization);
 	
-	// Revert email before saving to DB
 	if (isLegalDemo) organization.email = 'demo@sportshield.com';
 
 	organization.refreshTokenHash = hashToken(authPayload.refreshToken);
@@ -318,7 +317,7 @@ export async function getOrganizationById(organizationId) {
 export async function updateOrganizationNotificationPrefs({ organizationId, payload = {} }) {
 	const webhookRaw = typeof payload.webhookUrl === 'string' ? payload.webhookUrl.trim() : '';
 
-	// Allow empty string (user clearing the field), but reject invalid URLs
+	// Empty string clears the webhook; non-empty must be a valid URL
 	if (webhookRaw && !isValidUrl(webhookRaw)) {
 		const error = new Error('Please enter a valid webhook URL (must start with http:// or https://).');
 		error.statusCode = 400;

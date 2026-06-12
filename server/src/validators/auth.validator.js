@@ -7,15 +7,11 @@ function buildResult(valid, errors = []) {
   };
 }
 
-/**
- * Name must be 2-100 chars, start with a letter, and contain only
- * letters, numbers, spaces, hyphens, apostrophes, and dots.
- */
+// Must start with a letter; allows letters, digits, spaces, hyphens, apostrophes, dots
 function isValidName(value) {
   if (typeof value !== 'string') return false;
   const trimmed = value.trim();
   if (trimmed.length < 2 || trimmed.length > 100) return false;
-  // Must start with a letter; rest can be letters, digits, spaces, hyphens, apostrophes, dots
   return /^[A-Za-z][A-Za-z0-9 '\-.]{1,99}$/.test(trimmed);
 }
 

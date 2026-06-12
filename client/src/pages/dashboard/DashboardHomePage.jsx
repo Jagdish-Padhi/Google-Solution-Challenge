@@ -304,7 +304,7 @@ export default function DashboardHomePage() {
                )}
              </div>
           </div>
-          <Button as={Link} to="/dashboard/scans" variant="secondary" className="w-full h-10 text-[10px] font-bold uppercase tracking-widest mt-6 rounded-xl bg-slate-50 border-slate-200 hover:bg-[var(--app-color-primary)] hover:text-white transition-all">
+          <Button as={Link} to="/dashboard/scans" variant="secondary" className="w-full h-10 text-[10px] font-bold uppercase tracking-widest mt-6 rounded-xl bg-slate-50 border-slate-200 hover:bg-[var(--app-color-primary)] hover:!text-white transition-all">
             Audit Discovery History
           </Button>
         </Card>

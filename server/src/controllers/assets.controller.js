@@ -40,7 +40,7 @@ export async function uploadAssetController(req, res, next) {
 		}
 
 		const { title, description } = validateAssetUploadPayload(req.body);
-		const publicUrl = req.file.path; // Cloudinary URL
+		const publicUrl = req.file.path;
 
 		const asset = await createAsset({
 			orgId: req.auth.orgId,
@@ -50,7 +50,7 @@ export async function uploadAssetController(req, res, next) {
 			publicUrl,
 		});
 
-		// Run fingerprint generation in the background so upload stays responsive.
+		// Background fingerprint so upload stays responsive
 		void enrichAssetFingerprint({
 			assetId: asset._id.toString(),
 			sourceUrl: publicUrl,
