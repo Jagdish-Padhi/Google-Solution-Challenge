@@ -644,7 +644,7 @@ export default function DashboardViolationsPage() {
 										<button
 											onClick={handleDraftDmca}
 											disabled={isDraftingDmca}
-											className='group relative flex h-12 items-center justify-center gap-3 overflow-hidden rounded-xl bg-gradient-to-r from-teal-600 to-slate-900 px-8 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-teal-900/20 transition-all hover:scale-[1.02] hover:shadow-teal-900/30 active:scale-95 disabled:opacity-70 whitespace-nowrap'
+											className='group relative flex h-12 items-center justify-center gap-3 overflow-hidden rounded-xl bg-gradient-to-r from-teal-600 to-slate-900 px-8 text-xs font-black uppercase tracking-widest text-white hover:text-white shadow-lg shadow-teal-900/20 transition-all hover:scale-[1.02] hover:shadow-teal-900/30 active:scale-95 disabled:opacity-70 whitespace-nowrap'
 										>
 											<div className='absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700' />
 											{isDraftingDmca ? <Spinner size='xs' /> : <Sparkles size={16} className='animate-pulse' />}
@@ -671,7 +671,7 @@ export default function DashboardViolationsPage() {
 												onClick={() => updateStatus(selectedViolation._id, status)}
 												className={`px-4 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
 													selectedViolation.status === status 
-													? 'bg-[var(--app-color-primary)] text-white shadow-md' 
+													? 'bg-[var(--app-color-primary)] text-white hover:text-white shadow-md' 
 													: 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
 												}`}
 											>
@@ -778,7 +778,7 @@ export default function DashboardViolationsPage() {
 							{dmcaContactEmail && dmcaSubject && (
 								<a
 									href={`mailto:${dmcaContactEmail}?subject=${encodeURIComponent(dmcaSubject)}&body=${encodeURIComponent(dmcaDraftText)}`}
-									className='flex items-center justify-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:bg-red-700 hover:shadow-lg dark:bg-red-700 dark:hover:bg-red-600'
+									className='flex items-center justify-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white hover:text-white shadow-md transition-all hover:bg-red-700 hover:shadow-lg dark:bg-red-700 dark:hover:bg-red-600'
 									target="_blank"
 									rel="noreferrer"
 								>

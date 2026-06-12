@@ -308,7 +308,7 @@ export default function DashboardSettingsPage() {
 						type='button'
 						onClick={handleSendDigest}
 						disabled={isSendingDigest}
-						className='group relative flex h-9 items-center gap-2 overflow-hidden rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 px-5 text-[11px] font-black uppercase tracking-widest text-white shadow-md shadow-amber-900/15 transition-all hover:scale-[1.02] hover:shadow-amber-900/25 active:scale-95 disabled:opacity-60 whitespace-nowrap'
+						className='group relative flex h-9 items-center gap-2 overflow-hidden rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 px-5 text-[11px] font-black uppercase tracking-widest text-white hover:text-white shadow-md shadow-amber-900/15 transition-all hover:scale-[1.02] hover:shadow-amber-900/25 active:scale-95 disabled:opacity-60 whitespace-nowrap'
 					>
 						<div className='absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700' />
 						{isSendingDigest ? <Spinner size='xs' /> : <Send size={13} />}

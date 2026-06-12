@@ -129,13 +129,13 @@ export default function ReportGenerationModal({ isGenerating, progress, report, 
 							<div className='flex gap-2 w-full mb-6'>
 								<button
 									onClick={handleView}
-									className='flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold transition-all active:scale-95 shadow-lg shadow-teal-600/20'
+									className='flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 text-white hover:text-white text-sm font-bold transition-all active:scale-95 shadow-lg shadow-teal-600/20'
 								>
 									<ExternalLink size={16} /> View
 								</button>
 								<button
 									onClick={() => onDownload(report)}
-									className='flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold transition-all active:scale-95'
+									className='flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white hover:text-white text-sm font-bold transition-all active:scale-95'
 								>
 									<Download size={16} /> Download
 								</button>

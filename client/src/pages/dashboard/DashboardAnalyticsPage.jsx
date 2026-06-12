@@ -863,7 +863,7 @@ export default function DashboardAnalyticsPage() {
 												<button
 													type='button'
 													onClick={() => handleDownloadReport(report)}
-													className='inline-flex items-center justify-center gap-2 rounded-lg bg-(--app-color-primary) px-4 py-2 text-xs font-bold uppercase tracking-widest text-white transition hover:bg-(--app-color-primary-hover) shadow-sm active:scale-95'
+													className='inline-flex items-center justify-center gap-2 rounded-lg bg-(--app-color-primary) px-4 py-2 text-xs font-bold uppercase tracking-widest text-white hover:text-white transition hover:bg-(--app-color-primary-hover) shadow-sm active:scale-95'
 												>
 													<Download size={14} />
 													Download PDF

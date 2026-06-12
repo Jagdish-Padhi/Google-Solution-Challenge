@@ -293,7 +293,7 @@ export default function DashboardScanResultsPage() {
 							onClick={handleStopMonitoring} 
 							loading={isStopping} 
 							disabled={isStopping}
-							className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white"
+							className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white hover:text-white"
 						>
 							<Square size={16} fill="currentColor" />
 							Stop Monitoring
