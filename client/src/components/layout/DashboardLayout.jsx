@@ -47,6 +47,7 @@ export default function DashboardLayout() {
 	const setTransitioning = useAuthStore((state) => state.setTransitioning);
 	const isTransitioning = useAuthStore((state) => state.isTransitioning);
 	const [unreadAlerts, setUnreadAlerts] = useState(0);
+	const [isProfileOpen, setIsProfileOpen] = useState(false);
 
 	useEffect(() => {
 		let mounted = true;
@@ -178,7 +179,17 @@ export default function DashboardLayout() {
 					</Link>
 
 					<nav className='hidden items-center gap-1 lg:gap-2 md:flex'>
-						{navigationItems.map((item) => {
+						{navigationItems.filter(item => {
+							if (user?.role === 'legal') {
+								// Legal role only sees dashboard, violations, and alerts
+								return ['/dashboard', '/dashboard/violations', '/dashboard/alerts'].includes(item.path);
+							}
+							if (user?.role === 'analyst') {
+								// Analyst cannot see settings
+								return item.path !== '/dashboard/settings';
+							}
+							return true; // Admin sees all
+						}).map((item) => {
 							const isActive = location.pathname === item.path;
 							const Icon = item.icon;
 
@@ -203,26 +214,53 @@ export default function DashboardLayout() {
 					</nav>
 
 					<div className='flex items-center gap-3 shrink-0'>
-						<div className='tooltip-container'>
-							<div className='flex h-11 w-11 items-center justify-center rounded-full border border-(--app-color-border) bg-white/50 text-(--app-color-primary) transition-all hover:bg-white hover:border-(--app-color-primary)/30 hover:shadow-md cursor-help'>
-								<Building2 size={20} />
-							</div>
-							<div className='tooltip-dropdown-content'>
-								{user?.orgName || 'Guest'}
-							</div>
-						</div>
+						<div className='relative'>
+							<button 
+								onClick={() => setIsProfileOpen(!isProfileOpen)}
+								className='flex h-11 items-center gap-2 rounded-full border border-(--app-color-border) bg-white/50 pl-2 pr-4 text-(--app-color-text) transition-all hover:bg-white hover:border-(--app-color-primary)/30 hover:shadow-md'
+							>
+								<div className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--app-color-primary)] text-white text-xs font-bold uppercase shadow-inner">
+									{user?.role?.charAt(0) || 'A'}
+								</div>
+								<span className="text-sm font-semibold capitalize hidden sm:block text-slate-700">
+									{user?.role || 'Admin'}
+								</span>
+							</button>
+							
+							{isProfileOpen && (
+								<>
+									<div className="fixed inset-0 z-40" onClick={() => setIsProfileOpen(false)} />
+									<div className="absolute right-0 mt-2 w-64 rounded-2xl border border-[var(--app-color-border)] bg-white p-2 shadow-2xl z-50">
+										<div className="px-3 py-3 border-b border-[var(--app-color-border)]/50 mb-2 flex items-center gap-3">
+											<div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500'>
+												<Building2 size={18} />
+											</div>
+											<div className="min-w-0">
+												<p className="text-[10px] font-bold text-[var(--app-color-text-muted)] uppercase tracking-widest leading-none mb-1">Organization</p>
+												<p className="text-sm font-bold text-slate-900 truncate leading-tight">{user?.orgName || 'Guest'}</p>
+											</div>
+										</div>
+										
+										<div className="px-2 py-1.5">
+											<div className="flex items-center justify-between px-2 py-1">
+												<span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Role</span>
+												<span className="px-2 py-1 rounded-md bg-slate-100 text-slate-700 text-[10px] font-bold uppercase tracking-widest">{user?.role || 'Admin'}</span>
+											</div>
+										</div>
 
-						<button 
-							onClick={handleLogout}
-							className='tooltip-container group'
-						>
-							<div className='flex h-11 w-11 items-center justify-center rounded-full border border-red-100 bg-red-50/50 text-red-500 transition-all hover:bg-red-50 hover:border-red-200 hover:shadow-md'>
-								<LogOut size={20} />
-							</div>
-							<div className='tooltip-dropdown-content !text-red-600 !border-red-100'>
-								Logout
-							</div>
-						</button>
+										<div className="mt-2 border-t border-[var(--app-color-border)]/50 pt-2 px-2 pb-1">
+											<button
+												onClick={handleLogout}
+												className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold text-red-600 hover:bg-red-50 transition-colors"
+											>
+												<LogOut size={16} />
+												Sign Out
+											</button>
+										</div>
+									</div>
+								</>
+							)}
+						</div>
 					</div>
 				</Container>
 			</header>

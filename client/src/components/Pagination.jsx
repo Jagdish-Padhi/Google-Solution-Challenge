@@ -1,8 +1,3 @@
-/**
- * Pagination Component
- * Navigate through paginated data
- */
-
 const Pagination = ({
 	currentPage = 1,
 	totalPages = 1,

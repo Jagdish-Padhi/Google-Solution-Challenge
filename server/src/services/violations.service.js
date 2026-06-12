@@ -4,12 +4,20 @@ import crypto from 'node:crypto';
 
 import Violation from '../models/violation.model.js';
 
-export async function listViolationsByOrg({ orgId, page = 1, limit = 10, status = '', platform = '', minConfidence = 0 }) {
+export async function listViolationsByOrg({ orgId, page = 1, limit = 10, status = '', platform = '', minConfidence = 0, date = '' }) {
 	const skip = (page - 1) * limit;
 	const query = {
 		orgId,
 		matchConfidence: { $gte: minConfidence },
 	};
+
+	if (date) {
+		const start = new Date(date);
+		start.setHours(0, 0, 0, 0);
+		const end = new Date(date);
+		end.setHours(23, 59, 59, 999);
+		query.detectedAt = { $gte: start, $lte: end };
+	}
 
 	if (status) {
 		query.status = status;
@@ -214,11 +222,12 @@ INSTRUCTIONS FOR THE NOTICE:
 2. Open with a strong, declarative statement of copyright ownership for "${assetTitle}".
 3. Cite the exact infringing URL and all forensic evidence provided above — do NOT omit or generalize the evidence, cite specific numbers.
 4. Include citations to 17 U.S.C. § 512(c)(3)(A) (DMCA safe harbor removal obligations)${platformName === 'Youtube' || platformName === 'YouTube' ? ', YouTube\u2019s Content ID Policy,' : ''} and any relevant international treaties (e.g. Berne Convention for international platforms).
-5. Set a strict 24-hour deadline for content removal with explicit warning that failure will result in legal proceedings for statutory damages under 17 U.S.C. § 504.
-6. Include the mandatory DMCA good-faith belief statement (17 U.S.C. § 512(c)(3)(A)(v)).
-7. Include the mandatory penalty-of-perjury accuracy statement (17 U.S.C. § 512(c)(3)(A)(vi)).
-8. Use placeholder brackets for the signatory fields: [Authorized Representative], [Title], [Phone], [Email], [Address].
-9. End with the internal Case Reference ID: ${violation._id}
+5. Explicitly reference the BCCI (Board of Control for Cricket in India) and ICC (International Cricket Council) broadcast rights frameworks, asserting that the rights holder is an authorized, licensed distributor under these exclusive agreements.
+6. Set a strict 24-hour deadline for content removal with explicit warning that failure will result in legal proceedings for statutory damages under 17 U.S.C. § 504.
+7. Include the mandatory DMCA good-faith belief statement (17 U.S.C. § 512(c)(3)(A)(v)).
+8. Include the mandatory penalty-of-perjury accuracy statement (17 U.S.C. § 512(c)(3)(A)(vi)).
+9. Use placeholder brackets for the signatory fields: [Authorized Representative], [Title], [Phone], [Email], [Address].
+10. End with the internal Case Reference ID: ${violation._id}
 
 Tone: Authoritative, precise, and unambiguous. This is a real legal document dispatched by a legal team, not a template.
 Format: Plain text only. No markdown. No bullet points. Use formal legal letter structure with numbered sections.

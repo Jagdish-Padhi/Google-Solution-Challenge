@@ -42,6 +42,14 @@ const organizationSchema = new mongoose.Schema(
 			enum: ['broadcaster', 'creator'],
 			default: 'broadcaster',
 		},
+		members: [
+			{
+				email: { type: String, required: true },
+				role: { type: String, enum: ['admin', 'analyst', 'legal'], required: true },
+				inviteStatus: { type: String, enum: ['pending', 'active'], default: 'pending' },
+				joinedAt: { type: Date, default: null }
+			}
+		],
 		notificationPrefs: {
 			emailOnHighConfidence: {
 				type: Boolean,

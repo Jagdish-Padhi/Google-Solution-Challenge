@@ -1,26 +1,34 @@
-function createValidationError(message) {
-	const error = new Error(message);
-	error.statusCode = 400;
-	return error;
-}
+import { isValidUrl, validationError } from './common.js';
 
 export function validateAssetUploadPayload(payload) {
 	const title = payload?.title?.trim();
 	const description = payload?.description?.trim() || '';
+	const type = typeof payload?.type === 'string' ? payload.type.trim().toLowerCase() : '';
+	const livestreamUrl = typeof payload?.livestreamUrl === 'string' ? payload.livestreamUrl.trim() : '';
 
 	if (!title || title.length < 3) {
-		throw createValidationError('Title must be at least 3 characters long.');
+		throw validationError('Title must be at least 3 characters long.');
 	}
 
 	if (title.length > 120) {
-		throw createValidationError('Title must be 120 characters or fewer.');
+		throw validationError('Title must be 120 characters or fewer.');
 	}
 
 	if (description.length > 500) {
-		throw createValidationError('Description must be 500 characters or fewer.');
+		throw validationError('Description must be 500 characters or fewer.');
 	}
 
-	return { title, description };
+	// Livestream-specific validation
+	if (type === 'livestream') {
+		if (!livestreamUrl) {
+			throw validationError('Livestream URL is required for livestream assets.');
+		}
+		if (!isValidUrl(livestreamUrl)) {
+			throw validationError('Please enter a valid livestream URL (must start with http:// or https://).');
+		}
+	}
+
+	return { title, description, type, livestreamUrl };
 }
 
 export function validateAssetUpdatePayload(payload) {
@@ -28,14 +36,14 @@ export function validateAssetUpdatePayload(payload) {
 
 	if (payload?.title !== undefined) {
 		const title = payload.title.trim();
-		if (title.length < 3) throw createValidationError('Title must be at least 3 characters long.');
-		if (title.length > 120) throw createValidationError('Title must be 120 characters or fewer.');
+		if (title.length < 3) throw validationError('Title must be at least 3 characters long.');
+		if (title.length > 120) throw validationError('Title must be 120 characters or fewer.');
 		updates.title = title;
 	}
 
 	if (payload?.description !== undefined) {
 		const description = payload.description.trim();
-		if (description.length > 500) throw createValidationError('Description must be 500 characters or fewer.');
+		if (description.length > 500) throw validationError('Description must be 500 characters or fewer.');
 		updates.description = description;
 	}
 

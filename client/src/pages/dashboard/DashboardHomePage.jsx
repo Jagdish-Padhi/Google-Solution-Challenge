@@ -71,6 +71,8 @@ export default function DashboardHomePage() {
         };
       });
       setLiveLogs(initialLogs);
+    } else {
+      setLiveLogs([]);
     }
   }, [data.discoveryPulse]);
 
@@ -80,7 +82,7 @@ export default function DashboardHomePage() {
       const { alerts } = e.detail || {};
       if (alerts && Array.isArray(alerts)) {
         const newLogs = alerts.map((alert) => ({
-          id: alert._id || Math.random().toString(),
+          id: alert._id || crypto.randomUUID(),
           platform: alert.metadata?.platform || alert.platform || 'web',
           text: alert.message,
           time: new Date(alert.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
@@ -302,7 +304,7 @@ export default function DashboardHomePage() {
                )}
              </div>
           </div>
-          <Button as={Link} to="/dashboard/scans" variant="secondary" className="w-full h-10 text-[10px] font-bold uppercase tracking-widest mt-6 rounded-xl bg-slate-50 border-slate-200 hover:bg-[var(--app-color-primary)] hover:text-white transition-all">
+          <Button as={Link} to="/dashboard/scans" variant="secondary" className="w-full h-10 text-[10px] font-bold uppercase tracking-widest mt-6 rounded-xl bg-slate-50 border-slate-200 hover:bg-[var(--app-color-primary)] hover:!text-white transition-all">
             Audit Discovery History
           </Button>
         </Card>

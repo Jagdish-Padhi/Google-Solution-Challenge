@@ -1,8 +1,3 @@
-/**
- * Container Component
- * Layout wrapper with proper padding and max-width
- */
-
 const Container = ({
 	children,
 	size = 'lg',

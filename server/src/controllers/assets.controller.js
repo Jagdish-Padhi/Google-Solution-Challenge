@@ -19,10 +19,7 @@ export async function uploadAssetController(req, res, next) {
 		const { type, livestreamUrl } = req.body;
 
 		if (type === 'livestream') {
-			const { title, description } = validateAssetUploadPayload(req.body);
-			if (!livestreamUrl) {
-				return res.status(400).json({ message: 'Livestream URL is required.' });
-			}
+			const { title, description, livestreamUrl } = validateAssetUploadPayload(req.body);
 
 			const asset = await createAsset({
 				orgId: req.auth.orgId,
@@ -43,7 +40,7 @@ export async function uploadAssetController(req, res, next) {
 		}
 
 		const { title, description } = validateAssetUploadPayload(req.body);
-		const publicUrl = req.file.path; // Cloudinary URL
+		const publicUrl = req.file.path;
 
 		const asset = await createAsset({
 			orgId: req.auth.orgId,
@@ -53,7 +50,7 @@ export async function uploadAssetController(req, res, next) {
 			publicUrl,
 		});
 
-		// Run fingerprint generation in the background so upload stays responsive.
+		// Background fingerprint so upload stays responsive
 		void enrichAssetFingerprint({
 			assetId: asset._id.toString(),
 			sourceUrl: publicUrl,

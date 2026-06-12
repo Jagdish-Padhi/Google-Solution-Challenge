@@ -24,7 +24,7 @@ import {
 import { Badge, Button, Card, EmptyState, Loader } from '../../components';
 import api from '../../services/api.js';
 import useReportStore from '../../store/report.store.js';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useRef } from 'react';
 
 const rangeOptions = [
@@ -85,17 +85,26 @@ function trendBadgeVariant(direction) {
 
 function TrendLineChart({ items }) {
 	const [hoveredPoint, setHoveredPoint] = useState(null);
+	const navigate = useNavigate();
+
+	const handlePointClick = useCallback((p) => {
+		if (p?.item?.date) {
+			navigate(`/dashboard/violations?date=${p.item.date}`);
+		}
+	}, [navigate]);
 
 	if (!items.length) {
 		return <EmptyState title='No timeline data' message='Run more scans to build trend visibility.' />;
 	}
 
 	const maxValue = Math.max(...items.map((item) => item.count), 1);
+	const avgValue = items.reduce((sum, item) => sum + item.count, 0) / (items.length || 1);
 	
 	const pointsList = items.map((item, index) => {
 		const x = items.length === 1 ? 220 : 10 + (index / (items.length - 1)) * 420;
 		const y = 140 - (item.count / maxValue) * 120;
-		return { x, y, item };
+		const isSurge = item.count > 0 && item.count > avgValue * 1.5 && item.count >= 2;
+		return { x, y, item, isSurge, isMax: item.count === maxValue && item.count > 0 };
 	});
 	
 	const pointsString = pointsList.map(p => `${p.x},${p.y}`).join(' ');
@@ -123,6 +132,10 @@ function TrendLineChart({ items }) {
 					.animated-area {
 						opacity: 0;
 						animation: fadeArea 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) 0.4s forwards;
+					}
+					@keyframes sharpBlink {
+						0%, 100% { opacity: 0.8; }
+						50% { opacity: 0.1; }
 					}
 				`}
 			</style>
@@ -204,21 +217,47 @@ function TrendLineChart({ items }) {
 						return (
 							<g 
 								key={p.item.date} 
-								className="cursor-pointer"
+								className="cursor-pointer group hover:opacity-80 transition-opacity"
 								onMouseEnter={() => setHoveredPoint(p)}
 								onMouseLeave={() => setHoveredPoint(null)}
+								onClick={() => handlePointClick(p)}
 							>
-								{/* Actual dot - hidden unless hovered */}
+								{/* Sharp neon glow indicator */}
+								{p.isSurge && (
+									<circle 
+										cx={p.x} 
+										cy={p.y} 
+										r='5'
+										fill='#ef4444'
+										filter='blur(2px)'
+										className="animate-[sharpBlink_1s_infinite]"
+									/>
+								)}
+								{/* Actual dot - hidden unless hovered OR it's a surge */}
 								<circle 
 									cx={p.x} 
 									cy={p.y} 
-									r='4.5'
-									fill='var(--app-color-surface)'
-									stroke='var(--app-color-primary)'
-									strokeWidth='2'
-									opacity={isHovered ? 1 : 0}
+									r='2.5'
+									fill={p.isSurge ? '#ef4444' : 'var(--app-color-surface)'}
+									stroke={p.isSurge ? '#ef4444' : 'var(--app-color-primary)'}
+									strokeWidth='1.5'
+									opacity={(isHovered || p.isSurge) ? 1 : 0}
 									className="transition-opacity duration-150"
 								/>
+								{/* Surge label for the max point */}
+								{p.isMax && p.isSurge && !isHovered && (
+									<text 
+										x={p.x} 
+										y={p.y - 12} 
+										fontSize="7" 
+										fontWeight="bold"
+										fill="#ef4444"
+										textAnchor="middle"
+										className="uppercase tracking-[0.15em] opacity-90 drop-shadow-sm"
+									>
+										Surge Detected
+									</text>
+								)}
 								{/* Invisible hover target */}
 								<circle cx={p.x} cy={p.y} r='16' fill='transparent' />
 							</g>
@@ -234,14 +273,14 @@ function TrendLineChart({ items }) {
 							className="overflow-visible pointer-events-none"
 						>
 							<div className="flex flex-col items-center justify-end h-full w-full animate-in fade-in zoom-in-95 duration-150">
-								<div className="bg-slate-900 text-white px-3 py-1.5 rounded-xl shadow-xl shadow-teal-900/20 border border-slate-700/50 flex flex-col items-center">
-									<span className="text-[8px] font-bold uppercase tracking-widest text-slate-400 whitespace-nowrap leading-none">{hoveredPoint.item.label}</span>
-									<span className="text-sm font-black text-teal-400 tabular-nums leading-tight mt-0.5">
+								<div className="bg-[var(--app-color-surface-elevated)] text-[var(--app-color-text)] px-3 py-1.5 rounded-xl shadow-xl border border-[var(--app-color-border)] flex flex-col items-center">
+									<span className="text-[8px] font-bold uppercase tracking-widest text-[var(--app-color-text-muted)] whitespace-nowrap leading-none">{hoveredPoint.item.label}</span>
+									<span className="text-sm font-black text-[var(--app-color-primary)] tabular-nums leading-tight mt-0.5">
 										{hoveredPoint.item.count}
-										<span className="text-[8px] text-slate-500 font-bold ml-1">VIOLATIONS</span>
+										<span className="text-[8px] text-[var(--app-color-text-muted)] font-bold ml-1">VIOLATIONS</span>
 									</span>
 								</div>
-								<div className="w-2.5 h-2.5 bg-slate-900 rotate-45 border-r border-b border-slate-700/50 -mt-1.5 z-[-1]"></div>
+								<div className="w-2.5 h-2.5 bg-[var(--app-color-surface-elevated)] rotate-45 border-r border-b border-[var(--app-color-border)] -mt-1.5 z-[-1]"></div>
 							</div>
 						</foreignObject>
 					)}
@@ -395,6 +434,95 @@ function KPIMetricsGrid({ kpis }) {
 	);
 }
 
+function ContentDNAPropagationGraph({ data }) {
+	const navigate = useNavigate();
+
+	if (!data || !data.topAssetPropagations || data.topAssetPropagations.length === 0) {
+		return null;
+	}
+
+	const graph = data.topAssetPropagations[0]; // Render the top propagated asset for demo
+
+	return (
+		<Card className='border border-[var(--app-color-border)] shadow-sm bg-[var(--app-color-surface)]'>
+			<div className="flex flex-col gap-1 mb-6">
+				<div className="flex items-center gap-2">
+					<Globe size={18} className="text-[var(--app-color-primary)]" />
+					<h3 className="font-bold text-[var(--app-color-text)]">Asset Spread Timeline</h3>
+				</div>
+				<p className="text-sm text-[var(--app-color-text-muted)]">Visual lifecycle of the most actively spread pirated asset.</p>
+			</div>
+
+			<div className="flex items-center justify-between bg-[var(--app-color-surface-panel)] rounded-xl p-4 border border-[var(--app-color-border)] mb-6">
+				<div>
+					<p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--app-color-text-muted)] mb-1">Spread Timeline</p>
+					<p className="text-xl font-bold text-[var(--app-color-text)]">{graph.timeSpanHours} hours</p>
+				</div>
+				<div className="text-right">
+					<p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--app-color-text-muted)] mb-1">Total Surfaces</p>
+					<p className="text-xl font-bold text-[var(--app-color-text)]">{graph.totalPlatformsAffected} platforms</p>
+				</div>
+			</div>
+
+			<div className="relative pt-12 pb-2">
+				<style>{`
+					@keyframes drawTimeline {
+						from { width: 0%; opacity: 0; }
+						to { width: calc(100% - 2rem); opacity: 0.6; }
+					}
+					@keyframes popTimelineItem {
+						0% { opacity: 0; transform: scale(0.8) translateY(10px); }
+						100% { opacity: 1; transform: scale(1) translateY(0); }
+					}
+					@keyframes sharpBlinkNeon {
+						0%, 100% { opacity: 0.8; }
+						50% { opacity: 0.15; }
+					}
+				`}</style>
+				{/* Horizontal Timeline Line */}
+				<div className="absolute top-[3.8rem] left-4 right-4 h-0.5 bg-[var(--app-color-border)] rounded-full" />
+				<div 
+					className="absolute top-[3.8rem] left-4 h-0.5 bg-[var(--app-color-primary)] rounded-full"
+					style={{ animation: 'drawTimeline 2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards' }} 
+				/>
+
+				<div className="relative flex justify-between">
+					{graph.platformTimeline.map((pt, idx) => (
+						<div 
+							key={pt.platform} 
+							className="flex flex-col items-center relative w-20 cursor-pointer group"
+							onClick={() => navigate(`/dashboard/violations?platform=${pt.platform.toLowerCase()}`)}
+							style={{ opacity: 0, animation: `popTimelineItem 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards ${idx * 0.15 + 0.5}s` }}
+						>
+							<div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-[var(--app-color-surface-elevated)] border border-[var(--app-color-border)] px-2.5 py-1.5 rounded-md shadow-sm z-20 flex flex-col items-center group-hover:-translate-y-1 transition-transform">
+								<span className="text-[10px] font-bold text-[var(--app-color-text)] whitespace-nowrap capitalize leading-none">
+									{pt.platform}
+								</span>
+								<div className="absolute -bottom-1 w-2 h-2 bg-[var(--app-color-surface-elevated)] border-r border-b border-[var(--app-color-border)] rotate-45" />
+							</div>
+							
+							{/* Professional Blinking Neon Dot */}
+							<div className="relative w-3 h-3 flex items-center justify-center z-10 my-0.5 group-hover:scale-125 transition-transform duration-300">
+								<div className="absolute inset-0 rounded-full bg-[var(--app-color-primary)] blur-[2px] animate-[sharpBlinkNeon_1s_infinite]"></div>
+								<div className="relative w-2 h-2 rounded-full bg-[var(--app-color-primary)] border border-[var(--app-color-surface)] shadow-[0_0_5px_var(--app-color-primary)]" />
+							</div>
+							
+							<div className="mt-2 text-center">
+								<p className="text-[9px] font-bold text-[var(--app-color-primary)] whitespace-nowrap">
+									{new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(pt.firstSeenAt))}
+								</p>
+								<p className="text-[9px] text-[var(--app-color-text-muted)] font-semibold uppercase tracking-widest mt-0.5">
+									{pt.count} copies
+								</p>
+							</div>
+						</div>
+					))}
+				</div>
+			</div>
+		</Card>
+	);
+}
+
 export default function DashboardAnalyticsPage() {
 	const [range, setRange] = useState('30d');
 	const [customDates, setCustomDates] = useState({
@@ -436,23 +564,27 @@ export default function DashboardAnalyticsPage() {
 		return params;
 	}, [customDates.endDate, customDates.startDate, range]);
 
+	const [propagation, setPropagation] = useState(null);
+
 	const loadData = useCallback(async () => {
 		if (range === 'custom' && (!customDates.startDate || !customDates.endDate)) {
 			setOverview(null);
 			setTimeline([]);
 			setPlatforms([]);
 			setKpis(null);
+			setPropagation(null);
 			return;
 		}
 
 		try {
 			setIsLoading(true);
-			const [overviewResponse, timelineResponse, platformsResponse, kpisResponse, reportsResponse] = await Promise.all([
+			const [overviewResponse, timelineResponse, platformsResponse, kpisResponse, reportsResponse, propagationResponse] = await Promise.all([
 				api.get('/analytics/overview', { params: queryParams }),
 				api.get('/analytics/timeline', { params: queryParams }),
 				api.get('/analytics/platforms', { params: queryParams }),
 				api.get('/analytics/kpis', { params: queryParams }),
 				api.get('/reports', { params: { limit: 5 } }),
+				api.get('/analytics/propagation', { params: { ...queryParams, limit: 3 } }),
 			]);
 
 			setOverview(overviewResponse.data);
@@ -460,6 +592,7 @@ export default function DashboardAnalyticsPage() {
 			setPlatforms(platformsResponse.data.items || []);
 			setKpis(kpisResponse.data.kpis || null);
 			setReports(reportsResponse.data?.items || []);
+			setPropagation(propagationResponse.data);
 		} catch {
 			setError('Unable to load analytics right now.');
 		} finally {
@@ -729,6 +862,8 @@ export default function DashboardAnalyticsPage() {
 						</Card>
 					</section>
 
+					<ContentDNAPropagationGraph data={propagation} />
+
 					<Card
 						ref={reportsRef}
 						id="reports-section"
@@ -769,7 +904,7 @@ export default function DashboardAnalyticsPage() {
 												<button
 													type='button'
 													onClick={() => handleDownloadReport(report)}
-													className='inline-flex items-center justify-center gap-2 rounded-lg bg-(--app-color-primary) px-4 py-2 text-xs font-bold uppercase tracking-widest text-white transition hover:bg-(--app-color-primary-hover) shadow-sm active:scale-95'
+													className='inline-flex items-center justify-center gap-2 rounded-lg bg-(--app-color-primary) px-4 py-2 text-xs font-bold uppercase tracking-widest text-white hover:text-white transition hover:bg-(--app-color-primary-hover) shadow-sm active:scale-95'
 												>
 													<Download size={14} />
 													Download PDF

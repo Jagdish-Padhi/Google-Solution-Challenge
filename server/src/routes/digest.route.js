@@ -3,13 +3,7 @@ import { triggerWeeklyDigest } from '../services/alerts.service.js';
 
 const router = Router();
 
-/**
- * cron-job.org setup:
- *   URL: https://your-backend.com/api/digest/trigger
- *   Method: POST
- *   Headers: Authorization: Bearer <DIGEST_CRON_SECRET>
- *   Schedule: Every Monday at 09:00
- */
+// Triggered by cron-job.org webhook (Every Monday at 09:00)
 router.post('/trigger', async (req, res, next) => {
   try {
     // Verify the cron secret so random people can't trigger digests

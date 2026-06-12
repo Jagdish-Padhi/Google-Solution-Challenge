@@ -73,7 +73,7 @@ const violationSchema = new mongoose.Schema(
 		},
 		status: {
 			type: String,
-			enum: ['open', 'reported', 'resolved', 'false_positive'],
+			enum: ['open', 'reported', 'resolved', 'false_positive', 'licensed'],
 			default: 'open',
 		},
 		evidenceBundle: {

@@ -1,9 +1,3 @@
-/**
- * Card Component
- * Flexible container for content with optional header and footer
- * Lightweight wrapper following theme styling
- */
-
 const Card = ({
 	children,
 	header = null,

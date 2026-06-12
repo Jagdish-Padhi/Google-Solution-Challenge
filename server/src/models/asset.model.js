@@ -22,6 +22,17 @@ const assetSchema = new mongoose.Schema(
 			type: [String],
 			default: [],
 		},
+		licensedDomains: {
+			type: [String],
+			default: [],
+		},
+		licensedPartners: [
+			{
+				name: String,
+				domain: String,
+				expiresAt: Date
+			}
+		],
 		type: {
 			type: String,
 			enum: ['video', 'image', 'highlight', 'livestream'],

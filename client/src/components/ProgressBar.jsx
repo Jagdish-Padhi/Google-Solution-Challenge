@@ -1,8 +1,3 @@
-/**
- * ProgressBar Component
- * Visual progress indicator
- */
-
 const ProgressBar = ({
 	value = 0,
 	max = 100,

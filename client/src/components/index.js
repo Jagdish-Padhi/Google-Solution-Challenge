@@ -1,8 +1,4 @@
-/**
- * Components Index
- * Central export file for all UI components
- * Import: import { Button, Card, Input } from '@components';
- */
+// Central export file for all UI components
 
 // Basic UI Components
 export { default as Button } from './Button';

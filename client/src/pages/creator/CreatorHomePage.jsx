@@ -109,7 +109,22 @@ export default function CreatorHomePage() {
 		setScanProgress(0);
 
 		try {
-			await api.post('/scans');
+			const validAssets = assets.filter(a => a.status === 'active');
+			
+			if (validAssets.length === 0) {
+				toast.error('Your assets are still processing. Please wait.');
+				setIsScanning(false);
+				return;
+			}
+
+			await Promise.all(validAssets.map(asset => 
+				api.post('/scans/start', {
+					assetId: asset._id,
+					searchKeywords: [asset.title || 'portfolio', 'copyright', 'repost'],
+					platforms: ['youtube', 'twitter', 'web'],
+					multiLanguage: false
+				})
+			));
 			
 			// Simulate progress for the "Scan Now" button UX
 			for (let i = 1; i <= 100; i += 5) {

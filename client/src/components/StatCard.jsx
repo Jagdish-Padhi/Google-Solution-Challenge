@@ -1,8 +1,3 @@
-/**
- * StatCard Component
- * Display statistical data with optional icon and trend
- */
-
 const StatCard = ({
 	label,
 	value,

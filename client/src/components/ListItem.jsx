@@ -1,8 +1,3 @@
-/**
- * ListItem Component
- * Reusable list item with icon, title, description, and actions
- */
-
 const ListItem = ({
 	icon: Icon = null,
 	title,

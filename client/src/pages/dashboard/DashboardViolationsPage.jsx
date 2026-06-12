@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 import { 
@@ -27,10 +27,11 @@ import {
 } from 'lucide-react';
 import { Badge, Button, Card, EmptyState, Loader, Modal, Pagination, Select, Spinner } from '../../components';
 import api from '../../services/api.js';
+import useAuthStore from '../../store/auth.store.js';
 
-const statusFilters = ['', 'open', 'reported', 'resolved', 'false_positive'];
+const statusFilters = ['', 'open', 'reported', 'resolved', 'false_positive', 'licensed'];
 const platformFilters = ['', 'youtube', 'twitter', 'telegram', 'web'];
-const statusOptions = ['open', 'reported', 'resolved', 'false_positive'];
+const statusOptions = ['open', 'reported', 'resolved', 'false_positive', 'licensed'];
 
 function confidenceVariant(value) {
 	if (value >= 80) {
@@ -51,6 +52,7 @@ function statusVariant(status) {
 		case 'reported': return 'warning';
 		case 'resolved': return 'success';
 		case 'false_positive': return 'neutral';
+		case 'licensed': return 'success';
 		default: return 'secondary';
 	}
 }
@@ -58,6 +60,7 @@ function statusVariant(status) {
 function statusLabel(status) {
 	switch (status) {
 		case 'false_positive': return 'False Positive';
+		case 'licensed': return 'Licensed';
 		default: return status.charAt(0).toUpperCase() + status.slice(1);
 	}
 }
@@ -114,26 +117,39 @@ const getConfidenceBreakdown = (violation) => {
 
 export default function DashboardViolationsPage() {
 	const { violationId } = useParams();
+	const user = useAuthStore((state) => state.user);
 	const [violations, setViolations] = useState([]);
 	const [selectedViolation, setSelectedViolation] = useState(null);
 	const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+	const [isDmcaModalOpen, setIsDmcaModalOpen] = useState(false);
+	const [isBreakdownOpen, setIsBreakdownOpen] = useState(false);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState('');
 	const [filters, setFilters] = useState({
 		status: '',
 		platform: '',
-		minConfidence: 0,
+		minConfidence: user?.role === 'legal' ? 85 : 0,
 	});
 	const [pagination, setPagination] = useState({
 		page: 1,
 		limit: 10,
 		totalPages: 1,
 	});
+	const [searchParams] = useSearchParams();
+	const dateParam = searchParams.get('date');
+
 	const [isDraftingDmca, setIsDraftingDmca] = useState(false);
 	const [dmcaDraftText, setDmcaDraftText] = useState('');
 	const [dmcaContactEmail, setDmcaContactEmail] = useState('');
 	const [dmcaSubject, setDmcaSubject] = useState('');
-	const [isDmcaModalOpen, setIsDmcaModalOpen] = useState(false);
+
+	useEffect(() => {
+		if (user?.role === 'legal') {
+			setFilters(prev => ({ ...prev, minConfidence: 85 }));
+		} else {
+			setFilters(prev => ({ ...prev, minConfidence: 0 }));
+		}
+	}, [user?.role]);
 
 	useEffect(() => {
 		if (violationId) {
@@ -152,6 +168,7 @@ export default function DashboardViolationsPage() {
 					status: filters.status || undefined,
 					platform: filters.platform || undefined,
 					minConfidence: filters.minConfidence || undefined,
+					date: dateParam || undefined,
 				},
 			});
 
@@ -166,7 +183,7 @@ export default function DashboardViolationsPage() {
 		} finally {
 			setIsLoading(false);
 		}
-	}, [filters.minConfidence, filters.platform, filters.status, pagination.limit, pagination.page]);
+	}, [pagination.page, pagination.limit, filters.status, filters.platform, filters.minConfidence, dateParam]);
 
 	useEffect(() => {
 		loadViolations();
@@ -214,6 +231,60 @@ export default function DashboardViolationsPage() {
 			toast.error(message);
 		} finally {
 			setIsDraftingDmca(false);
+		}
+	};
+
+	const [isDownloadingPackage, setIsDownloadingPackage] = useState(false);
+	const handleDownloadEvidencePackage = async () => {
+		if (!selectedViolation?._id) return;
+		setIsDownloadingPackage(true);
+		try {
+			const dmcaResponse = await api.post(`/violations/${selectedViolation._id}/draft-dmca`);
+			const dmcaText = dmcaResponse.data.draft || 'No DMCA generated.';
+
+			const JSZip = (await import('jszip')).default;
+			const zip = new JSZip();
+
+			zip.file("DMCA_Takedown_Notice.txt", dmcaText);
+
+			const metadata = {
+				violationId: selectedViolation._id,
+				detectedAt: selectedViolation.detectedAt,
+				sourceUrl: selectedViolation.sourceUrl,
+				platform: selectedViolation.platform,
+				confidenceScore: selectedViolation.matchConfidence,
+				evidence: selectedViolation.evidenceBundle
+			};
+			zip.file("evidence_metadata.json", JSON.stringify(metadata, null, 2));
+
+			if (selectedViolation.screenshotUrl) {
+				try {
+					const imgRes = await fetch(selectedViolation.screenshotUrl);
+					const imgBlob = await imgRes.blob();
+					zip.file("screenshot.png", imgBlob);
+				} catch (e) {
+					console.error("Failed to fetch screenshot for ZIP:", e);
+					zip.file("screenshot_error.txt", "Failed to download screenshot. URL: " + selectedViolation.screenshotUrl);
+				}
+			}
+
+			const content = await zip.generateAsync({ type: "blob" });
+			const blobUrl = window.URL.createObjectURL(content);
+			
+			const anchor = document.createElement('a');
+			anchor.href = blobUrl;
+			anchor.download = `SportShield_Evidence_${selectedViolation._id}.zip`;
+			document.body.appendChild(anchor);
+			anchor.click();
+			anchor.remove();
+			window.URL.revokeObjectURL(blobUrl);
+
+			toast.success('Evidence package downloaded.');
+		} catch (error) {
+			toast.error('Failed to generate evidence package.');
+			console.error(error);
+		} finally {
+			setIsDownloadingPackage(false);
 		}
 	};
 
@@ -438,89 +509,41 @@ export default function DashboardViolationsPage() {
 				isOpen={isDetailsOpen}
 				onClose={() => setIsDetailsOpen(false)}
 				title='Violation evidence'
-				size='5xl'
+				size='7xl'
 			>
 				{selectedViolation ? (
-					<div className='grid grid-cols-1 gap-6 lg:grid-cols-2 text-sm'>
+					<div className='grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-5 text-sm'>
 						{/* Left Column: Details & Actions */}
-						<div className='flex flex-col justify-between space-y-4'>
+						<div className='flex flex-col justify-between space-y-4 xl:col-span-2'>
 							<div className='space-y-4'>
 								<div className='grid gap-3 sm:grid-cols-2'>
-									<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-3'>
+									<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-3 shadow-sm'>
 										<p className='text-xs uppercase tracking-[0.12em] text-(--app-color-text-muted)'>Match confidence</p>
-										<p className='mt-1 text-xl font-semibold text-(--app-color-text)'>{selectedViolation.matchConfidence}%</p>
+										<p className='mt-1 text-2xl font-black text-(--app-color-text)'>{selectedViolation.matchConfidence}%</p>
 									</div>
-									<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-3'>
+									<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-3 shadow-sm'>
 										<p className='text-xs uppercase tracking-[0.12em] text-(--app-color-text-muted)'>Match type</p>
-										<p className='mt-1 text-xl font-semibold capitalize text-(--app-color-text)'>{selectedViolation.matchType}</p>
+										<p className='mt-1 text-xl font-bold capitalize text-(--app-color-text)'>{selectedViolation.matchType}</p>
 									</div>
 								</div>
 
-								{/* Confidence Breakdown Bar */}
-								<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-4 space-y-3'>
-									<p className='text-xs font-semibold uppercase tracking-[0.14em] text-(--app-color-text-muted)'>Confidence score breakdown</p>
-									{(() => {
-										const breakdown = getConfidenceBreakdown(selectedViolation);
-										return (
-											<div className="space-y-3">
-												<div className="h-3.5 w-full rounded-full bg-slate-100 overflow-hidden flex shadow-inner">
-													{breakdown.pHash > 0 && (
-														<div style={{ width: `${breakdown.pHash}%` }} className="bg-indigo-500 h-full transition-all" title={`pHash DNA: ${breakdown.pHash}%`} />
-													)}
-													{breakdown.color > 0 && (
-														<div style={{ width: `${breakdown.color}%` }} className="bg-teal-500 h-full transition-all" title={`Color Similarity: ${breakdown.color}%`} />
-													)}
-													{breakdown.frames > 0 && (
-														<div style={{ width: `${breakdown.frames}%` }} className="bg-amber-500 h-full transition-all" title={`Frame Analysis: ${breakdown.frames}%`} />
-													)}
-													{breakdown.orb > 0 && (
-														<div style={{ width: `${breakdown.orb}%` }} className="bg-purple-500 h-full transition-all" title={`ORB Homography Boost: ${breakdown.orb}%`} />
-													)}
-													{breakdown.vision > 0 && (
-														<div style={{ width: `${breakdown.vision}%` }} className="bg-emerald-500 h-full transition-all" title={`Vision AI Boost: ${breakdown.vision}%`} />
-													)}
-												</div>
-												<div className="flex flex-wrap gap-x-4 gap-y-2 text-[10px] font-bold text-slate-500">
-													<div className="flex items-center gap-1">
-														<span className="w-2.5 h-2.5 rounded bg-indigo-500" />
-														<span>pHash DNA ({breakdown.pHash}%)</span>
-													</div>
-													<div className="flex items-center gap-1">
-														<span className="w-2.5 h-2.5 rounded bg-teal-500" />
-														<span>Color Match ({breakdown.color}%)</span>
-													</div>
-													{breakdown.frames > 0 && (
-														<div className="flex items-center gap-1">
-															<span className="w-2.5 h-2.5 rounded bg-amber-500" />
-															<span>Frame DNA ({breakdown.frames}%)</span>
-														</div>
-													)}
-													{breakdown.orb > 0 && (
-														<div className="flex items-center gap-1">
-															<span className="w-2.5 h-2.5 rounded bg-purple-500 animate-pulse" />
-															<span>ORB Boost ({breakdown.orb}%)</span>
-														</div>
-													)}
-													{breakdown.vision > 0 && (
-														<div className="flex items-center gap-1">
-															<span className="w-2.5 h-2.5 rounded bg-emerald-500 animate-pulse" />
-															<span>Vision AI Boost ({breakdown.vision}%)</span>
-														</div>
-													)}
-												</div>
-											</div>
-										);
-									})()}
-								</div>
+								<Button 
+									variant="secondary" 
+									size="sm" 
+									onClick={() => setIsBreakdownOpen(true)}
+									className="w-full flex items-center justify-center gap-2"
+								>
+									<Eye size={16} />
+									View Score Breakdown
+								</Button>
 
-								<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-4'>
+								<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-4 shadow-sm'>
 									<p className='text-xs font-semibold uppercase tracking-[0.14em] text-(--app-color-text-muted)'>Evidence explainability</p>
 									<div className='mt-3 grid gap-2 sm:grid-cols-3'>
 										<p className='text-(--app-color-text-muted)'>Hamming: <span className='font-semibold text-(--app-color-text)'>{selectedViolation.evidenceBundle?.hammingDistance ?? '-'}</span></p>
 										<p className='text-(--app-color-text-muted)'>Color: <span className='font-semibold text-(--app-color-text)'>{selectedViolation.evidenceBundle?.colorSimilarity ?? '-'}</span></p>
 										<p className='text-(--app-color-text-muted)'>Frames: <span className='font-semibold text-(--app-color-text)'>{selectedViolation.evidenceBundle?.frameMatchCount ?? '-'}</span></p>
 									</div>
-									
 									<div className="mt-4 pt-3 border-t border-(--app-color-border)/40 flex flex-wrap gap-2 items-center">
 										{selectedViolation.evidenceBundle?.isMirrored && (
 											<Badge variant="warning" size="xs" className="font-bold uppercase tracking-wider bg-amber-50 border-amber-200/50 text-amber-700">
@@ -541,15 +564,15 @@ export default function DashboardViolationsPage() {
 									</div>
 								</div>
 
-								<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-4'>
+								<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-4 shadow-sm'>
 									<p className='text-xs font-semibold uppercase tracking-[0.14em] text-(--app-color-text-muted)'>Source</p>
-									<a href={selectedViolation.sourceUrl} target='_blank' rel='noreferrer' className='mt-1 block break-all text-(--app-color-primary) hover:underline'>
+									<a href={selectedViolation.sourceUrl} target='_blank' rel='noreferrer' className='mt-1 block break-all text-(--app-color-primary) font-medium hover:underline'>
 										{selectedViolation.sourceUrl}
 									</a>
 								</div>
 
 								{selectedViolation.discoveryKeyword && (
-									<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-4'>
+									<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-4 shadow-sm'>
 										<p className='text-xs font-semibold uppercase tracking-[0.14em] text-(--app-color-text-muted)'>Found via search</p>
 										<p className='mt-1 font-mono text-xs font-semibold text-(--app-color-text) bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded inline-block'>
 											{selectedViolation.discoveryKeyword}
@@ -558,52 +581,67 @@ export default function DashboardViolationsPage() {
 								)}
 							</div>
 
-							<div className='pt-6 border-t border-(--app-color-border)/50 space-y-6'>
+							<div className='pt-6 border-t border-(--app-color-border)/50 space-y-4'>
 								<div>
-									<p className='mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-(--app-color-text-muted)'>Primary Enforcement</p>
-									<button
-										onClick={handleDraftDmca}
-										disabled={isDraftingDmca}
-										className='group relative flex h-12 items-center justify-center gap-3 overflow-hidden rounded-xl bg-gradient-to-r from-teal-600 to-slate-900 px-8 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-teal-900/20 transition-all hover:scale-[1.02] hover:shadow-teal-900/30 active:scale-95 disabled:opacity-70 whitespace-nowrap'
-									>
-										<div className='absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700' />
-										{isDraftingDmca ? <Spinner size='xs' /> : <Sparkles size={16} className='animate-pulse' />}
-										<span>Draft DMCA Notice</span>
-									</button>
-								</div>
-
-								<div>
-									<p className='mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-(--app-color-text-muted)'>Case Management</p>
-									<div className='inline-flex flex-wrap items-center gap-1 p-1 rounded-xl bg-slate-100 border border-slate-200'>
-										{['open', 'reported', 'resolved'].map((status) => (
+									<p className='mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-(--app-color-text-muted)'>Case Management</p>
+									<div className='flex items-center p-1 rounded-xl bg-slate-100 border border-slate-200'>
+										{['open', 'reported', 'resolved', 'false_positive'].map((status) => (
 											<button
 												key={status}
 												onClick={() => updateStatus(selectedViolation._id, status)}
-												className={`px-4 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
+												className={`flex-1 py-2 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
 													selectedViolation.status === status 
-													? 'bg-[var(--app-color-primary)] text-white shadow-md' 
-													: 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
+													? 'bg-[var(--app-color-primary)] text-white hover:text-white shadow-md' 
+													: 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
 												}`}
 											>
-												{statusLabel(status)}
+												{status === 'false_positive' ? 'False+' : statusLabel(status)}
 											</button>
 										))}
 									</div>
+								</div>
+
+								<div className='grid grid-cols-2 gap-2'>
+									<button
+										onClick={handleDraftDmca}
+										disabled={isDraftingDmca}
+										className='group relative flex h-10 items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-teal-600 to-slate-900 px-4 text-[10px] font-black uppercase tracking-widest text-white hover:text-white shadow-md shadow-teal-900/20 transition-all hover:scale-[1.02] hover:shadow-teal-900/30 active:scale-95 disabled:opacity-70 whitespace-nowrap'
+									>
+										<div className='absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700' />
+										{isDraftingDmca ? <Spinner size='xs' /> : <Sparkles size={14} className='animate-pulse' />}
+										<span>Draft DMCA</span>
+									</button>
+
+									<button
+										onClick={handleDownloadEvidencePackage}
+										disabled={isDownloadingPackage}
+										className='flex h-10 items-center justify-center gap-2 rounded-xl border border-(--app-color-border) bg-(--app-color-surface) px-4 text-[10px] font-black uppercase tracking-widest text-(--app-color-text) transition-all hover:bg-slate-50 dark:hover:bg-slate-800 dark:hover:text-white active:scale-95 disabled:opacity-70 whitespace-nowrap'
+									>
+										{isDownloadingPackage ? <Spinner size='xs' /> : <FolderOpen size={14} />}
+										<span>Evidence ZIP</span>
+									</button>
 								</div>
 							</div>
 						</div>
 
 						{/* Right Column: Screenshot */}
-						<div className='flex h-full flex-col'>
+						<div className='flex flex-col xl:col-span-3'>
 							{selectedViolation.screenshotUrl ? (
-								<div className='flex h-full flex-col rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-4'>
-									<p className='mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-(--app-color-text-muted)'>Captured evidence</p>
-									<div className='flex min-h-[300px] flex-1 items-center justify-center overflow-hidden rounded-lg border border-(--app-color-border) bg-black/5 dark:bg-black/20'>
-										<img src={selectedViolation.screenshotUrl} alt='Violation evidence screenshot' className='max-h-[500px] max-w-full object-contain' />
+								<div className='flex flex-col rounded-xl border border-(--app-color-border) bg-black shadow-lg overflow-hidden relative group/evidence'>
+									<div className='absolute top-0 inset-x-0 h-12 bg-gradient-to-b from-black/60 to-transparent z-10 flex items-center px-4'>
+										<p className='text-[10px] font-black uppercase tracking-[0.2em] text-white drop-shadow-md flex items-center gap-2'>
+											<span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+											Captured Evidence
+										</p>
 									</div>
+									<img 
+										src={selectedViolation.screenshotUrl} 
+										alt='Violation evidence screenshot' 
+										className='w-full h-auto max-h-[75vh] object-contain' 
+									/>
 								</div>
 							) : (
-								<div className='flex min-h-[300px] flex-1 items-center justify-center rounded-xl border border-dashed border-(--app-color-border) bg-(--app-color-surface) p-4 text-(--app-color-text-muted)'>
+								<div className='flex min-h-[300px] flex-1 items-center justify-center rounded-xl border border-dashed border-(--app-color-border) bg-(--app-color-surface) p-4 text-(--app-color-text-muted) shadow-inner'>
 									No screenshot captured yet.
 								</div>
 							)}
@@ -614,6 +652,82 @@ export default function DashboardViolationsPage() {
 				)}
 			</Modal>
 
+			{/* Breakdown Modal */}
+			<Modal
+				isOpen={isBreakdownOpen}
+				onClose={() => setIsBreakdownOpen(false)}
+				title='Confidence Score Breakdown'
+				size='lg'
+			>
+				{selectedViolation && (() => {
+					const breakdown = getConfidenceBreakdown(selectedViolation);
+					const eb = selectedViolation.evidenceBundle || {};
+					const rawHash = Math.max(0, 100 - ((eb.hammingDistance ?? 15) * 7.0));
+					const rawColor = Math.min(100, (eb.colorSimilarity ?? 0) * 100.0);
+					const rawFrames = eb.frameMatchCount ? Math.min(100, eb.frameMatchCount * 20) : 0;
+					
+					const renderBar = (percent, colorClass) => (
+						<div className="w-full flex-1 mx-4 h-2 rounded-full bg-slate-100 overflow-hidden">
+							<div style={{ width: `${percent}%` }} className={`h-full ${colorClass}`} />
+						</div>
+					);
+
+					return (
+						<div className="p-2 space-y-4 font-mono text-sm">
+							<div className="flex items-center justify-between text-slate-600">
+								<div className="w-32 font-semibold">pHash Match</div>
+								{renderBar(rawHash, 'bg-indigo-500')}
+								<div className="w-12 text-right">{Math.round(rawHash)}%</div>
+								<div className="w-20 text-right text-indigo-600 font-bold">→ {breakdown.pHash} pts</div>
+							</div>
+							<div className="flex items-center justify-between text-slate-600">
+								<div className="w-32 font-semibold">Color Match</div>
+								{renderBar(rawColor, 'bg-teal-500')}
+								<div className="w-12 text-right">{Math.round(rawColor)}%</div>
+								<div className="w-20 text-right text-teal-600 font-bold">→ {breakdown.color} pts</div>
+							</div>
+							<div className="flex items-center justify-between text-slate-600">
+								<div className="w-32 font-semibold">Frame Match</div>
+								{renderBar(rawFrames, 'bg-amber-500')}
+								<div className="w-12 text-right">{Math.round(rawFrames)}%</div>
+								<div className="w-20 text-right text-amber-600 font-bold">→ {breakdown.frames} pts</div>
+							</div>
+							
+							<div className="h-px bg-slate-200 my-4" />
+							
+							<div className="flex items-center justify-between text-slate-600">
+								<div className="w-32 font-semibold">ORB Verified</div>
+								<div className="flex-1 mx-4"></div>
+								<div className="w-12 text-right font-bold text-emerald-600">{eb.orbVerified ? '✓' : '—'}</div>
+								<div className="w-20 text-right text-purple-600 font-bold">→ {breakdown.orb > 0 ? `+${breakdown.orb} boost` : '—'}</div>
+							</div>
+							<div className="flex items-center justify-between text-slate-600">
+								<div className="w-32 font-semibold">Mirror Detect</div>
+								<div className="flex-1 mx-4"></div>
+								<div className="w-12 text-right font-bold text-amber-600">{eb.isMirrored ? '✓' : '—'}</div>
+								<div className="w-20 text-right text-slate-400 font-bold text-[10px]">{eb.isMirrored ? '(mirrored copy)' : '—'}</div>
+							</div>
+							<div className="flex items-center justify-between text-slate-600">
+								<div className="w-32 font-semibold">Vision API</div>
+								<div className="flex-1 mx-4"></div>
+								<div className="w-12 text-right font-bold text-emerald-600">{eb.visionAvailable ? '✓' : '—'}</div>
+								<div className="w-20 text-right text-emerald-600 font-bold">→ {breakdown.vision > 0 ? `+${breakdown.vision} boost` : '—'}</div>
+							</div>
+							
+							<div className="h-px bg-slate-200 my-4" />
+							
+							<div className="flex items-center justify-between">
+								<div className="w-32 font-black text-slate-800 text-lg">Final Score</div>
+								<div className="flex-1 mx-4"></div>
+								<div className="w-12"></div>
+								<div className="w-20 text-right text-(--app-color-primary) font-black text-2xl">{selectedViolation.matchConfidence}%</div>
+							</div>
+						</div>
+					);
+				})()}
+			</Modal>
+
+			{/* DMCA Modal */}
 			<Modal
 				isOpen={isDmcaModalOpen}
 				onClose={() => setIsDmcaModalOpen(false)}
@@ -679,7 +793,7 @@ export default function DashboardViolationsPage() {
 							{dmcaContactEmail && dmcaSubject && (
 								<a
 									href={`mailto:${dmcaContactEmail}?subject=${encodeURIComponent(dmcaSubject)}&body=${encodeURIComponent(dmcaDraftText)}`}
-									className='flex items-center justify-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:bg-red-700 hover:shadow-lg dark:bg-red-700 dark:hover:bg-red-600'
+									className='flex items-center justify-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white hover:text-white shadow-md transition-all hover:bg-red-700 hover:shadow-lg dark:bg-red-700 dark:hover:bg-red-600'
 									target="_blank"
 									rel="noreferrer"
 								>

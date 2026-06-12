@@ -1,8 +1,4 @@
-function validationError(message) {
-	const error = new Error(message);
-	error.statusCode = 400;
-	return error;
-}
+import { validationError } from './common.js';
 
 const allowedRanges = new Set(['7d', '30d', '90d', 'custom']);
 

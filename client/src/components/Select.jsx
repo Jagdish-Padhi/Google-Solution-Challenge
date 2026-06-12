@@ -1,8 +1,3 @@
-/**
- * Select Component
- * Dropdown select with label and error states
- */
-
 const Select = ({
 	label,
 	value,

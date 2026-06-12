@@ -1,8 +1,3 @@
-/**
- * PageHeader Component
- * Standard page header with title, subtitle, and actions
- */
-
 const PageHeader = ({
 	title,
 	subtitle = '',

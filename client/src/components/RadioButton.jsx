@@ -1,8 +1,3 @@
-/**
- * Radio Button Component
- * Single selection option from a group
- */
-
 const RadioButton = ({
 	value,
 	checked = false,

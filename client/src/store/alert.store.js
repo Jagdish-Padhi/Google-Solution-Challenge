@@ -1,12 +1,7 @@
 import { create } from 'zustand';
 import api from '../services/api.js';
 
-/**
- * alertStore — manages notification preferences.
- * Unread count and alert list are handled locally in
- * AlertBadge and DashboardAlertsPage respectively
- * (they use window events from useSocket for live updates).
- */
+// Zustand store for managing notification preferences
 export const useAlertStore = create((set) => ({
   notificationPrefs: {
     emailOnHighConfidence: true,

@@ -118,15 +118,15 @@ async function seed() {
             const confidence = status === 'false_positive' ? 30 + Math.floor(Math.random() * 20) : confPool[i % confPool.length];
             
             // Generate a realistic sports thumbnail based on the asset
-            let screenshotUrl = 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800&q=80'; // Generic Stadium
+            let screenshotUrl = '/evidence/generic.png'; // Generic Sports Piracy
             if (asset.title.includes('IPL') || asset.title.includes('Cricket')) {
-                screenshotUrl = 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=800&q=80'; // Cricket
+                screenshotUrl = '/evidence/cricket.png'; // Cricket Piracy
             } else if (asset.title.includes('Champions League') || asset.title.includes('Football')) {
-                screenshotUrl = 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&q=80'; // Football
+                screenshotUrl = '/evidence/football.png'; // Football Piracy
             }
 
-            // For YouTube, use a real-looking thumbnail structure
-            if (platform === 'youtube') {
+            // For YouTube, use a real-looking thumbnail structure but occasionally use the generic piracy image to show an illegal mirror stream embedded on a youtube container
+            if (platform === 'youtube' && Math.random() > 0.5) {
                 const mockIds = ['3VmsnL8Vdqc', 'dQw4w9WgXcQ', 'y6120QOlsfU', 'L_jWHffIx5E'];
                 screenshotUrl = `https://img.youtube.com/vi/${mockIds[Math.floor(Math.random() * mockIds.length)]}/maxresdefault.jpg`;
             }

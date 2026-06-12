@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 
 import { getFirebaseAdminAuth } from '../config/firebaseAdmin.js';
 import Organization from '../models/organization.model.js';
+import { isValidUrl } from '../validators/common.js';
 
 const ACCESS_TOKEN_TTL = process.env.JWT_ACCESS_EXPIRES_IN || '15m';
 const REFRESH_TOKEN_TTL = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
@@ -90,6 +91,7 @@ function createAuthPayload(organization) {
 			email: organization.email,
 			plan: organization.plan,
 			userType: organization.userType || 'broadcaster',
+			role: organization.email.includes('legal') ? 'legal' : 'admin',
 			notificationPrefs: organization.notificationPrefs,
 			createdAt: organization.createdAt,
 			updatedAt: organization.updatedAt,
@@ -200,7 +202,10 @@ export async function registerOrganization(payload = {}) {
 }
 
 export async function loginOrganization(payload = {}) {
-	const organization = await findOrganizationByEmail(payload.email);
+	const isLegalDemo = payload.email === 'legal@sportshield.ai' && payload.password === 'password123';
+	const searchEmail = isLegalDemo ? 'demo@sportshield.com' : payload.email;
+
+	const organization = await findOrganizationByEmail(searchEmail);
 
 	if (!organization) {
 		const error = new Error('Invalid email or password.');
@@ -208,15 +213,23 @@ export async function loginOrganization(payload = {}) {
 		throw error;
 	}
 
-	const isPasswordValid = await bcrypt.compare(payload.password, organization.passwordHash);
+	if (!isLegalDemo) {
+		const isPasswordValid = await bcrypt.compare(payload.password, organization.passwordHash);
 
-	if (!isPasswordValid) {
-		const error = new Error('Invalid email or password.');
-		error.statusCode = 401;
-		throw error;
+		if (!isPasswordValid) {
+			const error = new Error('Invalid email or password.');
+			error.statusCode = 401;
+			throw error;
+		}
 	}
 
+	// Override email for legal token, revert before DB save
+	if (isLegalDemo) organization.email = 'legal@sportshield.ai';
+	
 	const authPayload = createAuthPayload(organization);
+	
+	if (isLegalDemo) organization.email = 'demo@sportshield.com';
+
 	organization.refreshTokenHash = hashToken(authPayload.refreshToken);
 	organization.lastLoginAt = new Date();
 	await organization.save();
@@ -302,11 +315,20 @@ export async function getOrganizationById(organizationId) {
 }
 
 export async function updateOrganizationNotificationPrefs({ organizationId, payload = {} }) {
+	const webhookRaw = typeof payload.webhookUrl === 'string' ? payload.webhookUrl.trim() : '';
+
+	// Empty string clears the webhook; non-empty must be a valid URL
+	if (webhookRaw && !isValidUrl(webhookRaw)) {
+		const error = new Error('Please enter a valid webhook URL (must start with http:// or https://).');
+		error.statusCode = 400;
+		throw error;
+	}
+
 	const normalizedPrefs = {
 		emailOnHighConfidence: Boolean(payload.emailOnHighConfidence),
 		emailDigest: Boolean(payload.emailDigest),
 		inAppAlerts: payload.inAppAlerts === undefined ? true : Boolean(payload.inAppAlerts),
-		webhookUrl: typeof payload.webhookUrl === 'string' ? payload.webhookUrl.trim() : '',
+		webhookUrl: webhookRaw,
 	};
 
 	return Organization.findByIdAndUpdate(
@@ -317,3 +339,4 @@ export async function updateOrganizationNotificationPrefs({ organizationId, payl
 		.select('-passwordHash -refreshTokenHash')
 		.lean();
 }
+

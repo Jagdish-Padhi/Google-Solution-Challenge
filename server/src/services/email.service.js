@@ -1,14 +1,4 @@
-/**
- * Email service using Brevo (formerly Sendinblue) REST API.
- *
- * Required .env keys:
- *   BREVO_API_KEY        – Brevo dashboard → SMTP & API → API Keys → Create API Key
- *   BREVO_SENDER_EMAIL   – must be a verified sender in Brevo
- *   BREVO_SENDER_NAME    – display name, e.g. "SportShield"
- *   APP_URL              – e.g. http://localhost:5173
- *
- * No extra npm package needed — uses native fetch (Node 18+).
- */
+// Email delivery via Brevo (Sendinblue) REST API — requires BREVO_API_KEY env var
 
 const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
 
@@ -39,10 +29,7 @@ async function sendBrevoEmail({ to, subject, htmlContent }) {
   return response.json();
 }
 
-/**
- * Violation alert email — sent when matchConfidence > 70
- * and org has emailOnHighConfidence: true
- */
+// Sent when matchConfidence > 70 and org has emailOnHighConfidence enabled
 export async function sendViolationAlertEmail(orgEmail, violation) {
   const confidenceColor =
     violation.matchConfidence >= 85
@@ -96,9 +83,7 @@ export async function sendViolationAlertEmail(orgEmail, violation) {
   });
 }
 
-/**
- * Platform surge alert email — sent when 5+ violations from same platform in 1hr
- */
+// Sent when 5+ violations from same platform detected within 1 hour
 export async function sendSurgeAlertEmail(
   orgEmail,
   { platform, count, orgName }
@@ -124,9 +109,7 @@ export async function sendSurgeAlertEmail(
   });
 }
 
-/**
- * Weekly digest email — triggered by cron-job.org webhook every Monday 9 AM
- */
+// Triggered by cron-job.org webhook every Monday 9 AM
 export async function sendWeeklyDigestEmail(org, violations) {
   const byPlatform = violations.reduce((acc, v) => {
     acc[v.platform] = (acc[v.platform] || 0) + 1;

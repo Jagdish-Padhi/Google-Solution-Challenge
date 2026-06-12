@@ -1,8 +1,4 @@
-function validationError(message) {
-	const error = new Error(message);
-	error.statusCode = 400;
-	return error;
-}
+import { isValidMongoId, validationError } from './common.js';
 
 export function validateListAlertsQuery(query) {
 	const parsedPage = Number.parseInt(query.page || '1', 10);
@@ -32,6 +28,16 @@ export function validateMarkReadPayload(payload) {
 
 	if (alertIds.length === 0) {
 		throw validationError('alertIds must contain at least one alert id.');
+	}
+
+	if (alertIds.length > 100) {
+		throw validationError('You can mark a maximum of 100 alerts at a time.');
+	}
+
+	for (const id of alertIds) {
+		if (!isValidMongoId(id)) {
+			throw validationError(`Invalid alert ID format: "${id}". Expected a 24-character hex string.`);
+		}
 	}
 
 	return { alertIds };

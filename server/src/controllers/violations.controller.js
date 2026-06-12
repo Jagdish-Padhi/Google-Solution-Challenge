@@ -23,7 +23,7 @@ function getPublicUploadsUrl(req) {
 
 export async function listViolationsController(req, res, next) {
 	try {
-		const { page, limit, status, platform, minConfidence } = validateListViolationsQuery(req.query);
+		const { page, limit, status, platform, minConfidence, date } = validateListViolationsQuery(req.query);
 		const result = await listViolationsByOrg({
 			orgId: req.auth.orgId,
 			page,
@@ -31,6 +31,7 @@ export async function listViolationsController(req, res, next) {
 			status,
 			platform,
 			minConfidence,
+			date,
 		});
 
 		return res.status(200).json(result);

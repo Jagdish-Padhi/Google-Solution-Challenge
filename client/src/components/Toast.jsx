@@ -1,9 +1,3 @@
-/**
- * Toast/Notification Component
- * Display temporary notifications at the bottom of the screen
- * Use with a global toast manager context
- */
-
 import { useEffect } from 'react';
 
 const Toast = ({

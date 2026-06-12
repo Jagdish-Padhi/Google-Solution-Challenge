@@ -1,9 +1,3 @@
-/**
- * Badge Component
- * Small label for status, tags, or categories
- * Multiple color variants for different purposes
- */
-
 const Badge = ({
 	children,
 	variant = 'default',
