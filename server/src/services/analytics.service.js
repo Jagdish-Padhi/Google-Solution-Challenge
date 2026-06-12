@@ -931,11 +931,16 @@ export async function getPropagationAnalytics({ orgId, range = '30d', startDate 
 				_id: '$assetId',
 				platformCount: { $addToSet: '$platform' },
 				violationCount: { $sum: 1 },
+				maxDetectedAt: { $max: '$detectedAt' },
+				minDetectedAt: { $min: '$detectedAt' },
+			},
+		},
+		{
+			$project: {
+				platformCount: 1,
+				violationCount: 1,
 				timeSpan: {
-					$subtract: [
-						{ $max: '$detectedAt' },
-						{ $min: '$detectedAt' },
-					],
+					$subtract: ['$maxDetectedAt', '$minDetectedAt'],
 				},
 			},
 		},
