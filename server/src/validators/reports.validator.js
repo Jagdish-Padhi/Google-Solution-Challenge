@@ -1,10 +1,5 @@
 import { validateAnalyticsRangeQuery } from './analytics.validator.js';
-
-function validationError(message) {
-	const error = new Error(message);
-	error.statusCode = 400;
-	return error;
-}
+import { validationError } from './common.js';
 
 export function validateGenerateReportPayload(payload) {
 	const normalized = validateAnalyticsRangeQuery(payload || {});

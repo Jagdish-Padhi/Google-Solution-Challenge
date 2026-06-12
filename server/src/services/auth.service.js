@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 
 import { getFirebaseAdminAuth } from '../config/firebaseAdmin.js';
 import Organization from '../models/organization.model.js';
+import { isValidUrl } from '../validators/common.js';
 
 const ACCESS_TOKEN_TTL = process.env.JWT_ACCESS_EXPIRES_IN || '15m';
 const REFRESH_TOKEN_TTL = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
@@ -315,11 +316,20 @@ export async function getOrganizationById(organizationId) {
 }
 
 export async function updateOrganizationNotificationPrefs({ organizationId, payload = {} }) {
+	const webhookRaw = typeof payload.webhookUrl === 'string' ? payload.webhookUrl.trim() : '';
+
+	// Allow empty string (user clearing the field), but reject invalid URLs
+	if (webhookRaw && !isValidUrl(webhookRaw)) {
+		const error = new Error('Please enter a valid webhook URL (must start with http:// or https://).');
+		error.statusCode = 400;
+		throw error;
+	}
+
 	const normalizedPrefs = {
 		emailOnHighConfidence: Boolean(payload.emailOnHighConfidence),
 		emailDigest: Boolean(payload.emailDigest),
 		inAppAlerts: payload.inAppAlerts === undefined ? true : Boolean(payload.inAppAlerts),
-		webhookUrl: typeof payload.webhookUrl === 'string' ? payload.webhookUrl.trim() : '',
+		webhookUrl: webhookRaw,
 	};
 
 	return Organization.findByIdAndUpdate(
@@ -330,3 +340,4 @@ export async function updateOrganizationNotificationPrefs({ organizationId, payl
 		.select('-passwordHash -refreshTokenHash')
 		.lean();
 }
+

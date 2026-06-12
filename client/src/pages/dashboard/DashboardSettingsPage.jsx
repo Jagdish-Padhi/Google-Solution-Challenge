@@ -33,6 +33,7 @@ export default function DashboardSettingsPage() {
 		inAppAlerts: true,
 	});
 	const [webhookUrl, setWebhookUrl] = useState('');
+	const [webhookError, setWebhookError] = useState('');
 	const [lastDigestSentAt, setLastDigestSentAt] = useState(null);
 
 	const [inviteEmail, setInviteEmail] = useState('');
@@ -63,6 +64,15 @@ export default function DashboardSettingsPage() {
 		loadOrg();
 	}, [loadOrg]);
 
+	const isValidUrl = (value) => {
+		try {
+			const url = new URL(value);
+			return url.protocol === 'http:' || url.protocol === 'https:';
+		} catch {
+			return false;
+		}
+	};
+
 	const handleSavePrefs = async () => {
 		setIsSavingPrefs(true);
 		try {
@@ -71,23 +81,35 @@ export default function DashboardSettingsPage() {
 				webhookUrl,
 			});
 			toast.success('Notification preferences saved.');
-		} catch {
-			toast.error('Failed to save preferences.');
+		} catch (error) {
+			toast.error(error.response?.data?.message || 'Failed to save preferences.');
 		} finally {
 			setIsSavingPrefs(false);
 		}
 	};
 
 	const handleSaveWebhook = async () => {
+		const trimmed = webhookUrl.trim();
+
+		// Client-side validation: allow empty (clearing) but reject invalid URLs
+		if (trimmed && !isValidUrl(trimmed)) {
+			setWebhookError('Please enter a valid URL starting with https:// or http://');
+			toast.error('Invalid webhook URL. Must start with https:// or http://');
+			return;
+		}
+
+		setWebhookError('');
 		setIsSavingWebhook(true);
 		try {
 			await api.patch('/organization/notification-prefs', {
 				...prefs,
-				webhookUrl: webhookUrl.trim(),
+				webhookUrl: trimmed,
 			});
-			toast.success('Webhook URL updated.');
-		} catch {
-			toast.error('Failed to save webhook URL.');
+			toast.success(trimmed ? 'Webhook URL saved.' : 'Webhook URL cleared.');
+		} catch (error) {
+			const msg = error.response?.data?.message || 'Failed to save webhook URL.';
+			setWebhookError(msg);
+			toast.error(msg);
 		} finally {
 			setIsSavingWebhook(false);
 		}
@@ -468,18 +490,26 @@ export default function DashboardSettingsPage() {
 				<p className='text-xs text-(--app-color-text-muted) mb-4 leading-relaxed'>
 					Post violation events to your own endpoint in real time. SportShield will send a signed JSON payload on every new detection.
 				</p>
-				<div className='flex gap-2'>
-					<input
-						type='url'
-						value={webhookUrl}
-						onChange={(e) => setWebhookUrl(e.target.value)}
-						placeholder='https://your-server.com/webhook'
-						className='flex-1 rounded-lg border border-(--app-color-border) bg-(--app-color-surface) px-3 py-2 text-sm font-mono text-(--app-color-text) placeholder:text-(--app-color-text-muted) focus:border-(--app-color-primary) focus:outline-none transition-colors'
-					/>
-					<Button onClick={handleSaveWebhook} disabled={isSavingWebhook} className='flex items-center gap-2 shrink-0 h-9 text-xs'>
-						{isSavingWebhook ? <Spinner size='xs' /> : <CheckCircle2 size={13} />}
-						Save
-					</Button>
+				<div className='space-y-2'>
+					<div className='flex gap-2'>
+						<input
+							type='url'
+							value={webhookUrl}
+							onChange={(e) => { setWebhookUrl(e.target.value); setWebhookError(''); }}
+							placeholder='https://your-server.com/webhook'
+							className={`flex-1 rounded-lg border bg-(--app-color-surface) px-3 py-2 text-sm font-mono text-(--app-color-text) placeholder:text-(--app-color-text-muted) focus:outline-none transition-colors ${webhookError ? 'border-red-400 focus:border-red-500' : 'border-(--app-color-border) focus:border-(--app-color-primary)'}`}
+						/>
+						<Button onClick={handleSaveWebhook} disabled={isSavingWebhook} className='flex items-center gap-2 shrink-0 h-9 text-xs'>
+							{isSavingWebhook ? <Spinner size='xs' /> : <CheckCircle2 size={13} />}
+							Save
+						</Button>
+					</div>
+					{webhookError && (
+						<p className='text-xs font-semibold text-red-500 flex items-center gap-1.5'>
+							<AlertTriangle size={12} className='shrink-0' />
+							{webhookError}
+						</p>
+					)}
 				</div>
 			</Card>
 			<Modal

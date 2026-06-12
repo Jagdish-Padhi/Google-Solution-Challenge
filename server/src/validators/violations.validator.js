@@ -1,8 +1,4 @@
-function validationError(message) {
-	const error = new Error(message);
-	error.statusCode = 400;
-	return error;
-}
+import { validationError } from './common.js';
 
 export function validateListViolationsQuery(query) {
 	const parsedPage = Number.parseInt(query.page || '1', 10);
@@ -14,9 +10,13 @@ export function validateListViolationsQuery(query) {
 	const page = Number.isNaN(parsedPage) ? 1 : Math.max(1, parsedPage);
 	const limit = Number.isNaN(parsedLimit) ? 10 : Math.min(100, Math.max(1, parsedLimit));
 	const allowedStatuses = new Set(['open', 'reported', 'resolved', 'false_positive']);
-	const allowedPlatforms = new Set(['youtube', 'twitter', 'telegram', 'web']);
+	const allowedPlatforms = new Set(['youtube', 'twitter', 'telegram', 'web', 'livestream']);
 
+	// Validate date format if provided (expect ISO date string)
 	const date = typeof query.date === 'string' ? query.date.trim() : '';
+	if (date && Number.isNaN(new Date(date).getTime())) {
+		throw validationError('Invalid date format. Please use a valid ISO date string (e.g. 2024-01-15).');
+	}
 
 	return {
 		page,
@@ -33,7 +33,7 @@ export function validateViolationStatusPayload(payload) {
 	const allowed = new Set(['open', 'reported', 'resolved', 'false_positive']);
 
 	if (!allowed.has(status)) {
-		throw validationError('Invalid violation status value.');
+		throw validationError(`Invalid violation status. Allowed values: ${[...allowed].join(', ')}.`);
 	}
 
 	return { status };

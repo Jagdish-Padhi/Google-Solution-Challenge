@@ -6,6 +6,7 @@ import {
 } from '../services/auth.service.js';
 import { runDigestForOrg } from '../jobs/weeklyDigest.job.js';
 import Organization from '../models/organization.model.js';
+import { isValidEmail } from '../validators/common.js';
 
 const organizationRouter = Router();
 
@@ -49,9 +50,22 @@ organizationRouter.post('/invite', async (req, res, next) => {
 			return res.status(400).json({ message: 'Email and role are required.' });
 		}
 
+		if (!isValidEmail(email)) {
+			return res.status(400).json({ message: 'Please enter a valid email address.' });
+		}
+
+		const allowedRoles = new Set(['admin', 'analyst', 'legal']);
+		if (!allowedRoles.has(role)) {
+			return res.status(400).json({ message: `Invalid role. Allowed: ${[...allowedRoles].join(', ')}.` });
+		}
+
 		const org = await Organization.findById(req.auth.orgId);
 		if (!org) {
 			return res.status(404).json({ message: 'Organization not found.' });
+		}
+
+		if (org.members.length >= 20) {
+			return res.status(400).json({ message: 'Maximum team size of 20 members reached.' });
 		}
 
 		// check if already a member
@@ -91,6 +105,11 @@ organizationRouter.patch('/member/:email/role', async (req, res, next) => {
 		const { email } = req.params;
 		const { role } = req.body;
 		if (!role) return res.status(400).json({ message: 'Role is required.' });
+
+		const allowedRoles = new Set(['admin', 'analyst', 'legal']);
+		if (!allowedRoles.has(role)) {
+			return res.status(400).json({ message: `Invalid role. Allowed: ${[...allowedRoles].join(', ')}.` });
+		}
 
 		const org = await Organization.findById(req.auth.orgId);
 		if (!org) return res.status(404).json({ message: 'Organization not found.' });
