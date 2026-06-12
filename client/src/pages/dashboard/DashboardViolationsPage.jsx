@@ -121,6 +121,8 @@ export default function DashboardViolationsPage() {
 	const [violations, setViolations] = useState([]);
 	const [selectedViolation, setSelectedViolation] = useState(null);
 	const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+	const [isDmcaModalOpen, setIsDmcaModalOpen] = useState(false);
+	const [isBreakdownOpen, setIsBreakdownOpen] = useState(false);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState('');
 	const [filters, setFilters] = useState({
@@ -137,7 +139,6 @@ export default function DashboardViolationsPage() {
 	const [dmcaDraftText, setDmcaDraftText] = useState('');
 	const [dmcaContactEmail, setDmcaContactEmail] = useState('');
 	const [dmcaSubject, setDmcaSubject] = useState('');
-	const [isDmcaModalOpen, setIsDmcaModalOpen] = useState(false);
 
 	useEffect(() => {
 		if (user?.role === 'legal') {
@@ -522,76 +523,15 @@ export default function DashboardViolationsPage() {
 									</div>
 								</div>
 
-								{/* Confidence Breakdown Bar */}
-								<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-4 space-y-3 shadow-sm'>
-									<p className='text-xs font-semibold uppercase tracking-[0.14em] text-(--app-color-text-muted)'>Confidence score breakdown</p>
-									{(() => {
-										const breakdown = getConfidenceBreakdown(selectedViolation);
-										const eb = selectedViolation.evidenceBundle || {};
-										const rawHash = Math.max(0, 100 - ((eb.hammingDistance ?? 15) * 7.0));
-										const rawColor = Math.min(100, (eb.colorSimilarity ?? 0) * 100.0);
-										const rawFrames = eb.frameMatchCount ? Math.min(100, eb.frameMatchCount * 20) : 0;
-										
-										const renderBar = (percent, colorClass) => (
-											<div className="w-24 lg:w-32 h-1.5 rounded-full bg-slate-100 overflow-hidden hidden sm:block">
-												<div style={{ width: `${percent}%` }} className={`h-full ${colorClass}`} />
-											</div>
-										);
-
-										return (
-											<div className="space-y-3 font-mono text-xs">
-												<div className="flex items-center justify-between text-slate-600">
-													<div className="w-28 font-semibold">pHash Match</div>
-													{renderBar(rawHash, 'bg-indigo-500')}
-													<div className="w-12 text-right">{Math.round(rawHash)}%</div>
-													<div className="w-20 text-right text-indigo-600 font-bold">→ {breakdown.pHash} pts</div>
-												</div>
-												<div className="flex items-center justify-between text-slate-600">
-													<div className="w-28 font-semibold">Color Match</div>
-													{renderBar(rawColor, 'bg-teal-500')}
-													<div className="w-12 text-right">{Math.round(rawColor)}%</div>
-													<div className="w-20 text-right text-teal-600 font-bold">→ {breakdown.color} pts</div>
-												</div>
-												<div className="flex items-center justify-between text-slate-600">
-													<div className="w-28 font-semibold">Frame Match</div>
-													{renderBar(rawFrames, 'bg-amber-500')}
-													<div className="w-12 text-right">{Math.round(rawFrames)}%</div>
-													<div className="w-20 text-right text-amber-600 font-bold">→ {breakdown.frames} pts</div>
-												</div>
-												
-												<div className="h-px bg-slate-200 my-2" />
-												
-												<div className="flex items-center justify-between text-slate-600">
-													<div className="w-28 font-semibold">ORB Verified</div>
-													<div className="w-24 lg:w-32 hidden sm:block"></div>
-													<div className="w-12 text-right font-bold text-emerald-600">{eb.orbVerified ? '✓' : '—'}</div>
-													<div className="w-20 text-right text-purple-600 font-bold">→ {breakdown.orb > 0 ? `+${breakdown.orb} boost` : '—'}</div>
-												</div>
-												<div className="flex items-center justify-between text-slate-600">
-													<div className="w-28 font-semibold">Mirror Detect</div>
-													<div className="w-24 lg:w-32 hidden sm:block"></div>
-													<div className="w-12 text-right font-bold text-amber-600">{eb.isMirrored ? '✓' : '—'}</div>
-													<div className="w-20 text-right text-slate-400 font-bold text-[10px]">{eb.isMirrored ? '(mirrored copy)' : '—'}</div>
-												</div>
-												<div className="flex items-center justify-between text-slate-600">
-													<div className="w-28 font-semibold">Vision API</div>
-													<div className="w-24 lg:w-32 hidden sm:block"></div>
-													<div className="w-12 text-right font-bold text-emerald-600">{eb.visionAvailable ? '✓' : '—'}</div>
-													<div className="w-20 text-right text-emerald-600 font-bold">→ {breakdown.vision > 0 ? `+${breakdown.vision} boost` : '—'}</div>
-												</div>
-												
-												<div className="h-px bg-slate-200 my-2" />
-												
-												<div className="flex items-center justify-between">
-													<div className="w-28 font-black text-slate-800 text-sm">Final Score</div>
-													<div className="w-24 lg:w-32 hidden sm:block"></div>
-													<div className="w-12"></div>
-													<div className="w-20 text-right text-(--app-color-primary) font-black text-lg">{selectedViolation.matchConfidence}%</div>
-												</div>
-											</div>
-										);
-									})()}
-								</div>
+								<Button 
+									variant="secondary" 
+									size="sm" 
+									onClick={() => setIsBreakdownOpen(true)}
+									className="w-full flex items-center justify-center gap-2"
+								>
+									<Eye size={16} />
+									View Score Breakdown
+								</Button>
 
 								<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-4 shadow-sm'>
 									<p className='text-xs font-semibold uppercase tracking-[0.14em] text-(--app-color-text-muted)'>Evidence explainability</p>
@@ -684,22 +624,20 @@ export default function DashboardViolationsPage() {
 						</div>
 
 						{/* Right Column: Screenshot */}
-						<div className='flex h-full flex-col xl:col-span-3'>
+						<div className='flex flex-col xl:col-span-3'>
 							{selectedViolation.screenshotUrl ? (
-								<div className='flex h-full flex-col rounded-xl border border-(--app-color-border) bg-(--app-color-surface) shadow-inner overflow-hidden relative group/evidence'>
+								<div className='flex flex-col rounded-xl border border-(--app-color-border) bg-black shadow-lg overflow-hidden relative group/evidence'>
 									<div className='absolute top-0 inset-x-0 h-12 bg-gradient-to-b from-black/60 to-transparent z-10 flex items-center px-4'>
 										<p className='text-[10px] font-black uppercase tracking-[0.2em] text-white drop-shadow-md flex items-center gap-2'>
 											<span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
 											Captured Evidence
 										</p>
 									</div>
-									<div className='flex flex-1 items-center justify-center bg-slate-900/5 dark:bg-black/40 min-h-[400px]'>
-										<img 
-											src={selectedViolation.screenshotUrl} 
-											alt='Violation evidence screenshot' 
-											className='max-h-[65vh] w-full object-contain drop-shadow-2xl' 
-										/>
-									</div>
+									<img 
+										src={selectedViolation.screenshotUrl} 
+										alt='Violation evidence screenshot' 
+										className='w-full h-auto max-h-[75vh] object-contain' 
+									/>
 								</div>
 							) : (
 								<div className='flex min-h-[300px] flex-1 items-center justify-center rounded-xl border border-dashed border-(--app-color-border) bg-(--app-color-surface) p-4 text-(--app-color-text-muted) shadow-inner'>
@@ -713,6 +651,82 @@ export default function DashboardViolationsPage() {
 				)}
 			</Modal>
 
+			{/* Breakdown Modal */}
+			<Modal
+				isOpen={isBreakdownOpen}
+				onClose={() => setIsBreakdownOpen(false)}
+				title='Confidence Score Breakdown'
+				size='lg'
+			>
+				{selectedViolation && (() => {
+					const breakdown = getConfidenceBreakdown(selectedViolation);
+					const eb = selectedViolation.evidenceBundle || {};
+					const rawHash = Math.max(0, 100 - ((eb.hammingDistance ?? 15) * 7.0));
+					const rawColor = Math.min(100, (eb.colorSimilarity ?? 0) * 100.0);
+					const rawFrames = eb.frameMatchCount ? Math.min(100, eb.frameMatchCount * 20) : 0;
+					
+					const renderBar = (percent, colorClass) => (
+						<div className="w-full flex-1 mx-4 h-2 rounded-full bg-slate-100 overflow-hidden">
+							<div style={{ width: `${percent}%` }} className={`h-full ${colorClass}`} />
+						</div>
+					);
+
+					return (
+						<div className="p-2 space-y-4 font-mono text-sm">
+							<div className="flex items-center justify-between text-slate-600">
+								<div className="w-32 font-semibold">pHash Match</div>
+								{renderBar(rawHash, 'bg-indigo-500')}
+								<div className="w-12 text-right">{Math.round(rawHash)}%</div>
+								<div className="w-20 text-right text-indigo-600 font-bold">→ {breakdown.pHash} pts</div>
+							</div>
+							<div className="flex items-center justify-between text-slate-600">
+								<div className="w-32 font-semibold">Color Match</div>
+								{renderBar(rawColor, 'bg-teal-500')}
+								<div className="w-12 text-right">{Math.round(rawColor)}%</div>
+								<div className="w-20 text-right text-teal-600 font-bold">→ {breakdown.color} pts</div>
+							</div>
+							<div className="flex items-center justify-between text-slate-600">
+								<div className="w-32 font-semibold">Frame Match</div>
+								{renderBar(rawFrames, 'bg-amber-500')}
+								<div className="w-12 text-right">{Math.round(rawFrames)}%</div>
+								<div className="w-20 text-right text-amber-600 font-bold">→ {breakdown.frames} pts</div>
+							</div>
+							
+							<div className="h-px bg-slate-200 my-4" />
+							
+							<div className="flex items-center justify-between text-slate-600">
+								<div className="w-32 font-semibold">ORB Verified</div>
+								<div className="flex-1 mx-4"></div>
+								<div className="w-12 text-right font-bold text-emerald-600">{eb.orbVerified ? '✓' : '—'}</div>
+								<div className="w-20 text-right text-purple-600 font-bold">→ {breakdown.orb > 0 ? `+${breakdown.orb} boost` : '—'}</div>
+							</div>
+							<div className="flex items-center justify-between text-slate-600">
+								<div className="w-32 font-semibold">Mirror Detect</div>
+								<div className="flex-1 mx-4"></div>
+								<div className="w-12 text-right font-bold text-amber-600">{eb.isMirrored ? '✓' : '—'}</div>
+								<div className="w-20 text-right text-slate-400 font-bold text-[10px]">{eb.isMirrored ? '(mirrored copy)' : '—'}</div>
+							</div>
+							<div className="flex items-center justify-between text-slate-600">
+								<div className="w-32 font-semibold">Vision API</div>
+								<div className="flex-1 mx-4"></div>
+								<div className="w-12 text-right font-bold text-emerald-600">{eb.visionAvailable ? '✓' : '—'}</div>
+								<div className="w-20 text-right text-emerald-600 font-bold">→ {breakdown.vision > 0 ? `+${breakdown.vision} boost` : '—'}</div>
+							</div>
+							
+							<div className="h-px bg-slate-200 my-4" />
+							
+							<div className="flex items-center justify-between">
+								<div className="w-32 font-black text-slate-800 text-lg">Final Score</div>
+								<div className="flex-1 mx-4"></div>
+								<div className="w-12"></div>
+								<div className="w-20 text-right text-(--app-color-primary) font-black text-2xl">{selectedViolation.matchConfidence}%</div>
+							</div>
+						</div>
+					);
+				})()}
+			</Modal>
+
+			{/* DMCA Modal */}
 			<Modal
 				isOpen={isDmcaModalOpen}
 				onClose={() => setIsDmcaModalOpen(false)}
