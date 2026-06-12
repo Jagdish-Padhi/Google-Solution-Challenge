@@ -197,10 +197,10 @@ export default function DashboardStreamsPage() {
 	const handleStartMonitoring = async (stream) => {
 		const toastId = toast.loading('Dispatching livestream monitor...');
 		try {
-			const response = await api.post('/scans', {
+			const response = await api.post('/scans/start', {
 				assetId: stream._id,
 				platforms: ['livestream'],
-				keywords: [stream.title]
+				searchKeywords: [stream.title]
 			});
 			
 			toast.success('Monitoring started!', { id: toastId });
@@ -241,25 +241,33 @@ export default function DashboardStreamsPage() {
 						</div>
 					</div>
 				</Card>
-				<Card className="border-(--app-color-border) shadow-sm group hover:border-amber-500/50 transition-all duration-300" style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
+				<Card className="border-(--app-color-border) shadow-sm group hover:border-[var(--app-color-warning)]/50 transition-all duration-300" style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
 					<div className="flex items-center justify-between">
 						<div className="space-y-1">
 							<p className="text-[10px] font-black uppercase tracking-[0.2em] text-(--app-color-text-muted)">Active Audits</p>
 							<p className="text-3xl font-black text-(--app-color-text) tabular-nums">{monitoringCount}</p>
 						</div>
-						<div className="h-12 w-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
+						<div className={`h-12 w-12 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-300 ${
+							monitoringCount > 0 
+								? 'bg-[var(--app-color-warning)]/20 text-[var(--app-color-warning)] shadow-[0_0_15px_rgba(180,83,9,0.25)]' 
+								: 'bg-[var(--app-color-warning)]/10 text-[var(--app-color-warning)]'
+						}`}>
 							<Activity size={22} className={monitoringCount > 0 ? 'animate-pulse' : ''} />
 						</div>
 					</div>
 				</Card>
-				<Card className="border-(--app-color-border) shadow-sm group hover:border-red-500/50 transition-all duration-300" style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
+				<Card className="border-(--app-color-border) shadow-sm group hover:border-[var(--app-color-danger)]/50 transition-all duration-300" style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
 					<div className="flex items-center justify-between">
 						<div className="space-y-1">
 							<p className="text-[10px] font-black uppercase tracking-[0.2em] text-(--app-color-text-muted)">Pirated Feeds Found</p>
-							<p className="text-3xl font-black text-red-500 tabular-nums">{totalViolations}</p>
+							<p className="text-3xl font-black text-[var(--app-color-danger)] tabular-nums">{totalViolations}</p>
 						</div>
-						<div className="h-12 w-12 rounded-2xl bg-red-50 flex items-center justify-center text-red-500 group-hover:scale-110 transition-transform">
-							<AlertTriangle size={22} />
+						<div className={`h-12 w-12 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-all duration-300 ${
+							totalViolations > 0 
+								? 'bg-[var(--app-color-danger)]/20 text-[var(--app-color-danger)] shadow-[0_0_15px_rgba(180,35,24,0.25)]' 
+								: 'bg-[var(--app-color-danger)]/10 text-[var(--app-color-danger)]'
+						}`}>
+							<AlertTriangle size={22} className={totalViolations > 0 ? 'animate-bounce' : ''} />
 						</div>
 					</div>
 				</Card>
@@ -281,7 +289,7 @@ export default function DashboardStreamsPage() {
 
 				<div className="mt-6">
 					{error ? (
-						<p className="text-sm text-red-600">{error}</p>
+						<p className="text-sm text-[var(--app-color-danger)]">{error}</p>
 					) : isLoading ? (
 						<div className="flex flex-col items-center justify-center py-16 gap-6 text-sm text-(--app-color-text-muted)">
 							<Loader size={0.6} />
@@ -316,9 +324,14 @@ export default function DashboardStreamsPage() {
 								return (
 									<Card 
 										key={stream._id}
-										className="border-(--app-color-border) shadow-sm flex flex-col justify-between hover:shadow-md transition-all duration-300 relative overflow-hidden"
+										className={`border-(--app-color-border) shadow-sm flex flex-col justify-between hover:shadow-md transition-all duration-300 relative overflow-hidden ${
+											isMonitoring ? 'border-[var(--app-color-success)]/30 shadow-[0_0_20px_rgba(21,128,61,0.06)]' : ''
+										}`}
 										style={{ backgroundColor: 'var(--app-color-surface)' }}
 									>
+										{isMonitoring && (
+											<div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[var(--app-color-success)]/10 via-[var(--app-color-success)] to-[var(--app-color-success)]/10 animate-progress-indefinite" />
+										)}
 										<div className="space-y-4">
 											{/* Header info */}
 											<div className="flex items-start justify-between gap-2">
@@ -326,7 +339,19 @@ export default function DashboardStreamsPage() {
 													<h3 className="text-base font-bold text-(--app-color-text) truncate">{stream.title}</h3>
 													<p className="text-xs text-(--app-color-text-muted) line-clamp-1">{stream.description || 'No description'}</p>
 												</div>
-												<Badge variant={statusVariant} size="sm">
+												<Badge variant={statusVariant} size="sm" className="flex items-center gap-1.5">
+													{isMonitoring && (
+														<span className="relative flex h-2 w-2">
+															<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--app-color-success)] opacity-75"></span>
+															<span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--app-color-success)]"></span>
+														</span>
+													)}
+													{isQueued && (
+														<span className="relative flex h-2 w-2">
+															<span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-[var(--app-color-warning)] opacity-75"></span>
+															<span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--app-color-warning)]"></span>
+														</span>
+													)}
 													{statusLabel}
 												</Badge>
 											</div>
@@ -347,7 +372,7 @@ export default function DashboardStreamsPage() {
 												</p>
 												<p className="text-(--app-color-text-muted) flex justify-between">
 													<span>Detections:</span>
-													<span className={`font-bold ${stream.violationsFound > 0 ? 'text-red-500' : 'text-(--app-color-text)'}`}>
+													<span className={`font-bold ${stream.violationsFound > 0 ? 'text-[var(--app-color-danger)]' : 'text-(--app-color-text)'}`}>
 														{stream.violationsFound || 0} hits
 													</span>
 												</p>
@@ -366,7 +391,7 @@ export default function DashboardStreamsPage() {
 												</button>
 												<button
 													onClick={() => handleDeleteStream(stream._id)}
-													className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
+													className="p-1.5 rounded-lg bg-[var(--app-color-danger)]/10 text-[var(--app-color-danger)] hover:bg-[var(--app-color-danger)]/20 transition-colors"
 													title="Delete Stream"
 												>
 													<Trash2 size={14} />
