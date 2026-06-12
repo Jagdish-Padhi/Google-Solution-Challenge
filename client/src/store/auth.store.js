@@ -31,7 +31,6 @@ const useAuthStore = create(
         set({ isTransitioning, transitionShowTagline: showTagline, isExiting: false }),
       setExiting: (isExiting) => set({ isExiting }),
       getIsCreator: () => get().user?.userType === 'creator',
-      setDemoRole: (role) => set((state) => ({ user: { ...state.user, role } })),
     }),
     {
       name: 'sportshield-auth-store',
