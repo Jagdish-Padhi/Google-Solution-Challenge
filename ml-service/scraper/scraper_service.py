@@ -11,6 +11,8 @@ from scraper.telegram_public_scraper import scrape_telegram_public
 from scraper.twitter_scraper import scrape_twitter
 from scraper.web_scraper import scrape_web
 from scraper.youtube_scraper import scrape_youtube
+from scraper.twitch_scraper import scrape_twitch
+from scraper.kick_scraper import scrape_kick
 
 SCRAPER_DELAY_SECONDS = float(os.getenv("SCRAPER_DELAY_SECONDS", "1"))
 SCRAPER_MAX_RETRIES = int(os.getenv("SCRAPER_MAX_RETRIES", "3"))
@@ -20,6 +22,8 @@ PLATFORM_HANDLERS = {
     "twitter": scrape_twitter,
     "telegram": scrape_telegram_public,
     "web": scrape_web,
+    "twitch": scrape_twitch,
+    "kick": scrape_kick,
 }
 
 

@@ -22,9 +22,9 @@ import { Badge, Button, Card, EmptyState, Loader, Modal, Pagination, Select, Spi
 import api from '../../services/api.js';
 
 const defaultPlatforms = ['youtube', 'web'];
-const supportedPlatforms = ['youtube', 'twitter', 'telegram', 'web'];
+const supportedPlatforms = ['youtube', 'twitter', 'telegram', 'web', 'twitch', 'kick'];
 const scanStatusFilters = ['', 'queued', 'running', 'completed', 'failed'];
-const scanPlatformFilters = ['', 'youtube', 'twitter', 'telegram', 'web'];
+const scanPlatformFilters = ['', 'youtube', 'twitter', 'telegram', 'web', 'twitch', 'kick'];
 
 function statusDisplay(job) {
 	if (job.status === 'monitoring') return { label: 'Monitoring Stream', icon: Activity, variant: 'warning' };

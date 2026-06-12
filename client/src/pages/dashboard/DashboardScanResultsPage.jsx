@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Globe, Radio, Send, Video, Layers, Activity } from 'lucide-react';
+import { ArrowLeft, Globe, Radio, Send, Video, Layers, Activity, Square, AlertCircle } from 'lucide-react';
 
 import { Badge, Button, Card, EmptyState, Loader, Pagination, Select, Spinner } from '../../components';
 import api from '../../services/api.js';
 
-const resultPlatformFilters = ['', 'youtube', 'twitter', 'telegram', 'web'];
+const resultPlatformFilters = ['', 'youtube', 'twitter', 'telegram', 'web', 'twitch', 'kick'];
 const resultStatusFilters = ['', 'pending_match', 'matched', 'no_match'];
 
 function statusVariant(status) {
@@ -48,6 +49,14 @@ function platformIcon(platform) {
 		return <Send className='h-4 w-4 text-blue-600' />;
 	}
 
+	if (platform === 'twitch') {
+		return <Radio className='h-4 w-4 text-purple-600' />;
+	}
+
+	if (platform === 'kick') {
+		return <Video className='h-4 w-4 text-green-500' />;
+	}
+
 	return <Globe className='h-4 w-4 text-slate-600' />;
 }
 
@@ -58,6 +67,9 @@ export default function DashboardScanResultsPage() {
 	const [scanJob, setScanJob] = useState(null);
 	const [results, setResults] = useState([]);
 	const [terminalLogs, setTerminalLogs] = useState([]);
+	const [isStopping, setIsStopping] = useState(false);
+	const [webhookUrl, setWebhookUrl] = useState('');
+	const [isSavingWebhook, setIsSavingWebhook] = useState(false);
 	const [filters, setFilters] = useState({
 		platform: '',
 		status: '',
@@ -158,6 +170,36 @@ export default function DashboardScanResultsPage() {
 		}
 	}, [scanJob]);
 
+	useEffect(() => {
+		async function fetchOrg() {
+			try {
+				const response = await api.get('/organization/me');
+				setWebhookUrl(response.data.organization?.notificationPrefs?.webhookUrl || '');
+			} catch {
+				// Silent ignore
+			}
+		}
+		fetchOrg();
+	}, []);
+
+	const handleSaveWebhook = async () => {
+		setIsSavingWebhook(true);
+		try {
+			const response = await api.get('/organization/me');
+			const currentPrefs = response.data.organization?.notificationPrefs || {};
+			
+			await api.patch('/organization/notification-prefs', {
+				...currentPrefs,
+				webhookUrl: webhookUrl.trim(),
+			});
+			toast.success('Webhook settings updated.');
+		} catch {
+			toast.error('Failed to save webhook settings.');
+		} finally {
+			setIsSavingWebhook(false);
+		}
+	};
+
 	const handleFilterChange = (name, value) => {
 		setFilters((current) => ({
 			...current,
@@ -176,6 +218,20 @@ export default function DashboardScanResultsPage() {
 		}));
 	};
 
+	const handleStopMonitoring = async () => {
+		setIsStopping(true);
+		try {
+			await api.post(`/scans/${jobId}/stop`);
+			toast.success('Livestream monitoring stopped.');
+			await loadData();
+		} catch (requestError) {
+			const message = requestError.response?.data?.message || 'Failed to stop stream monitoring.';
+			toast.error(message);
+		} finally {
+			setIsStopping(false);
+		}
+	};
+
 	return (
 		<div className='space-y-6'>
 			<div className='flex flex-wrap items-center justify-between gap-3'>
@@ -184,6 +240,18 @@ export default function DashboardScanResultsPage() {
 					<p className='text-sm text-(--app-color-text-muted)'>Review discovered URLs and platform metadata for this scan job.</p>
 				</div>
 				<div className='flex items-center gap-2'>
+					{scanJob && scanJob.status === 'monitoring' && (
+						<Button 
+							variant='danger' 
+							onClick={handleStopMonitoring} 
+							loading={isStopping} 
+							disabled={isStopping}
+							className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white"
+						>
+							<Square size={16} fill="currentColor" />
+							Stop Monitoring
+						</Button>
+					)}
 					{scanJob && (
 						<Link to={`/dashboard/assets?assetId=${scanJob.assetId?._id || scanJob.assetId}`}>
 							<Button variant='secondary' className='flex items-center gap-2'>
@@ -270,60 +338,92 @@ export default function DashboardScanResultsPage() {
 					<Card className="border-(--app-color-border) p-4 flex flex-col justify-between" style={{ backgroundColor: 'var(--app-color-surface-panel)' }}>
 						<div>
 							<h3 className="text-base font-bold text-(--app-color-text) uppercase tracking-tight flex items-center gap-2 mb-2">
-								<Layers size={18} className="text-(--app-color-primary)" />
-								Stream Pipeline Architecture
+								<Activity size={18} className="text-(--app-color-primary)" />
+								Live Stream Preview Visualizer
 							</h3>
 							<p className="text-xs text-(--app-color-text-muted) mb-4">
-								SportShield ingests RTMP/HLS streams, extracts frames on an interval, and runs pHash verification in parallel.
+								Authorized broadcast stream vs. active detected pirated stream instances updated in near real-time.
 							</p>
 						</div>
 
-						<div className="flex flex-col gap-3 py-2 px-1 relative">
-							<div className="flex items-center gap-3 bg-(--app-color-surface) border border-(--app-color-border) p-2.5 rounded-xl transition-all duration-300 hover:border-(--app-color-primary)/50">
-								<div className="p-2 rounded-lg bg-red-500/10 text-red-500 font-black text-xs uppercase">
-									SRC
-								</div>
-								<div>
-									<h4 className="text-xs font-bold text-(--app-color-text)">Live Feed (HLS/RTMP)</h4>
-									<p className="text-[10px] text-(--app-color-text-muted) truncate max-w-[280px] font-mono">{scanJob.assetId?.livestreamUrl}</p>
-								</div>
-							</div>
-
-							<div className="w-4 h-4 border-l-2 border-dashed border-(--app-color-border) ml-6 -my-1"></div>
-
-							<div className="flex items-center gap-3 bg-(--app-color-surface) border border-(--app-color-border) p-2.5 rounded-xl transition-all duration-300 hover:border-(--app-color-primary)/50">
-								<div className="p-2 rounded-lg bg-orange-500/10 text-orange-500 font-black text-xs uppercase">
-									CAP
-								</div>
-								<div>
-									<h4 className="text-xs font-bold text-(--app-color-text)">FFmpeg Subprocess Frame Sampler</h4>
-									<p className="text-[10px] text-(--app-color-text-muted) font-mono">fps=0.1 (1 frame every 10 seconds)</p>
+						<div className="grid grid-cols-2 gap-4 my-2">
+							<div className="space-y-1.5">
+								<span className="text-[10px] font-black uppercase tracking-widest text-(--app-color-text-muted)">Authorized Feed</span>
+								<div className="relative aspect-video rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center overflow-hidden group">
+									<div className="absolute inset-0 bg-gradient-to-tr from-emerald-950/20 to-slate-900 flex flex-col justify-between p-2.5 z-10">
+										<div className="flex items-center justify-between">
+											<Badge variant="success" size="xs">OFFICIAL FEED</Badge>
+											<span className="text-[8px] font-mono text-emerald-400 uppercase tracking-widest animate-pulse">1080p 60fps</span>
+										</div>
+										<span className="text-xs font-bold text-slate-100 truncate">{scanJob.assetId?.title}</span>
+									</div>
+									<div className="p-3 bg-emerald-500/10 rounded-full text-emerald-400 group-hover:scale-110 transition-transform">
+										<Radio size={24} className="animate-pulse" />
+									</div>
 								</div>
 							</div>
-
-							<div className="w-4 h-4 border-l-2 border-dashed border-(--app-color-border) ml-6 -my-1"></div>
-
-							<div className="flex items-center gap-3 bg-(--app-color-surface) border border-(--app-color-border) p-2.5 rounded-xl transition-all duration-300 hover:border-(--app-color-primary)/50">
-								<div className="p-2 rounded-lg bg-yellow-500/10 text-yellow-500 font-black text-xs uppercase">
-									HASH
-								</div>
-								<div>
-									<h4 className="text-xs font-bold text-(--app-color-text)">Perceptual Hash Generator (pHash)</h4>
-									<p className="text-[10px] text-(--app-color-text-muted)">Converts image to stable 64-bit fingerprint</p>
-								</div>
+							
+							<div className="space-y-1.5">
+								<span className="text-[10px] font-black uppercase tracking-widest text-red-500">Detected Violation</span>
+								{results.some(r => r.status === 'matched') ? (
+									<div className="relative aspect-video rounded-xl bg-slate-900 border border-red-500/30 flex items-center justify-center overflow-hidden group">
+										<div className="absolute inset-0 bg-gradient-to-tr from-red-950/20 to-slate-900 flex flex-col justify-between p-2.5 z-10">
+											<div className="flex items-center justify-between">
+												<Badge variant="danger" size="xs">PIRACY MATCH</Badge>
+												<span className="text-[8px] font-mono text-red-400 uppercase tracking-widest">CONFIDENCE: {results.find(r => r.status === 'matched')?.matchConfidence}%</span>
+											</div>
+											<span className="text-xs font-bold text-slate-100 truncate">{results.find(r => r.status === 'matched')?.pageTitle || 'Unauthorized Broadcast'}</span>
+										</div>
+										{results.find(r => r.status === 'matched')?.thumbnailUrl ? (
+											<img 
+												src={results.find(r => r.status === 'matched')?.thumbnailUrl} 
+												alt="Live Infringement Proof" 
+												className="absolute inset-0 w-full h-full object-cover filter brightness-50"
+											/>
+										) : (
+											<div className="p-3 bg-red-500/10 rounded-full text-red-500 group-hover:scale-110 transition-transform">
+												<AlertCircle size={24} className="animate-bounce" />
+											</div>
+										)}
+									</div>
+								) : (
+									<div className="relative aspect-video rounded-xl bg-slate-950 border border-slate-900 flex flex-col items-center justify-center text-center p-3">
+										<Search size={20} className="text-slate-700 mb-1 animate-pulse" />
+										<span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">No active violations</span>
+										<span className="text-[7px] text-slate-600 mt-0.5">Scanning Twitch, Kick and YouTube...</span>
+									</div>
+								)}
 							</div>
+						</div>
 
-							<div className="w-4 h-4 border-l-2 border-dashed border-(--app-color-border) ml-6 -my-1"></div>
-
-							<div className="flex items-center gap-3 bg-(--app-color-surface) border border-(--app-color-border) p-2.5 rounded-xl transition-all duration-300 hover:border-(--app-color-primary)/50">
-								<div className="p-2 rounded-lg bg-green-500/10 text-green-500 font-black text-xs uppercase">
-									MTCH
-								</div>
-								<div>
-									<h4 className="text-xs font-bold text-(--app-color-text)">Hamming Distance Match Engine</h4>
-									<p className="text-[10px] text-(--app-color-text-muted)">Compares distance (Threshold &le; 10) against catalog</p>
-								</div>
+						<div className="border-t border-(--app-color-border)/50 pt-3 mt-3">
+							<h4 className="text-[10px] font-black uppercase tracking-widest text-(--app-color-text-muted) mb-1.5 flex items-center gap-1.5">
+								<Send size={12} className="text-(--app-color-primary)" />
+								Webhook Alert Integration
+							</h4>
+							<div className="flex gap-2">
+								<input
+									type="url"
+									placeholder="https://discord.com/api/webhooks/..."
+									value={webhookUrl}
+									onChange={(e) => setWebhookUrl(e.target.value)}
+									className="flex-1 rounded-lg border border-(--app-color-border) bg-(--app-color-surface) px-2.5 py-1 text-xs text-(--app-color-text) focus:border-(--app-color-primary) focus:outline-none"
+								/>
+								<Button 
+									type="button" 
+									variant="secondary" 
+									size="sm" 
+									onClick={handleSaveWebhook}
+									loading={isSavingWebhook}
+									disabled={isSavingWebhook}
+									className="text-xs py-1 px-3"
+								>
+									Save
+								</Button>
 							</div>
+							<p className="text-[8px] text-(--app-color-text-muted) mt-1">
+								Pipes Slack/Discord alerts when new piracy streams match.
+							</p>
 						</div>
 					</Card>
 

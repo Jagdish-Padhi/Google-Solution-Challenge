@@ -46,6 +46,10 @@ const organizationSchema = new mongoose.Schema(
 				type: Boolean,
 				default: true,
 			},
+			webhookUrl: {
+				type: String,
+				default: '',
+			},
 		},
 	},
 	{
