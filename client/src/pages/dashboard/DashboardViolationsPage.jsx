@@ -654,7 +654,7 @@ export default function DashboardViolationsPage() {
 										<button
 											onClick={handleDownloadEvidencePackage}
 											disabled={isDownloadingPackage}
-											className='flex h-12 items-center justify-center gap-3 rounded-xl border border-(--app-color-border) bg-(--app-color-surface) px-8 text-xs font-black uppercase tracking-widest text-(--app-color-text) transition-all hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 disabled:opacity-70 whitespace-nowrap'
+											className='flex h-12 items-center justify-center gap-3 rounded-xl border border-(--app-color-border) bg-(--app-color-surface) px-8 text-xs font-black uppercase tracking-widest text-(--app-color-text) transition-all hover:bg-slate-50 dark:hover:bg-slate-800 dark:hover:text-white active:scale-95 disabled:opacity-70 whitespace-nowrap'
 										>
 											{isDownloadingPackage ? <Spinner size='xs' /> : <FolderOpen size={16} />}
 											<span>Download Evidence Package (ZIP)</span>
