@@ -577,48 +577,45 @@ export default function DashboardViolationsPage() {
 								)}
 							</div>
 
-							<div className='pt-6 border-t border-(--app-color-border)/50 space-y-6'>
+							<div className='pt-6 border-t border-(--app-color-border)/50 space-y-4'>
 								<div>
-									<p className='mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-(--app-color-text-muted)'>Primary Enforcement</p>
-									<div className='flex flex-col gap-2'>
-										<button
-											onClick={handleDraftDmca}
-											disabled={isDraftingDmca}
-											className='group relative flex h-12 items-center justify-center gap-3 overflow-hidden rounded-xl bg-gradient-to-r from-teal-600 to-slate-900 px-8 text-xs font-black uppercase tracking-widest text-white hover:text-white shadow-lg shadow-teal-900/20 transition-all hover:scale-[1.02] hover:shadow-teal-900/30 active:scale-95 disabled:opacity-70 whitespace-nowrap'
-										>
-											<div className='absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700' />
-											{isDraftingDmca ? <Spinner size='xs' /> : <Sparkles size={16} className='animate-pulse' />}
-											<span>Draft DMCA Notice</span>
-										</button>
-
-										<button
-											onClick={handleDownloadEvidencePackage}
-											disabled={isDownloadingPackage}
-											className='flex h-12 items-center justify-center gap-3 rounded-xl border border-(--app-color-border) bg-(--app-color-surface) px-8 text-xs font-black uppercase tracking-widest text-(--app-color-text) transition-all hover:bg-slate-50 dark:hover:bg-slate-800 dark:hover:text-white active:scale-95 disabled:opacity-70 whitespace-nowrap'
-										>
-											{isDownloadingPackage ? <Spinner size='xs' /> : <FolderOpen size={16} />}
-											<span>Download Evidence Package (ZIP)</span>
-										</button>
-									</div>
-								</div>
-
-								<div>
-									<p className='mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-(--app-color-text-muted)'>Case Management</p>
-									<div className='inline-flex flex-wrap items-center gap-1 p-1 rounded-xl bg-slate-100 border border-slate-200'>
-										{['open', 'reported', 'resolved'].map((status) => (
+									<p className='mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-(--app-color-text-muted)'>Case Management</p>
+									<div className='flex items-center p-1 rounded-xl bg-slate-100 border border-slate-200'>
+										{['open', 'reported', 'resolved', 'false_positive'].map((status) => (
 											<button
 												key={status}
 												onClick={() => updateStatus(selectedViolation._id, status)}
-												className={`px-4 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
+												className={`flex-1 py-2 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
 													selectedViolation.status === status 
 													? 'bg-[var(--app-color-primary)] text-white hover:text-white shadow-md' 
-													: 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
+													: 'text-slate-500 hover:text-slate-700 hover:bg-white/60'
 												}`}
 											>
-												{statusLabel(status)}
+												{status === 'false_positive' ? 'False+' : statusLabel(status)}
 											</button>
 										))}
 									</div>
+								</div>
+
+								<div className='grid grid-cols-2 gap-2'>
+									<button
+										onClick={handleDraftDmca}
+										disabled={isDraftingDmca}
+										className='group relative flex h-10 items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-teal-600 to-slate-900 px-4 text-[10px] font-black uppercase tracking-widest text-white hover:text-white shadow-md shadow-teal-900/20 transition-all hover:scale-[1.02] hover:shadow-teal-900/30 active:scale-95 disabled:opacity-70 whitespace-nowrap'
+									>
+										<div className='absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700' />
+										{isDraftingDmca ? <Spinner size='xs' /> : <Sparkles size={14} className='animate-pulse' />}
+										<span>Draft DMCA</span>
+									</button>
+
+									<button
+										onClick={handleDownloadEvidencePackage}
+										disabled={isDownloadingPackage}
+										className='flex h-10 items-center justify-center gap-2 rounded-xl border border-(--app-color-border) bg-(--app-color-surface) px-4 text-[10px] font-black uppercase tracking-widest text-(--app-color-text) transition-all hover:bg-slate-50 dark:hover:bg-slate-800 dark:hover:text-white active:scale-95 disabled:opacity-70 whitespace-nowrap'
+									>
+										{isDownloadingPackage ? <Spinner size='xs' /> : <FolderOpen size={14} />}
+										<span>Evidence ZIP</span>
+									</button>
 								</div>
 							</div>
 						</div>
