@@ -54,6 +54,27 @@ def _frame_match_count(scraped_frames: list[str], reference_frames: list[str], t
 	return matched
 
 
+def _best_single_frame_bonus(scraped_hash: str, reference_frames: list[str], threshold: int = 10) -> float:
+	"""
+	For thumbnail-only candidates (no scraped frame list), find the best matching
+	reference frame by Hamming distance and return a 0.0–1.0 bonus signal.
+
+	Distance 0  → 1.0 (perfect frame hit)
+	Distance ≤ threshold → linear interpolation down to 0.3
+	Distance > threshold → 0.0 (no useful signal)
+
+	This recovers the wasted 0.15 frame weight when scraped_frames is empty.
+	"""
+	if not scraped_hash or not reference_frames:
+		return 0.0
+
+	best = min(hamming_distance(scraped_hash, ref) for ref in reference_frames)
+	if best > threshold:
+		return 0.0
+	# Map [0, threshold] → [1.0, 0.3] linearly
+	return 1.0 - (0.7 * best / threshold)
+
+
 def _match_type_from_signals(hamming_bits: int, frame_matches: int, vision_boosted: bool = False, orb_verified: bool = False) -> str:
 	if orb_verified or vision_boosted or hamming_bits <= 6:
 		return "exact"
@@ -62,12 +83,24 @@ def _match_type_from_signals(hamming_bits: int, frame_matches: int, vision_boost
 	return "partial"
 
 
-def _confidence_score(hamming_bits: int, color_similarity: float, frame_matches: int, scraped_frames: list[str]) -> int:
+def _confidence_score(
+	hamming_bits: int,
+	color_similarity: float,
+	frame_matches: int,
+	scraped_frames: list[str],
+	thumbnail_frame_bonus: float = 0.0,
+) -> int:
 	# Convert hamming distance to a bounded 0-100 score where lower distance is better.
 	hash_score = max(0.0, 100.0 - (hamming_bits * 7.0))
 	color_score = max(0.0, min(100.0, color_similarity * 100.0))
-	frame_ratio = (frame_matches / max(1, len(scraped_frames))) if scraped_frames else 0.0
-	frame_score = max(0.0, min(100.0, frame_ratio * 100.0))
+
+	if scraped_frames:
+		# Multi-frame path: ratio of matched frames to total scraped frames
+		frame_ratio = frame_matches / max(1, len(scraped_frames))
+		frame_score = max(0.0, min(100.0, frame_ratio * 100.0))
+	else:
+		# Thumbnail-only path: use the single-frame bonus signal (0.0–1.0 → 0–100)
+		frame_score = max(0.0, min(100.0, thumbnail_frame_bonus * 100.0))
 
 	weighted = (hash_score * 0.55) + (color_score * 0.30) + (frame_score * 0.15)
 	return int(round(max(0.0, min(100.0, weighted))))
@@ -216,7 +249,19 @@ def match_fingerprint_bundle(
 	else:
 		frame_matches = _frame_match_count(scraped_frames, reference_frames)
 
-	confidence = _confidence_score(hamming_bits, color_similarity, frame_matches, scraped_frames)
+	# --- Thumbnail-only bonus: when no scraped frames exist but reference has frames ---
+	# Run the single scraped pHash against all reference frames to recover the 0.15 frame weight.
+	thumbnail_frame_bonus = 0.0
+	if not scraped_frames and reference_frames:
+		lookup_hash = (
+			scraped_fingerprint.get("pHashFlipped") if is_mirrored and scraped_fingerprint.get("pHashFlipped")
+			else scraped_hash
+		)
+		thumbnail_frame_bonus = _best_single_frame_bonus(lookup_hash, reference_frames)
+		if thumbnail_frame_bonus > 0:
+			print(f"[matching_service] Thumbnail→frame bonus applied: {thumbnail_frame_bonus:.2f} (best frame distance lookup)")
+
+	confidence = _confidence_score(hamming_bits, color_similarity, frame_matches, scraped_frames, thumbnail_frame_bonus)
 	
 	# --- Advanced Tie-Breakers (ORB RANSAC and Vision AI) ---
 	orb_verified = False

@@ -3,7 +3,7 @@ from pathlib import Path
 from PIL import Image
 
 from fingerprint.fingerprint_service import compute_image_fingerprint
-from matching.matching_service import match_fingerprint_bundle
+from matching.matching_service import match_fingerprint_bundle, _best_single_frame_bonus
 
 
 def _build_test_image(path: Path, accent: tuple[int, int, int]) -> None:
@@ -108,3 +108,74 @@ def test_matching_verifies_with_orb_tie_breaker(tmp_path):
     assert result_with_orb["evidenceBundle"]["orbVerified"] is True
     assert result_with_orb["matchConfidence"] >= 95
 
+
+def test_thumbnail_frame_bonus_activates_when_scraped_frames_empty(tmp_path):
+    """
+    When scraped_frames is empty (thumbnail-only candidate) but reference has
+    frameHashes, the thumbnail-frame bonus should produce a non-zero frame_score,
+    giving a higher confidence than without any frame signal.
+    """
+    img_path = tmp_path / "same.jpg"
+    _build_test_image(img_path, (220, 200, 35))
+
+    full_fp = compute_image_fingerprint(str(img_path))
+
+    # Simulate thumbnail fingerprint: same pHash, no frameHashes
+    thumbnail_fp = {
+        "pHash": full_fp["pHash"],
+        "pHashFlipped": full_fp.get("pHashFlipped"),
+        "colorHistogram": full_fp.get("colorHistogram", []),
+        "frameHashes": [],       # ← thumbnail: no frames
+        "frameHashesFlipped": [],
+    }
+
+    # Reference has the full set of frameHashes (video asset with many frames)
+    result = match_fingerprint_bundle(thumbnail_fp, full_fp)
+
+    # The thumbnail hash IS one of the reference frames → bonus should kick in
+    assert result["matchConfidence"] >= 70, (
+        f"Expected bonus to lift confidence, got {result['matchConfidence']}"
+    )
+    # The frame match count stays 0 (no scraped frames) — frame signal came via bonus
+    assert result["evidenceBundle"]["frameMatchCount"] == 0
+
+
+def test_thumbnail_frame_bonus_zero_when_reference_has_no_frames(tmp_path):
+    """
+    When both scraped_frames and reference_frames are empty, the bonus must be
+    0.0 — the frame weight contributes nothing, as before.
+    """
+    img_path = tmp_path / "img.jpg"
+    _build_test_image(img_path, (100, 200, 50))
+
+    fp = compute_image_fingerprint(str(img_path))
+
+    thumbnail_fp = {
+        "pHash": fp["pHash"],
+        "colorHistogram": fp.get("colorHistogram", []),
+        "frameHashes": [],
+    }
+    reference_fp_no_frames = {
+        "pHash": fp["pHash"],
+        "colorHistogram": fp.get("colorHistogram", []),
+        "frameHashes": [],   # ← reference also has no frames
+    }
+
+    result = match_fingerprint_bundle(thumbnail_fp, reference_fp_no_frames)
+    assert result["evidenceBundle"]["frameMatchCount"] == 0
+    # Confidence should still be high due to pHash + color, but no frame bonus inflation
+    assert result["matchConfidence"] >= 70
+
+
+def test_best_single_frame_bonus_linearity():
+    """Unit test for the bonus interpolation function itself."""
+    # Perfect hit (distance=0) → 1.0
+    same_hash = "f0f0f0f0f0f0f0f0"   # valid 16-char hex = 64-bit pHash
+    assert _best_single_frame_bonus(same_hash, [same_hash]) == 1.0
+
+    # All-zeros vs all-ones → all 64 bits differ → distance ≫ threshold → 0.0
+    assert _best_single_frame_bonus("f" * 16, ["0" * 16]) == 0.0
+
+    # Empty inputs → 0.0
+    assert _best_single_frame_bonus("", [same_hash]) == 0.0
+    assert _best_single_frame_bonus(same_hash, []) == 0.0
