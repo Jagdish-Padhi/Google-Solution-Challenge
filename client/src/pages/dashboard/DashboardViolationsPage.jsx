@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 import { 
@@ -135,6 +135,9 @@ export default function DashboardViolationsPage() {
 		limit: 10,
 		totalPages: 1,
 	});
+	const [searchParams] = useSearchParams();
+	const dateParam = searchParams.get('date');
+
 	const [isDraftingDmca, setIsDraftingDmca] = useState(false);
 	const [dmcaDraftText, setDmcaDraftText] = useState('');
 	const [dmcaContactEmail, setDmcaContactEmail] = useState('');
@@ -165,6 +168,7 @@ export default function DashboardViolationsPage() {
 					status: filters.status || undefined,
 					platform: filters.platform || undefined,
 					minConfidence: filters.minConfidence || undefined,
+					date: dateParam || undefined,
 				},
 			});
 
@@ -179,7 +183,7 @@ export default function DashboardViolationsPage() {
 		} finally {
 			setIsLoading(false);
 		}
-	}, [filters.minConfidence, filters.platform, filters.status, pagination.limit, pagination.page]);
+	}, [pagination.page, pagination.limit, filters.status, filters.platform, filters.minConfidence, dateParam]);
 
 	useEffect(() => {
 		loadViolations();
