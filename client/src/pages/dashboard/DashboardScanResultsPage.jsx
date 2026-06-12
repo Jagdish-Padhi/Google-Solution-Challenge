@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Globe, Radio, Send, Video, Layers, Activity, Square, AlertCircle } from 'lucide-react';
@@ -71,6 +71,8 @@ export default function DashboardScanResultsPage() {
 	const [webhookUrl, setWebhookUrl] = useState('');
 	const [isSavingWebhook, setIsSavingWebhook] = useState(false);
 	const [liveTelemetry, setLiveTelemetry] = useState(null);
+	const [elapsedSeconds, setElapsedSeconds] = useState(0);
+	const elapsedTickRef = useRef(null);
 	const [filters, setFilters] = useState({
 		platform: '',
 		status: '',
@@ -108,6 +110,22 @@ export default function DashboardScanResultsPage() {
 			setIsLoading(false);
 		}
 	}, [filters.platform, filters.status, jobId, pagination.limit, pagination.page]);
+
+	// Smooth elapsed ticker — ticks every second while job is active
+	useEffect(() => {
+		if (scanJob?.startedAt && ['running', 'monitoring'].includes(scanJob.status)) {
+			const startMs = new Date(scanJob.startedAt).getTime();
+			// Seed immediately from actual start time
+			setElapsedSeconds(Math.floor((Date.now() - startMs) / 1000));
+			// Then tick every second
+			elapsedTickRef.current = setInterval(() => {
+				setElapsedSeconds(Math.floor((Date.now() - startMs) / 1000));
+			}, 1000);
+		} else {
+			clearInterval(elapsedTickRef.current);
+		}
+		return () => clearInterval(elapsedTickRef.current);
+	}, [scanJob?.startedAt, scanJob?.status]);
 
 	useEffect(() => {
 		loadData();
@@ -320,7 +338,17 @@ export default function DashboardScanResultsPage() {
 										Multi-language scan active
 									</Badge>
 								)}
-								<Badge variant={statusVariant(scanJob.status)} size="sm" className="font-black uppercase tracking-widest">{scanJob.status}</Badge>
+								{scanJob.status === 'monitoring' ? (
+									<span className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-red-500/10 text-red-600 border border-red-500/25 shadow-[0_0_12px_rgba(239,68,68,0.25)]">
+										<span className="relative flex h-2.5 w-2.5">
+											<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+											<span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
+										</span>
+										Monitoring
+									</span>
+								) : (
+									<Badge variant={statusVariant(scanJob.status)} size="sm" className="font-black uppercase tracking-widest">{scanJob.status}</Badge>
+								)}
 							</div>
 						</div>
 
@@ -361,8 +389,17 @@ export default function DashboardScanResultsPage() {
 							</div>
 							<div>
 								<p className='text-[10px] font-black uppercase tracking-widest text-(--app-color-text-muted) mb-1'>Elapsed</p>
-								<p className='text-xs font-bold text-(--app-color-text)'>
-									{scanJob.startedAt ? new Date(new Date(scanJob.completedAt || Date.now()) - new Date(scanJob.startedAt)).toISOString().substr(14, 5) : '--:--'}
+								<p className='text-xs font-bold text-(--app-color-text) tabular-nums'>
+									{scanJob.startedAt
+										? (() => {
+											const secs = ['running','monitoring'].includes(scanJob.status)
+												? elapsedSeconds
+												: Math.floor((new Date(scanJob.completedAt || Date.now()) - new Date(scanJob.startedAt)) / 1000);
+											const m = String(Math.floor(secs / 60)).padStart(2, '0');
+											const s = String(secs % 60).padStart(2, '0');
+											return `${m}:${s}`;
+										})()
+										: '--:--'}
 								</p>
 							</div>
 						</div>
