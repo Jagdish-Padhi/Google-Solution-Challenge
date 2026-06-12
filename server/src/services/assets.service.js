@@ -62,20 +62,28 @@ export function inferAssetType(mimeType = '') {
 	return 'highlight';
 }
 
-export async function createAsset({ orgId, title, description, file, publicUrl }) {
-	const asset = await Asset.create({
+export async function createAsset({ orgId, title, description, file, publicUrl, type, livestreamUrl }) {
+	const assetData = {
 		orgId,
 		title,
 		description: description || '',
-		type: inferAssetType(file.mimetype),
-		storageKey: file.filename,
-		gcsUrl: publicUrl,
-		thumbnailUrl: null,
-		fileSize: file.size,
-		status: 'processing',
+		type: type || (file ? inferAssetType(file.mimetype) : 'video'),
+		status: type === 'livestream' ? 'active' : 'processing',
 		uploadedAt: new Date(),
-	});
+	};
 
+	if (type === 'livestream') {
+		assetData.livestreamUrl = livestreamUrl;
+		assetData.storageKey = 'livestream';
+		assetData.gcsUrl = livestreamUrl;
+		assetData.fileSize = 0;
+	} else if (file) {
+		assetData.storageKey = file.filename;
+		assetData.gcsUrl = publicUrl;
+		assetData.fileSize = file.size;
+	}
+
+	const asset = await Asset.create(assetData);
 	return asset;
 }
 
