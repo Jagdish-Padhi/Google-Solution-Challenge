@@ -10,10 +10,11 @@ import {
 	Webhook,
 	Zap,
 	X,
+	AlertTriangle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-import { Button, Card, Loader, Spinner } from '../../components';
+import { Button, Card, Loader, Spinner, Modal } from '../../components';
 import api from '../../services/api.js';
 import useAuthStore from '../../store/auth.store.js';
 
@@ -36,7 +37,7 @@ export default function DashboardSettingsPage() {
 	const [inviteRole, setInviteRole] = useState('analyst');
 	const [isInviting, setIsInviting] = useState(false);
 	const [isRemoving, setIsRemoving] = useState(null);
-
+	const [memberToRemove, setMemberToRemove] = useState(null);
 	const loadOrg = useCallback(async () => {
 		try {
 			const response = await api.get('/organization/me');
@@ -127,16 +128,28 @@ export default function DashboardSettingsPage() {
 		}
 	};
 
-	const handleRemoveMember = async (email) => {
-		setIsRemoving(email);
+	const confirmRemoveMember = async () => {
+		if (!memberToRemove) return;
+		setIsRemoving(memberToRemove);
 		try {
-			const response = await api.delete(`/organization/member/${email}`);
+			const response = await api.delete(`/organization/member/${memberToRemove}`);
 			toast.success('Member removed.');
 			setOrg(prev => ({ ...prev, members: response.data.members }));
+			setMemberToRemove(null);
 		} catch (error) {
 			toast.error(error.response?.data?.message || 'Failed to remove member.');
 		} finally {
 			setIsRemoving(null);
+		}
+	};
+
+	const handleUpdateRole = async (email, newRole) => {
+		try {
+			const response = await api.patch(`/organization/member/${email}/role`, { role: newRole });
+			toast.success('Member role updated.');
+			setOrg(prev => ({ ...prev, members: response.data.members }));
+		} catch (error) {
+			toast.error(error.response?.data?.message || 'Failed to update member role.');
 		}
 	};
 
@@ -177,23 +190,6 @@ export default function DashboardSettingsPage() {
 					<p className='text-sm text-(--app-color-text-muted) mt-0.5'>
 						Manage your organization profile, notification preferences, and proactive monitoring settings.
 					</p>
-				</div>
-				<div className='flex items-center gap-3'>
-					<span className='text-xs font-semibold text-(--app-color-text-muted)'>Demo Role:</span>
-					<div className='flex rounded-lg border border-(--app-color-border) bg-(--app-color-surface) p-1'>
-						<button
-							onClick={() => setDemoRole('admin')}
-							className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-md transition-colors ${user?.role === 'admin' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-100'}`}
-						>
-							Admin
-						</button>
-						<button
-							onClick={() => setDemoRole('legal')}
-							className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-md transition-colors ${user?.role === 'legal' ? 'bg-emerald-500 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-100'}`}
-						>
-							Legal
-						</button>
-					</div>
 				</div>
 			</div>
 
@@ -251,61 +247,90 @@ export default function DashboardSettingsPage() {
 					Invite team members and assign roles to restrict access to sensitive operations. Legal roles can only view high-confidence violations.
 				</p>
 				
-				<div className='flex flex-wrap gap-2 mb-6'>
-					<input
-						type='email'
-						value={inviteEmail}
-						onChange={(e) => setInviteEmail(e.target.value)}
-						placeholder='colleague@sportshield.com'
-						className='flex-1 rounded-lg border border-(--app-color-border) bg-(--app-color-surface) px-3 py-2 text-sm text-(--app-color-text) placeholder:text-(--app-color-text-muted) focus:border-(--app-color-primary) focus:outline-none transition-colors'
-					/>
+				<div className='flex items-center gap-3 mb-6 p-1.5 bg-[var(--app-color-surface)] border border-[var(--app-color-border)] rounded-xl focus-within:border-[var(--app-color-primary)] focus-within:ring-1 focus-within:ring-[var(--app-color-primary)] transition-all'>
+					<div className='flex-1 flex items-center relative pl-3'>
+						<Mail size={16} className='absolute left-3 text-slate-400' />
+						<input
+							type='email'
+							value={inviteEmail}
+							onChange={(e) => setInviteEmail(e.target.value)}
+							placeholder='Invite colleague (e.g., legal@sportshield.com)'
+							className='w-full bg-transparent border-none outline-none focus:outline-none text-sm text-[var(--app-color-text)] placeholder:text-slate-400 focus:ring-0 pl-7 py-2 h-10'
+						/>
+					</div>
+					<div className='w-px h-6 bg-slate-200' />
 					<select
 						value={inviteRole}
 						onChange={(e) => setInviteRole(e.target.value)}
-						className='rounded-lg border border-(--app-color-border) bg-(--app-color-surface) px-3 py-2 text-sm text-(--app-color-text) focus:border-(--app-color-primary) focus:outline-none transition-colors'
+						className='bg-transparent border-none outline-none focus:outline-none text-sm text-[var(--app-color-text)] focus:ring-0 font-medium w-40 cursor-pointer h-10 py-2'
 					>
-						<option value='admin'>Admin (Full Access)</option>
-						<option value='analyst'>Analyst (View & Scan)</option>
-						<option value='legal'>Legal (Only {'>'}85% Violations)</option>
+						<option value='admin'>Admin</option>
+						<option value='analyst'>Analyst</option>
+						<option value='legal'>Legal</option>
 					</select>
-					<Button onClick={handleInvite} disabled={isInviting || !inviteEmail} className='flex items-center gap-2 h-9 text-xs shrink-0'>
-						{isInviting ? <Spinner size='xs' /> : <Send size={13} />}
-						Send Invite
+					<Button onClick={handleInvite} disabled={isInviting || !inviteEmail} className='h-10 px-5 rounded-lg font-bold uppercase tracking-widest text-[10px] shrink-0'>
+						{isInviting ? <Spinner size='xs' /> : 'Send Invite'}
 					</Button>
 				</div>
 
 				{org?.members?.length > 0 && (
-					<div className='divide-y divide-(--app-color-border)/50 border-t border-(--app-color-border)/50 pt-2'>
-						{org.members.map((member, idx) => (
-							<div key={idx} className='flex items-center justify-between py-3 group'>
-								<div className='flex items-center gap-3'>
-									<div className='h-8 w-8 rounded-full bg-(--app-color-primary-soft) flex items-center justify-center text-(--app-color-primary) font-bold text-xs uppercase'>
-										{member.email.charAt(0)}
+					<div className='border border-[var(--app-color-border)] rounded-xl overflow-hidden bg-white'>
+						<div className='grid grid-cols-12 gap-4 items-center bg-slate-50/80 px-5 py-3 border-b border-[var(--app-color-border)]'>
+							<div className='col-span-6 text-[10px] font-black uppercase tracking-widest text-slate-500'>Member</div>
+							<div className='col-span-3 text-[10px] font-black uppercase tracking-widest text-slate-500'>Role</div>
+							<div className='col-span-2 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right'>Status</div>
+							<div className='col-span-1 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right'></div>
+						</div>
+						<div className='divide-y divide-[var(--app-color-border)]'>
+							{org.members.map((member, idx) => (
+								<div key={idx} className='grid grid-cols-12 gap-4 items-center px-5 py-3.5 group hover:bg-slate-50/50 transition-colors'>
+									<div className='col-span-6 flex items-center gap-3 min-w-0'>
+										<div className='h-9 w-9 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 border border-slate-200 flex items-center justify-center text-slate-600 font-black text-sm uppercase shadow-sm shrink-0'>
+											{member.email.charAt(0)}
+										</div>
+										<p className='text-sm font-semibold text-slate-900 truncate'>{member.email}</p>
 									</div>
-									<div>
-										<p className='text-sm font-semibold text-(--app-color-text)'>{member.email}</p>
-										<p className='text-xs text-(--app-color-text-muted) capitalize'>{member.role}</p>
+									<div className='col-span-3'>
+										{user?.role === 'admin' && user?.email !== member.email ? (
+											<select
+												value={member.role}
+												onChange={(e) => handleUpdateRole(member.email, e.target.value)}
+												className='block w-fit text-[10px] font-black uppercase tracking-widest text-slate-700 bg-slate-100 border-none rounded-md px-2.5 py-1 outline-none focus:outline-none focus:ring-2 focus:ring-[var(--app-color-primary)]/50 cursor-pointer shadow-sm hover:bg-slate-200 transition-colors'
+											>
+												<option value='admin'>Admin</option>
+												<option value='analyst'>Analyst</option>
+												<option value='legal'>Legal</option>
+											</select>
+										) : (
+											<span className='inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 text-[10px] font-black uppercase tracking-widest'>
+												{member.role}
+											</span>
+										)}
+									</div>
+									<div className='col-span-2 flex justify-end'>
+										<span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest ${
+											member.inviteStatus === 'active' 
+											? 'bg-emerald-50 text-emerald-600 border border-emerald-200/50 shadow-sm' 
+											: 'bg-amber-50 text-amber-600 border border-amber-200/50 shadow-sm'
+										}`}>
+											{member.inviteStatus}
+										</span>
+									</div>
+									<div className='col-span-1 flex justify-end'>
+										{user?.role === 'admin' && user?.email !== member.email && (
+											<button 
+												onClick={() => setMemberToRemove(member.email)}
+												disabled={isRemoving === member.email}
+												className='opacity-0 group-hover:opacity-100 p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all border border-transparent hover:border-red-100'
+												title="Remove Member"
+											>
+												{isRemoving === member.email ? <Spinner size="xs" /> : <X size={15} />}
+											</button>
+										)}
 									</div>
 								</div>
-								<div className='flex items-center gap-3'>
-									<span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
-										member.inviteStatus === 'active' 
-										? 'bg-emerald-50 text-emerald-600 border border-emerald-200/70' 
-										: 'bg-amber-50 text-amber-600 border border-amber-200/70'
-									}`}>
-										{member.inviteStatus}
-									</span>
-									<button 
-										onClick={() => handleRemoveMember(member.email)}
-										disabled={isRemoving === member.email}
-										className='opacity-0 group-hover:opacity-100 p-1.5 rounded-md text-red-400 hover:text-red-600 hover:bg-red-50 transition-all'
-										title="Remove Member"
-									>
-										{isRemoving === member.email ? <Spinner size="xs" /> : <X size={14} />}
-									</button>
-								</div>
-							</div>
-						))}
+							))}
+						</div>
 					</div>
 				)}
 			</Card>
@@ -447,6 +472,26 @@ export default function DashboardSettingsPage() {
 					</Button>
 				</div>
 			</Card>
+			<Modal
+				isOpen={!!memberToRemove}
+				onClose={() => setMemberToRemove(null)}
+				title="Remove Team Member"
+				size="sm"
+			>
+				<div className="flex flex-col">
+					<p className="text-sm text-slate-600 leading-relaxed mb-8">
+						Are you sure you want to remove <strong className="text-slate-900 font-bold">{memberToRemove}</strong> from your organization? They will immediately lose access to all cases, assets, and scans. This action cannot be undone.
+					</p>
+					<div className="flex justify-end gap-3 w-full">
+						<Button variant="secondary" onClick={() => setMemberToRemove(null)} disabled={!!isRemoving} className="px-6 font-semibold">
+							Cancel
+						</Button>
+						<Button variant="danger" onClick={confirmRemoveMember} disabled={!!isRemoving} className="px-6 font-semibold shadow-sm">
+							{isRemoving ? <Spinner size="sm" /> : 'Yes, Remove'}
+						</Button>
+					</div>
+				</div>
+			</Modal>
 		</div>
 	);
 }
