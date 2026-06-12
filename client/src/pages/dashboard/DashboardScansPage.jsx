@@ -22,11 +22,12 @@ import { Badge, Button, Card, EmptyState, Loader, Modal, Pagination, Select, Spi
 import api from '../../services/api.js';
 
 const defaultPlatforms = ['youtube', 'web'];
-const supportedPlatforms = ['youtube', 'twitter', 'telegram', 'web'];
+const supportedPlatforms = ['youtube', 'twitter', 'telegram', 'web', 'twitch', 'kick'];
 const scanStatusFilters = ['', 'queued', 'running', 'completed', 'failed'];
-const scanPlatformFilters = ['', 'youtube', 'twitter', 'telegram', 'web'];
+const scanPlatformFilters = ['', 'youtube', 'twitter', 'telegram', 'web', 'twitch', 'kick'];
 
 function statusDisplay(job) {
+	if (job.status === 'monitoring') return { label: 'Monitoring Stream', icon: Activity, variant: 'warning' };
 	if (job.status === 'running') return { label: 'Scanning', icon: Activity, variant: 'warning' };
 	if (job.status === 'completed' && Number(job.violationsCount || 0) > 0) return { label: 'Violations Found', icon: AlertCircle, variant: 'danger' };
 	if (job.status === 'completed') return { label: 'Complete', icon: CheckCircle2, variant: 'success' };
@@ -184,10 +185,15 @@ export default function DashboardScansPage() {
 	const handleSubmit = async (event) => {
 		event.preventDefault();
 
-		const keywords = formState.keywords
-			.split(',')
-			.map((item) => item.trim())
-			.filter(Boolean);
+		const selectedAsset = assets.find((a) => a._id === formState.assetId);
+		const isLivestream = selectedAsset?.type === 'livestream';
+
+		const keywords = isLivestream
+			? ['monitoring']
+			: formState.keywords
+				.split(',')
+				.map((item) => item.trim())
+				.filter(Boolean);
 
 		if (!formState.assetId) {
 			toast.error('Please select an asset first.');
@@ -199,7 +205,8 @@ export default function DashboardScansPage() {
 			return;
 		}
 
-		if (formState.platforms.length === 0) {
+		const platforms = isLivestream ? ['livestream'] : formState.platforms;
+		if (platforms.length === 0) {
 			toast.error('Please select at least one platform.');
 			return;
 		}
@@ -210,8 +217,8 @@ export default function DashboardScansPage() {
 			await api.post('/scans/start', {
 				assetId: formState.assetId,
 				searchKeywords: keywords,
-				platforms: formState.platforms,
-				multiLanguage: formState.multiLanguage,
+				platforms: platforms,
+				multiLanguage: isLivestream ? false : formState.multiLanguage,
 			});
 
 			toast.success('Scan started successfully.');
@@ -428,10 +435,10 @@ export default function DashboardScansPage() {
 									</Badge>
 								</div>
 
-								{job.status === 'running' && (
+								{(job.status === 'running' || job.status === 'monitoring') && (
 									<div className="mt-3 space-y-1.5">
 										<div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-(--app-color-primary)">
-											<span>Intelligence Discovery</span>
+											<span>{job.status === 'monitoring' ? 'Stream Monitor In Progress' : 'Intelligence Discovery'}</span>
 											<span>{job.progress || 0}%</span>
 										</div>
 										<div className="h-1.5 w-full overflow-hidden rounded-full bg-(--app-color-primary-soft)">
@@ -522,70 +529,93 @@ export default function DashboardScansPage() {
 							<option value=''>Select asset</option>
 							{assets.map((asset) => (
 								<option key={asset._id} value={asset._id}>
-									{asset.title}
+									{asset.title} ({asset.type})
 								</option>
 							))}
 						</select>
 					</div>
 
-					<div>
-						<div className='mb-1 flex items-center justify-between'>
-							<label className='block text-sm font-medium text-(--app-color-text)'>Search keywords</label>
-							<button 
-								type='button' 
-								onClick={handleSuggestKeywords} 
-								disabled={isSuggesting || !formState.assetId}
-								className='text-xs font-semibold text-(--app-color-primary) hover:underline disabled:opacity-50'
-							>
-								{isSuggesting ? '✨ Thinking...' : '✨ Auto-suggest with AI'}
-							</button>
-						</div>
-						<input
-							type='text'
-							value={formState.keywords}
-							onChange={(event) => setFormState((current) => ({ ...current, keywords: event.target.value }))}
-							placeholder='e.g. goal highlight, final match clip'
-							className='w-full rounded-lg border border-(--app-color-border) bg-(--app-color-surface) px-3 py-2 text-sm text-(--app-color-text) focus:border-(--app-color-primary) focus:outline-none'
-						/>
-						<p className='mt-1 text-xs text-(--app-color-text-muted)'>Comma separated keywords.</p>
-					</div>
+					{(() => {
+						const selectedAsset = assets.find((a) => a._id === formState.assetId);
+						const isLivestream = selectedAsset?.type === 'livestream';
 
-					<div>
-						<p className='mb-2 text-sm font-medium text-(--app-color-text)'>Platforms</p>
-						<div className='flex flex-wrap gap-2'>
-							{supportedPlatforms.map((platform) => {
-								const active = formState.platforms.includes(platform);
+						if (isLivestream) {
+							return (
+								<div className="rounded-xl border border-(--app-color-primary)/20 bg-(--app-color-primary-soft) p-4 space-y-2">
+									<div className="flex items-center gap-2 text-(--app-color-primary) font-bold text-sm">
+										<Activity size={16} className="animate-pulse" />
+										<span>REAL-TIME STREAM MONITOR ACTIVATED</span>
+									</div>
+									<p className="text-xs text-(--app-color-text-muted) leading-relaxed">
+										This scan will operate continuously as a live background monitor. It will capture video frames from the stream every 10 seconds and compare them using perceptual hashing (pHash) against your active library assets to detect live piracy immediately.
+									</p>
+								</div>
+							);
+						}
 
-								return (
-									<button
-										key={platform}
-										type='button'
-										onClick={() => handleTogglePlatform(platform)}
-										className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] ${
-											active
-												? 'border-(--app-color-primary) bg-(--app-color-primary-soft) text-(--app-color-primary)'
-												: 'border-(--app-color-border) bg-(--app-color-surface) text-(--app-color-text-muted)'
-										}`}
-									>
-										{platform}
-									</button>
-								);
-							})}
-						</div>
-					</div>
+						return (
+							<>
+								<div>
+									<div className='mb-1 flex items-center justify-between'>
+										<label className='block text-sm font-medium text-(--app-color-text)'>Search keywords</label>
+										<button 
+											type='button' 
+											onClick={handleSuggestKeywords} 
+											disabled={isSuggesting || !formState.assetId}
+											className='text-xs font-semibold text-(--app-color-primary) hover:underline disabled:opacity-50'
+										>
+											{isSuggesting ? '✨ Thinking...' : '✨ Auto-suggest with AI'}
+										</button>
+									</div>
+									<input
+										type='text'
+										value={formState.keywords}
+										onChange={(event) => setFormState((current) => ({ ...current, keywords: event.target.value }))}
+										placeholder='e.g. goal highlight, final match clip'
+										className='w-full rounded-lg border border-(--app-color-border) bg-(--app-color-surface) px-3 py-2 text-sm text-(--app-color-text) focus:border-(--app-color-primary) focus:outline-none'
+									/>
+									<p className='mt-1 text-xs text-(--app-color-text-muted)'>Comma separated keywords.</p>
+								</div>
 
-					<div className='flex items-center gap-2'>
-						<input
-							type='checkbox'
-							id='multiLanguage'
-							checked={formState.multiLanguage}
-							onChange={(event) => setFormState((current) => ({ ...current, multiLanguage: event.target.checked }))}
-							className='h-4 w-4 rounded border-(--app-color-border) text-(--app-color-primary) focus:ring-(--app-color-primary)'
-						/>
-						<label htmlFor='multiLanguage' className='text-sm text-(--app-color-text)'>
-							Enable Multi-language Scan <span className='text-xs text-(--app-color-text-muted)'>(Translates keywords to 5 languages)</span>
-						</label>
-					</div>
+								<div>
+									<p className='mb-2 text-sm font-medium text-(--app-color-text)'>Platforms</p>
+									<div className='flex flex-wrap gap-2'>
+										{supportedPlatforms.map((platform) => {
+											const active = formState.platforms.includes(platform);
+
+											return (
+												<button
+													key={platform}
+													type='button'
+													onClick={() => handleTogglePlatform(platform)}
+													className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] ${
+														active
+															? 'border-(--app-color-primary) bg-(--app-color-primary-soft) text-(--app-color-primary)'
+															: 'border-(--app-color-border) bg-(--app-color-surface) text-(--app-color-text-muted)'
+													}`}
+												>
+													{platform}
+												</button>
+											);
+										})}
+									</div>
+								</div>
+
+								<div className='flex items-center gap-2'>
+									<input
+										type='checkbox'
+										id='multiLanguage'
+										checked={formState.multiLanguage}
+										onChange={(event) => setFormState((current) => ({ ...current, multiLanguage: event.target.checked }))}
+										className='h-4 w-4 rounded border-(--app-color-border) text-(--app-color-primary) focus:ring-(--app-color-primary)'
+									/>
+									<label htmlFor='multiLanguage' className='text-sm text-(--app-color-text)'>
+										Enable Multi-language Scan <span className='text-xs text-(--app-color-text-muted)'>(Translates keywords to 5 languages)</span>
+									</label>
+								</div>
+							</>
+						);
+					})()}
 
 					<div className='flex justify-end gap-2'>
 						<Button type='button' variant='secondary' onClick={() => setIsModalOpen(false)} disabled={isSubmitting}>

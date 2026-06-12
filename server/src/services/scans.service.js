@@ -4,6 +4,10 @@ import { createAlertFromViolation } from './alerts.service.js';
 import ScanJob from '../models/scanJob.model.js';
 import ScanResult from '../models/scanResult.model.js';
 import Violation from '../models/violation.model.js';
+import { spawn } from 'node:child_process';
+import path from 'node:path';
+import fs from 'node:fs/promises';
+import os from 'node:os';
 
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://localhost:8000';
 const GOOGLE_TRANSLATE_API_URL = 'https://translation.googleapis.com/language/translate/v2';
@@ -424,6 +428,12 @@ export async function dispatchScanJob(scanJobId) {
 			return;
 		}
 
+		const asset = await Asset.findById(scanJob.assetId);
+		if (asset?.type === 'livestream') {
+			void monitorLiveStream(scanJob, asset);
+			return;
+		}
+
 		scanJob.status = 'running';
 		scanJob.progress = 10; // Started
 		scanJob.startedAt = new Date();
@@ -624,4 +634,291 @@ export async function createScheduledScanJobsForOrg(orgId) {
 
 export async function getAssetsForScheduledScans() {
 	return Asset.find({ status: 'active' }).select('_id orgId title').lean();
+}
+
+const activeMonitors = new Map();
+const livestreamReconnects = new Map();
+
+export async function stopLiveStreamJob({ orgId, scanJobId }) {
+	const scanJob = await ScanJob.findOne({ _id: scanJobId, orgId });
+	if (!scanJob) {
+		const error = new Error('Scan job not found.');
+		error.statusCode = 404;
+		throw error;
+	}
+
+	const jobIdStr = scanJobId.toString();
+	const ffmpeg = activeMonitors.get(jobIdStr);
+	if (ffmpeg) {
+		ffmpeg.kill('SIGKILL');
+		activeMonitors.delete(jobIdStr);
+	}
+
+	scanJob.status = 'completed';
+	scanJob.progress = 100;
+	scanJob.completedAt = new Date();
+	await scanJob.save();
+
+	return scanJob;
+}
+
+function calculateHammingDistance(hex1, hex2) {
+	if (!hex1 || !hex2 || hex1.length !== hex2.length) {
+		return 999;
+	}
+
+	let distance = 0;
+	for (let i = 0; i < hex1.length; i++) {
+		const val1 = Number.parseInt(hex1[i], 16);
+		const val2 = Number.parseInt(hex2[i], 16);
+		let xor = val1 ^ val2;
+		while (xor > 0) {
+			if (xor & 1) distance++;
+			xor = xor >> 1;
+		}
+	}
+	return distance;
+}
+
+export async function monitorLiveStream(scanJob, asset) {
+	const jobIdStr = scanJob._id.toString();
+	
+	// Initialize reconnect count if not present
+	if (!livestreamReconnects.has(jobIdStr)) {
+		livestreamReconnects.set(jobIdStr, 0);
+	}
+	
+	const attempt = livestreamReconnects.get(jobIdStr);
+
+	try {
+		// Only update status and clear errors on initial launch
+		if (attempt === 0) {
+			scanJob.status = 'monitoring';
+			scanJob.progress = 10;
+			scanJob.startedAt = new Date();
+			scanJob.lastError = null;
+			await scanJob.save();
+		}
+
+		console.log(`[LIVESTREAM MONITOR] Starting ffmpeg capture for scanJob ${jobIdStr} (attempt ${attempt + 1}/5)`);
+
+		// Spawn ffmpeg child process to capture a frame from the live stream every 1.5 seconds:
+		const ffmpeg = spawn('ffmpeg', [
+			'-i', asset.livestreamUrl,
+			'-vf', 'fps=1/1.5',
+			'-f', 'image2pipe',
+			'-vcodec', 'mjpeg',
+			'-'
+		]);
+
+		activeMonitors.set(jobIdStr, ffmpeg);
+
+		let dataBuffer = Buffer.alloc(0);
+		
+		ffmpeg.stdout.on('data', async (chunk) => {
+			// On successful data intake, reset reconnect attempt counter because the connection is alive!
+			if (livestreamReconnects.get(jobIdStr) > 0) {
+				livestreamReconnects.set(jobIdStr, 0);
+			}
+			
+			dataBuffer = Buffer.concat([dataBuffer, chunk]);
+			while (true) {
+				const startIndex = dataBuffer.indexOf(Buffer.from([0xFF, 0xD8]));
+				if (startIndex === -1) {
+					dataBuffer = dataBuffer.slice(Math.max(0, dataBuffer.length - 1));
+					break;
+				}
+				const endIndex = dataBuffer.indexOf(Buffer.from([0xFF, 0xD9]), startIndex + 2);
+				if (endIndex === -1) {
+					break;
+				}
+				const jpegFrame = dataBuffer.slice(startIndex, endIndex + 2);
+				dataBuffer = dataBuffer.slice(endIndex + 2);
+
+				// Process JPEG frame in background
+				void processLiveStreamFrame(jpegFrame, scanJob, asset);
+			}
+		});
+
+		const handleDisconnect = async (reason, detail) => {
+			activeMonitors.delete(jobIdStr);
+			
+			// Verify if the job is still active in the database
+			const freshJob = await ScanJob.findById(scanJob._id);
+			if (freshJob && freshJob.status === 'monitoring') {
+				const currentAttempt = livestreamReconnects.get(jobIdStr) || 0;
+				if (currentAttempt < 4) {
+					livestreamReconnects.set(jobIdStr, currentAttempt + 1);
+					const backoffMs = 3000 + currentAttempt * 2000; // exponential backoff: 3s, 5s, 7s, 9s
+					console.warn(`[LIVESTREAM DISCONNECT] ${reason} (${detail}). Reconnecting in ${backoffMs / 1000}s (Attempt ${currentAttempt + 1}/5)...`);
+					setTimeout(() => {
+						void monitorLiveStream(scanJob, asset);
+					}, backoffMs);
+				} else {
+					console.error(`[LIVESTREAM FAILED] Max connection attempts (5/5) reached for scanJob ${jobIdStr}`);
+					livestreamReconnects.delete(jobIdStr);
+					await markScanJobFailed(scanJob._id, `Stream disconnected: Max reconnect attempts reached. (${detail})`);
+				}
+			} else {
+				livestreamReconnects.delete(jobIdStr);
+			}
+		};
+
+		ffmpeg.on('error', async (err) => {
+			console.error(`[FFMPEG ERROR] Failed to start ffmpeg process for scanJob ${jobIdStr}:`, err);
+			void handleDisconnect('ffmpeg process error', err.message);
+		});
+
+		ffmpeg.stderr.on('data', (data) => {
+			const logStr = data.toString();
+			if (logStr.toLowerCase().includes('error') || logStr.toLowerCase().includes('fail')) {
+				console.warn(`[FFMPEG STDERR] ${logStr.trim()}`);
+			}
+		});
+
+		ffmpeg.on('close', async (code) => {
+			if (code !== 0 && code !== null) {
+				console.error(`[FFMPEG CLOSE] ffmpeg process for scanJob ${jobIdStr} exited with code ${code}`);
+				void handleDisconnect('ffmpeg process closed unexpectedly', `exit code ${code}`);
+			} else {
+				// Clean exit (e.g. killed by SIGKILL)
+				activeMonitors.delete(jobIdStr);
+				livestreamReconnects.delete(jobIdStr);
+			}
+		});
+
+	} catch (error) {
+		activeMonitors.delete(jobIdStr);
+		console.error(`[MONITOR_LIVE_STREAM_ERROR] Exception in monitorLiveStream for scanJob ${jobIdStr}:`, error);
+		await markScanJobFailed(scanJob._id, error.message);
+	}
+}
+
+async function markScanJobFailed(scanJobId, errorMsg) {
+	try {
+		await ScanJob.findByIdAndUpdate(scanJobId, {
+			status: 'failed',
+			completedAt: new Date(),
+			lastError: errorMsg,
+		});
+	} catch (dbErr) {
+		console.error('[markScanJobFailed DB ERROR]', dbErr);
+	}
+}
+
+async function processLiveStreamFrame(jpegFrame, scanJob, asset) {
+	let tempFilePath = '';
+	try {
+		const tmp = os.tmpdir();
+		tempFilePath = path.join(tmp, `livestream-frame-${scanJob._id}-${Date.now()}.jpg`);
+		await fs.writeFile(tempFilePath, jpegFrame);
+
+		// Post to ML service to fingerprint the local JPEG file
+		const response = await fetch(`${ML_SERVICE_URL}/ml/fingerprint`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ localFilePath: tempFilePath }),
+		});
+
+		if (!response.ok) {
+			const errorText = await response.text();
+			throw new Error(`ML fingerprint endpoint failed: ${errorText}`);
+		}
+
+		const fingerprintResult = await response.json();
+		const framePHash = fingerprintResult.pHash;
+
+		if (!framePHash) {
+			return; // No pHash calculated for this frame, skip
+		}
+
+		// Query active reference assets (non-livestream) for this organization
+		const referenceAssets = await Asset.find({
+			orgId: scanJob.orgId,
+			type: { $ne: 'livestream' },
+			status: 'active'
+		}).lean();
+
+		for (const refAsset of referenceAssets) {
+			const refPHashes = [];
+			if (refAsset.fingerprint?.pHash) {
+				refPHashes.push(refAsset.fingerprint.pHash);
+			}
+			if (Array.isArray(refAsset.fingerprint?.frameHashes)) {
+				refPHashes.push(...refAsset.fingerprint.frameHashes);
+			}
+
+			let minDistance = 999;
+			for (const refPHash of refPHashes) {
+				const distance = calculateHammingDistance(framePHash, refPHash);
+				if (distance < minDistance) {
+					minDistance = distance;
+				}
+			}
+
+			if (minDistance <= 10) {
+				console.log(`[LIVESTREAM ALERT] Match found for reference asset "${refAsset.title}" (ID: ${refAsset._id}) on livestream! Hamming distance: ${minDistance}`);
+
+				// Create scan result record for this match
+				await ScanResult.create({
+					scanJobId: scanJob._id,
+					orgId: scanJob.orgId,
+					assetId: refAsset._id,
+					sourceUrl: asset.livestreamUrl,
+					sourceDomain: 'livestream',
+					platform: 'livestream',
+					pageTitle: `Livestream Match: ${refAsset.title}`,
+					status: 'matched',
+					matchConfidence: 100 - minDistance * 5,
+					matchType: 'near-duplicate',
+					evidenceBundle: {
+						hammingDistance: minDistance
+					},
+					scrapedAt: new Date()
+				});
+
+				// Create violation record
+				const violation = await Violation.create({
+					orgId: scanJob.orgId,
+					assetId: refAsset._id,
+					scanJobId: scanJob._id,
+					sourceUrl: asset.livestreamUrl,
+					sourceDomain: 'livestream',
+					platform: 'livestream',
+					matchConfidence: 100 - minDistance * 5,
+					matchType: 'near-duplicate',
+					status: 'open',
+					evidenceBundle: {
+						hammingDistance: minDistance
+					},
+					detectedAt: new Date()
+				});
+
+				// Create alert
+				await createAlertFromViolation({
+					orgId: scanJob.orgId,
+					violationId: violation._id,
+					platform: 'livestream',
+					matchConfidence: 100 - minDistance * 5
+				});
+
+				// Update results counts on scan job
+				await ScanJob.findByIdAndUpdate(scanJob._id, {
+					$inc: { resultsCount: 1, violationsCount: 1 }
+				});
+
+				// Also increment asset violations
+				await Asset.findByIdAndUpdate(refAsset._id, {
+					$inc: { violationsFound: 1 }
+				});
+			}
+		}
+
+	} catch (error) {
+		console.error(`[processLiveStreamFrame ERROR] Failed to process frame:`, error.message);
+	} finally {
+		if (tempFilePath) {
+			await fs.unlink(tempFilePath).catch(() => {});
+		}
+	}
 }

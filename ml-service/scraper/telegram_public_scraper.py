@@ -75,6 +75,10 @@ def _scrape_channel(channel: str, keyword: str) -> list[dict]:
             if video_el and video_el.get("poster"):
                 thumbnail = video_el["poster"]
 
+        from urllib.parse import urljoin
+        if thumbnail:
+            thumbnail = urljoin(url, thumbnail)
+
         results.append(
             {
                 "platform": "telegram",

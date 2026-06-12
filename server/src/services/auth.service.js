@@ -301,6 +301,7 @@ export async function updateOrganizationNotificationPrefs({ organizationId, payl
 		emailOnHighConfidence: Boolean(payload.emailOnHighConfidence),
 		emailDigest: Boolean(payload.emailDigest),
 		inAppAlerts: payload.inAppAlerts === undefined ? true : Boolean(payload.inAppAlerts),
+		webhookUrl: typeof payload.webhookUrl === 'string' ? payload.webhookUrl.trim() : '',
 	};
 
 	return Organization.findByIdAndUpdate(

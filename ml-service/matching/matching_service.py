@@ -103,7 +103,18 @@ def match_fingerprint_bundle(
     stored_hash = reference_fingerprint.get("pHash")
 
     if not scraped_hash or not stored_hash:
-        raise ValueError("Both scraped and reference pHash values are required.")
+        return {
+            "matchConfidence": 0,
+            "matchType": None,
+            "evidenceBundle": {
+                "hammingDistance": None,
+                "colorSimilarity": 0.0,
+                "frameMatchCount": 0,
+                "visionBoosted": False,
+                "reasoning": "Matching skipped due to missing pHash values in fingerprint."
+            },
+            "scrapedFingerprint": scraped_fingerprint,
+        }
 
     hamming_bits = hamming_distance(scraped_hash, stored_hash)
     color_similarity = _cosine_similarity(
