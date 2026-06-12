@@ -254,6 +254,7 @@ async function runMatchingForScan({ scanJob, results }) {
 			const match = await requestMatch({
 				scrapedUrl: compareUrl,
 				referenceFingerprint: asset.fingerprint,
+				referenceUrl: asset.thumbnailUrl || asset.gcsUrl,
 			});
 
 			let confidence = Number(match.matchConfidence || 0);
