@@ -256,7 +256,7 @@ export async function generateAnalyticsReport({
 
 	try {
 		const page = await browser.newPage();
-		await page.setContent(html, { waitUntil: 'networkidle0' });
+		await page.setContent(html, { waitUntil: 'domcontentloaded' });
 		await page.pdf({
 			path: outputPath,
 			format: 'A4',
