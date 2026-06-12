@@ -732,6 +732,76 @@ FULL DEMO FLOW (run this before every presentation):
 
 ---
 
+## 📺 Phase 9 — Optimization Round: Real-time Livestreaming Piracy Detection & Robustness Hardening
+**Duration:** Days 27–29 (Hackathon Final Sprint) | **Branches:** `feature/livestream-ingestion` · `feature/livestream-dashboard` · `feature/livestream-accuracy`
+
+> 🎯 **Goal:** Integrate a professional livestream piracy detection pipeline and achieve $\ge 95\%$ match accuracy. We will first establish the ingestion and UI workflows (Days 27–28), followed by deep ML-driven accuracy optimization (Day 29) when the ML member is available.
+
+### 📅 Day 27 — Stream Ingestion, Discovery Engines & Backend Architecture
+*Establish the pipelines to capture and track active live feeds without system lag.*
+
+#### 1. Ingestion Pipeline (`ml-service/app/`)
+* **HLS & RTMP Ingestor**: Implement an OpenCV and `ffmpeg-python` frame-grabber that connects to active stream formats (`.m3u8` playlists and RTMP feeds).
+* **Frame-Sampling Rate**: Grab frames every 1.5 seconds to balance performance and real-time responsiveness.
+* **In-Memory Frame Buffer**: Store frames in a Redis cache or in-memory ring buffer (maximum size of 10 frames) to eliminate disk-write bottlenecks.
+* **API Worker Pools**: Set up worker processes in FastAPI using `asyncio` to manage parallel frame processing for multiple concurrent stream scans.
+
+#### 2. Discovery Scraping Engines (`ml-service/scraper/`)
+* **YouTube Live Scraper**: Query the YouTube Data API v3 (`search` endpoint with `eventType=live` and `type=video`) using match keywords.
+* **Twitch & Kick Scraper**: Scrape index/search endpoints using keywords (e.g., "MCI vs ARS live stream", "sports highlights") to capture active stream URLs.
+* **Metadata Extractor**: Extract broadcaster names, stream titles, viewership numbers, and stream start times.
+
+#### 3. Backend Endpoints & Database Schemas (`server/`)
+* **`LiveStream` Model**: Track stream details, target match metadata (e.g., team abbreviations like "MCI", "ARS"), status (`monitoring`, `stopped`), and scan frequency.
+* **`LiveViolation` Model**: Store matching confidence, platform details, OCR data, proof screenshot GCS links, and action status (`open`, `reported`, `resolved`).
+* **Endpoints**:
+  * `POST /api/livestreams/monitor` — Start background ingestion and discovery scans.
+  * `POST /api/livestreams/:id/stop` — Clean up active opencv streams and worker resources.
+  * `GET /api/livestreams/active` — Fetch all currently monitored streams.
+
+---
+
+### 📅 Day 28 — Live Piracy Control Dashboard, WebSockets & DMCA Actions
+*Build a modern, premium frontend interface that visualizes near-real-time detection and offers immediate action paths.*
+
+#### 1. Real-time Live Monitor UI (`client/src/`)
+* **Monitoring Center Dashboard**: Create a dedicated `/dashboard/livestreams` view with a high-fidelity control grid.
+* **Live Ingestion Telemetry**: Show network latency (ingestion-to-analysis delay in ms), stream status, and an indicator displaying CPU/memory loads.
+* **Live Match Feed**: A side-by-side interface showing the official match context and a real-time warning panel for pirated feeds. Each card should flash red upon matching.
+
+#### 2. WebSocket Notifications (`server/socket.io` & `client/`)
+* **WebSocket Ingestion**: Connect the Express backend to the client with `socket.io`.
+* **Push Warnings**: Emit `live_violation_alert` to push details (screenshot, confidence, channel URL) straight to the active dashboard.
+
+#### 3. Takedown Automation (`server/services/`)
+* **One-Click Live DMCA Generator**: Connect to Google Gemini API to write immediate takedown notice drafts.
+  * *Input*: Violation URL, platform abuse email, timestamped frame proof, and match metadata.
+  * *Output*: Clean markdown notice ready to copy or email in one click.
+* **Webhook Alert Escalation**: Allow users to configure Discord or Slack incoming webhooks to push critical live piracy alerts directly to internal channels.
+
+---
+
+### 📅 Day 29 — ML Accuracy Optimization (Target $\ge 95\%$) & Demo Polish
+*Harden the matching engine using multi-signal classification to hit high-accuracy targets and compile the final demo flow.*
+
+#### 1. Scoreboard OCR Engine (`ml-service/matching/`)
+* **Scoreboard Region Detection**: Define bounding boxes in the stream frame corresponding to typical scoreboard positions (top-left or top-right).
+* **Text Extraction**: Use EasyOCR / Tesseract to extract team abbreviations (e.g., "MCI", "ARS") and current game timer/scores.
+* **Text Similarity Match**: Validate extracted abbreviations against the stream's registered metadata. If match matches, add a $+30\%$ boost to the matching confidence score.
+
+#### 2. Multi-Signal Decision Matrix (`ml-service/matching/`)
+* Combine three distinct pipelines to reach a $\ge 95\%$ confidence classification:
+  1. *Visual pHash Matching* (40%): Frame-level perceptual hashing Hamming distance.
+  2. *Scoreboard OCR Alignment* (30%): Semantic scoreboard overlay check.
+  3. *Google Vision API Fallback* (30%): Applied on marginal matches (confidence 50-70%) to compare visual entities (e.g., team jerseys, stadium overlays).
+* **Temporal Verification**: A match must persist for at least 3 consecutive frames before generating a violation. This completely filters out transient false matches (e.g., ads or standard transitions).
+
+#### 3. Final Demo Seeder & Verification (`server/scripts/`)
+* **FFmpeg Stream Simulator**: Write a script to loop a local video file as a mock HLS stream (`.m3u8`) to allow judges or developers to test the live matching system locally.
+* **Demo Data Injector**: Seed realistic historical metrics for live monitoring (e.g., live matches scanned, average takedown response times) to make the metrics look mature and complete.
+
+---
+
 ## 🌿 Git Branch Workflow
 
 ```
@@ -744,7 +814,8 @@ main
 ├── Phase 5: feature/alerts-backend + feature/alerts-frontend + feature/email-notifications
 ├── Phase 6: feature/analytics-backend + feature/analytics-frontend + feature/pdf-report
 ├── Phase 7: feature/google-cloud-integration
-└── Phase 8: feature/ui-polish + feature/demo-data
+├── Phase 8: feature/ui-polish + feature/demo-data
+└── Phase 9: feature/livestream-ingestion + feature/livestream-dashboard + feature/livestream-accuracy
 ```
 
 **Rules:**
@@ -771,6 +842,8 @@ main
 | Email | Nodemailer / SendGrid | Free tier sufficient |
 | File Storage | Google Cloud Storage | Required for GCP alignment |
 | AI | Google Gemini API + Vision API | Free tier, Google alignment |
+| OCR Engine | EasyOCR / Tesseract | Bounding-box text similarity checks |
+| Stream Processing | FFmpeg + OpenCV | Capture HLS/RTMP streams efficiently |
 | PDF | Puppeteer | Reliable HTML→PDF |
 | Deployment | Cloud Run + Vercel | Free tier, fast CI/CD |
 
@@ -803,10 +876,12 @@ main
 | 6 | Analytics + Reports | 18–20 | 🟨 Baseline done, advanced analytics pending |
 | 7 | Google Cloud Integration | 21–23 | ⬜ |
 | 8 | Polish + Demo Prep | 24–26 | ⬜ |
+| 9 | Live Monitoring & Accuracy | 27–29 | ⬜ Planned (Optimization Round) |
 
-**Buffer:** Keep Days 27–28 for bugs, rehearsing the demo, and submission.
+**Buffer:** Keep Day 30 for bugs, rehearsing the demo, and submission.
 
 ---
 
 *Built for Google Solution Challenge · SportShield MVP v1.0*
 *"Your content, tracked everywhere, protected always."*
+
