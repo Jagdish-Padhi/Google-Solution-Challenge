@@ -26,6 +26,7 @@ organizationRouter.get('/me', async (req, res, next) => {
 				orgName: organization.orgName,
 				email: organization.email,
 				plan: organization.plan,
+				userType: organization.userType || 'broadcaster',
 				notificationPrefs: organization.notificationPrefs,
 				createdAt: organization.createdAt,
 				lastLoginAt: organization.lastLoginAt,
