@@ -71,6 +71,21 @@ organizationRouter.post('/invite', async (req, res, next) => {
 	}
 });
 
+organizationRouter.delete('/member/:email', async (req, res, next) => {
+	try {
+		const { email } = req.params;
+		const org = await Organization.findById(req.auth.orgId);
+		if (!org) return res.status(404).json({ message: 'Organization not found.' });
+
+		org.members = org.members.filter(m => m.email !== email);
+		await org.save();
+
+		return res.status(200).json({ message: 'Member removed.', members: org.members });
+	} catch (error) {
+		return next(error);
+	}
+});
+
 organizationRouter.patch('/notification-prefs', async (req, res, next) => {
 	try {
 		const updated = await updateOrganizationNotificationPrefs({

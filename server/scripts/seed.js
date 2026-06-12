@@ -87,7 +87,7 @@ const realViolationUrls = {
 };
 
 const domains = ['youtube.com', 'x.com', 't.me', 'reddit.com', 'vimeo.com', 'dailymotion.com', 'facebook.com', 'archive.org', 'twitch.tv', 'kick.com', 'cricfree.sc', 'mylivecricket.com', 'smartcric.com'];
-const highRiskDomains = ['t.me', 'reddit.com', 'vimeo.com', 'dailymotion.com', 'twitch.tv', 'kick.com', 'cricfree.sc', 'mylivecricket.com', 'smartcric.com']; // Repeat offenders
+const highRiskDomains = ['hesgoal.com', 'cricfree.sc', 't.me', 'reddit.com', 'vimeo.com', 'dailymotion.com', 'twitch.tv', 'kick.com']; // Repeat offenders
 
 const seedData = async () => {
 	try {
@@ -118,7 +118,11 @@ const seedData = async () => {
 			email: 'demo@sportshield.com',
 			passwordHash,
 			plan: 'pro',
-			createdAt: randomDate(45, 45) // Org created 45 days ago
+			createdAt: randomDate(45, 45), // Org created 45 days ago
+			members: [
+				{ email: 'demo@sportshield.com', role: 'admin', inviteStatus: 'active', joinedAt: new Date() },
+				{ email: 'legal-reviewer@sportshield.com', role: 'legal', inviteStatus: 'active', joinedAt: new Date() }
+			]
 		});
 		const orgId = demoOrg._id;
 
@@ -134,12 +138,12 @@ const seedData = async () => {
 				thumbnailUrl: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=800',
 			},
 			{
-				title: 'NBA Finals: Lakers vs Celtics Game 7',
-				description: 'Full match recording of the historic NBA Finals Game 7. Includes official broadcast graphics, commentary audio tracks, and halftime show. Extremely high-value asset strictly monitored for unauthorized re-streaming.',
+				title: 'IPL 2024 Final Match Highlights',
+				description: 'Official broadcast recording of the IPL 2024 Final. Strictly monitored across social platforms. Highly susceptible to immediate propagation.',
 				type: 'video',
-				storageUrl: 'https://res.cloudinary.com/diqmfvdzi/video/upload/v1714030000/demo/nba.mp4',
-				// Basketball game action - verified Unsplash ID
-				thumbnailUrl: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&q=80&w=800',
+				storageUrl: 'https://res.cloudinary.com/diqmfvdzi/video/upload/v1714030000/demo/ipl.mp4',
+				// Cricket game action
+				thumbnailUrl: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&q=80&w=800',
 			},
 			{
 				title: "Wimbledon Men's Final Match Point",
@@ -166,12 +170,12 @@ const seedData = async () => {
 				thumbnailUrl: 'https://images.unsplash.com/photo-1541417904950-b855846fe074?auto=format&fit=crop&q=80&w=800',
 			},
 			{
-				title: 'ICC Cricket World Cup 2024 Official Promo Poster',
-				description: 'High-resolution promotional artwork for the ICC T20 World Cup. Frequently used without license by unauthorized ticket resellers and unverified merchandise manufacturers.',
+				title: 'ISL 2024: Mumbai City vs Mohun Bagan Photo',
+				description: 'Exclusive press photography of the ISL 2024 Final winning goal. Very high risk of unauthorized use on sports blogs.',
 				type: 'image',
 				storageUrl: 'https://res.cloudinary.com/diqmfvdzi/image/upload/v1714030000/demo/cricket.jpg',
-				// Cricket match, batsman hitting - verified Unsplash ID
-				thumbnailUrl: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&q=80&w=800',
+				// Football stadium / player
+				thumbnailUrl: 'https://images.unsplash.com/photo-1518605368461-1e1e2333b2a5?auto=format&fit=crop&q=80&w=800',
 			},
 			{
 				title: 'Manchester City Official Home Kit 24/25',
@@ -238,45 +242,90 @@ const seedData = async () => {
 		for (let i = 0; i < 120; i++) {
 			const scanJob = randomElement(scanJobs);
 			const asset = assets.find(a => a._id.toString() === scanJob.assetId.toString());
-			const detectedAt = new Date(scanJob.completedAt.getTime() - randomInt(0, 60000));
 			
-			// Simulate Repeat Offenders (60% chance to pick from highRiskDomains)
-			const domain = Math.random() > 0.4 ? randomElement(highRiskDomains) : randomElement(domains);
-			const platform = domain === 'youtube.com' ? 'youtube' : domain === 'x.com' ? 'twitter' : domain === 't.me' ? 'telegram' : domain === 'twitch.tv' ? 'twitch' : domain === 'kick.com' ? 'kick' : 'web';
+			// Base detected time
+			let detectedAt = new Date(scanJob.completedAt.getTime() - randomInt(0, 60000));
+			let domain = Math.random() > 0.4 ? randomElement(highRiskDomains) : randomElement(domains);
+			let platform = domain === 'youtube.com' ? 'youtube' : domain === 'x.com' ? 'twitter' : domain === 't.me' ? 'telegram' : domain === 'twitch.tv' ? 'twitch' : domain === 'kick.com' ? 'kick' : 'web';
 			
-			// Realistic statuses
-			const statusRand = Math.random();
 			let status = 'open';
 			let resolvedAt = null;
+			let isMirrored = Math.random() > 0.6;
+			let orbVerified = Math.random() > 0.5;
+			let pickedUrl = randomElement(realViolationUrls[platform] || realViolationUrls.web);
 			
-			// Varied realistic confidence scores
 			const confPool = [58, 62, 71, 78, 85, 87, 91, 95, 98];
 			let matchConfidence = randomElement(confPool);
 			let matchType = matchConfidence > 90 ? 'exact' : matchConfidence > 70 ? 'near-duplicate' : 'partial';
 
-			if (statusRand < 0.15) {
-				status = 'false_positive';
-				matchConfidence = randomInt(30, 50);
-				matchType = 'partial';
-			} else if (statusRand < 0.35) {
-				status = 'resolved';
-				// SLA Realistic: Resolved 2 to 48 hours after detection
-				resolvedAt = new Date(detectedAt.getTime() + randomInt(2, 48) * 3600000);
-			} else if (statusRand < 0.5) {
+			// CHRONOLOGICAL STORY: IPL Propagation (First 6 iterations)
+			if (i < 6) {
+				const iplAsset = assets.find(a => a.title.includes('IPL'));
+				if (iplAsset) {
+					// Base time: 3 days ago
+					const baseTime = new Date();
+					baseTime.setDate(baseTime.getDate() - 3);
+					
+					if (i === 0) { // Telegram first
+						platform = 'telegram'; domain = 't.me'; detectedAt = new Date(baseTime.getTime()); 
+						pickedUrl = { url: 'https://t.me/s/sportsstreams', title: 'Telegram Sports Streams Channel' };
+					} else if (i === 1) { // YouTube 14 mins later
+						platform = 'youtube'; domain = 'youtube.com'; detectedAt = new Date(baseTime.getTime() + 14 * 60000);
+						pickedUrl = { url: 'https://www.youtube.com/watch?v=JGwWNGJdvx8', title: 'IPL 2024 Best Moments Watch Free' };
+						isMirrored = true; orbVerified = true; matchConfidence = 96; matchType = 'exact';
+					} else if (i === 2) { // Twitter 45 mins later
+						platform = 'twitter'; domain = 'x.com'; detectedAt = new Date(baseTime.getTime() + 45 * 60000);
+					} else if (i === 3) { // Web domains 2 hours later
+						platform = 'web'; domain = 'cricfree.sc'; detectedAt = new Date(baseTime.getTime() + 120 * 60000);
+						pickedUrl = { url: 'https://cricfree.sc/watch/ipl-live', title: 'IPL Live Match Free Stream' };
+						isMirrored = true; orbVerified = true;
+					} else if (i === 4 || i === 5) { // hesgoal.com repeat offender 3 hours later
+						platform = 'web'; domain = 'hesgoal.com'; detectedAt = new Date(baseTime.getTime() + 180 * 60000 + (i * 5000));
+						pickedUrl = { url: `https://hesgoal.com/watch/ipl-live-${i}`, title: 'IPL Stream Backup HD' };
+					}
+					status = 'open';
+				}
+			}
+
+			// LICENSED DOMAINS (Iterations 6 & 7)
+			if (i === 6 || i === 7) {
+				status = 'licensed';
+				platform = 'web';
+				domain = i === 6 ? 'espn.com' : 'skysports.com';
+				pickedUrl = { url: `https://${domain}/official-highlights`, title: 'Official Broadcast Partner' };
+				matchConfidence = 99; matchType = 'exact';
+				orbVerified = true;
+			}
+
+			// REPEAT OFFENDER BOOST (Iterations 8-10)
+			if (i >= 8 && i <= 10) {
+				platform = 'web';
+				domain = 'hesgoal.com';
+				pickedUrl = { url: `https://hesgoal.com/stream/channel-${i}`, title: 'Live Sports VIP Stream' };
 				status = 'reported';
 			}
-
-			// Generate realistic evidence screenshots based on asset type
-			let screenshotUrl = '/evidence/generic.png'; // Generic Sports Piracy
-			if (asset.title.includes('IPL') || asset.title.includes('Cricket')) {
-				screenshotUrl = '/evidence/cricket.png'; // Cricket Piracy
-			} else if (asset.title.includes('Champions League') || asset.title.includes('Football') || asset.title.includes('UFC')) {
-				screenshotUrl = '/evidence/football.png'; // Football Piracy
+			
+			// Apply random status changes only for the non-scripted violations
+			const statusRand = Math.random();
+			if (i > 10) {
+				if (statusRand < 0.15 && status === 'open') {
+					status = 'false_positive';
+					matchConfidence = randomInt(30, 50);
+					matchType = 'partial';
+				} else if (statusRand < 0.35 && status === 'open') {
+					status = 'resolved';
+					resolvedAt = new Date(detectedAt.getTime() + randomInt(2, 48) * 3600000);
+				} else if (statusRand < 0.5 && status === 'open') {
+					status = 'reported';
+				}
 			}
 
-			// Pick a real URL from the pool based on platform
-			const urlPool = realViolationUrls[platform] || realViolationUrls.web;
-			const pickedUrl = randomElement(urlPool);
+			let screenshotUrl = '/evidence/generic.png';
+			if (asset && (asset.title.includes('IPL') || asset.title.includes('Cricket'))) {
+				screenshotUrl = '/evidence/cricket.png';
+			} else if (asset && (asset.title.includes('Champions League') || asset.title.includes('Football') || asset.title.includes('UFC'))) {
+				screenshotUrl = '/evidence/football.png';
+			}
 
 			violationData.push({
 				orgId,
@@ -294,8 +343,8 @@ const seedData = async () => {
 					hammingDistance: randomInt(0, 15),
 					colorSimilarity: Number((Math.random() * 0.4 + 0.6).toFixed(2)),
 					frameMatchCount: asset.type !== 'image' ? randomInt(1, 20) : undefined,
-					isMirrored: Math.random() > 0.6,
-					orbVerified: Math.random() > 0.5,
+					isMirrored,
+					orbVerified,
 					visionAvailable: Math.random() > 0.2, // 80% active
 					visionConfidenceBoost: Math.random() > 0.5 ? 14 : 0,
 				},

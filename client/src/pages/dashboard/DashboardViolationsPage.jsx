@@ -29,9 +29,9 @@ import { Badge, Button, Card, EmptyState, Loader, Modal, Pagination, Select, Spi
 import api from '../../services/api.js';
 import useAuthStore from '../../store/auth.store.js';
 
-const statusFilters = ['', 'open', 'reported', 'resolved', 'false_positive'];
+const statusFilters = ['', 'open', 'reported', 'resolved', 'false_positive', 'licensed'];
 const platformFilters = ['', 'youtube', 'twitter', 'telegram', 'web'];
-const statusOptions = ['open', 'reported', 'resolved', 'false_positive'];
+const statusOptions = ['open', 'reported', 'resolved', 'false_positive', 'licensed'];
 
 function confidenceVariant(value) {
 	if (value >= 80) {

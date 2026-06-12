@@ -9,13 +9,16 @@ import {
 	Send,
 	Webhook,
 	Zap,
+	X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import { Button, Card, Loader, Spinner } from '../../components';
 import api from '../../services/api.js';
+import useAuthStore from '../../store/auth.store.js';
 
 export default function DashboardSettingsPage() {
+	const { user, setDemoRole } = useAuthStore();
 	const [org, setOrg] = useState(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [isSendingDigest, setIsSendingDigest] = useState(false);
@@ -32,6 +35,7 @@ export default function DashboardSettingsPage() {
 	const [inviteEmail, setInviteEmail] = useState('');
 	const [inviteRole, setInviteRole] = useState('analyst');
 	const [isInviting, setIsInviting] = useState(false);
+	const [isRemoving, setIsRemoving] = useState(null);
 
 	const loadOrg = useCallback(async () => {
 		try {
@@ -123,6 +127,19 @@ export default function DashboardSettingsPage() {
 		}
 	};
 
+	const handleRemoveMember = async (email) => {
+		setIsRemoving(email);
+		try {
+			const response = await api.delete(`/organization/member/${email}`);
+			toast.success('Member removed.');
+			setOrg(prev => ({ ...prev, members: response.data.members }));
+		} catch (error) {
+			toast.error(error.response?.data?.message || 'Failed to remove member.');
+		} finally {
+			setIsRemoving(null);
+		}
+	};
+
 	const Toggle = ({ checked, onChange, id }) => (
 		<button
 			id={id}
@@ -154,11 +171,30 @@ export default function DashboardSettingsPage() {
 	return (
 		<div className='space-y-6'>
 			{/* ── Page header ─────────────────────────────────────────── */}
-			<div>
-				<h2 className='text-2xl font-semibold text-(--app-color-text)'>Organization Settings</h2>
-				<p className='text-sm text-(--app-color-text-muted) mt-0.5'>
-					Manage your organization profile, notification preferences, and proactive monitoring settings.
-				</p>
+			<div className='flex items-start justify-between'>
+				<div>
+					<h2 className='text-2xl font-semibold text-(--app-color-text)'>Organization Settings</h2>
+					<p className='text-sm text-(--app-color-text-muted) mt-0.5'>
+						Manage your organization profile, notification preferences, and proactive monitoring settings.
+					</p>
+				</div>
+				<div className='flex items-center gap-3'>
+					<span className='text-xs font-semibold text-(--app-color-text-muted)'>Demo Role:</span>
+					<div className='flex rounded-lg border border-(--app-color-border) bg-(--app-color-surface) p-1'>
+						<button
+							onClick={() => setDemoRole('admin')}
+							className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-md transition-colors ${user?.role === 'admin' ? 'bg-indigo-500 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-100'}`}
+						>
+							Admin
+						</button>
+						<button
+							onClick={() => setDemoRole('legal')}
+							className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-md transition-colors ${user?.role === 'legal' ? 'bg-emerald-500 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-100'}`}
+						>
+							Legal
+						</button>
+					</div>
+				</div>
 			</div>
 
 			{/* ── Org profile card ─────────────────────────────────────── */}
@@ -241,7 +277,7 @@ export default function DashboardSettingsPage() {
 				{org?.members?.length > 0 && (
 					<div className='divide-y divide-(--app-color-border)/50 border-t border-(--app-color-border)/50 pt-2'>
 						{org.members.map((member, idx) => (
-							<div key={idx} className='flex items-center justify-between py-3'>
+							<div key={idx} className='flex items-center justify-between py-3 group'>
 								<div className='flex items-center gap-3'>
 									<div className='h-8 w-8 rounded-full bg-(--app-color-primary-soft) flex items-center justify-center text-(--app-color-primary) font-bold text-xs uppercase'>
 										{member.email.charAt(0)}
@@ -251,7 +287,7 @@ export default function DashboardSettingsPage() {
 										<p className='text-xs text-(--app-color-text-muted) capitalize'>{member.role}</p>
 									</div>
 								</div>
-								<div>
+								<div className='flex items-center gap-3'>
 									<span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
 										member.inviteStatus === 'active' 
 										? 'bg-emerald-50 text-emerald-600 border border-emerald-200/70' 
@@ -259,6 +295,14 @@ export default function DashboardSettingsPage() {
 									}`}>
 										{member.inviteStatus}
 									</span>
+									<button 
+										onClick={() => handleRemoveMember(member.email)}
+										disabled={isRemoving === member.email}
+										className='opacity-0 group-hover:opacity-100 p-1.5 rounded-md text-red-400 hover:text-red-600 hover:bg-red-50 transition-all'
+										title="Remove Member"
+									>
+										{isRemoving === member.email ? <Spinner size="xs" /> : <X size={14} />}
+									</button>
 								</div>
 							</div>
 						))}

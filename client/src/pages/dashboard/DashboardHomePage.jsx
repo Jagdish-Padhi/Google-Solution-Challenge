@@ -71,6 +71,8 @@ export default function DashboardHomePage() {
         };
       });
       setLiveLogs(initialLogs);
+    } else {
+      setLiveLogs([]);
     }
   }, [data.discoveryPulse]);
 
@@ -80,7 +82,7 @@ export default function DashboardHomePage() {
       const { alerts } = e.detail || {};
       if (alerts && Array.isArray(alerts)) {
         const newLogs = alerts.map((alert) => ({
-          id: alert._id || Math.random().toString(),
+          id: alert._id || crypto.randomUUID(),
           platform: alert.metadata?.platform || alert.platform || 'web',
           text: alert.message,
           time: new Date(alert.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
