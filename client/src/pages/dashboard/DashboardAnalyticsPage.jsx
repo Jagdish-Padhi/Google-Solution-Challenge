@@ -91,11 +91,13 @@ function TrendLineChart({ items }) {
 	}
 
 	const maxValue = Math.max(...items.map((item) => item.count), 1);
+	const avgValue = items.reduce((sum, item) => sum + item.count, 0) / (items.length || 1);
 	
 	const pointsList = items.map((item, index) => {
 		const x = items.length === 1 ? 220 : 10 + (index / (items.length - 1)) * 420;
 		const y = 140 - (item.count / maxValue) * 120;
-		return { x, y, item };
+		const isSurge = item.count > 0 && item.count > avgValue * 1.5 && item.count >= 2;
+		return { x, y, item, isSurge, isMax: item.count === maxValue && item.count > 0 };
 	});
 	
 	const pointsString = pointsList.map(p => `${p.x},${p.y}`).join(' ');
@@ -208,17 +210,41 @@ function TrendLineChart({ items }) {
 								onMouseEnter={() => setHoveredPoint(p)}
 								onMouseLeave={() => setHoveredPoint(null)}
 							>
-								{/* Actual dot - hidden unless hovered */}
+								{/* Surge indicator (pulsing background) */}
+								{p.isSurge && (
+									<circle 
+										cx={p.x} 
+										cy={p.y} 
+										r='12'
+										fill='rgba(239, 68, 68, 0.2)'
+										className="animate-pulse"
+									/>
+								)}
+								{/* Actual dot - hidden unless hovered OR it's a surge */}
 								<circle 
 									cx={p.x} 
 									cy={p.y} 
 									r='4.5'
-									fill='var(--app-color-surface)'
-									stroke='var(--app-color-primary)'
+									fill={p.isSurge ? '#ef4444' : 'var(--app-color-surface)'}
+									stroke={p.isSurge ? '#b91c1c' : 'var(--app-color-primary)'}
 									strokeWidth='2'
-									opacity={isHovered ? 1 : 0}
+									opacity={(isHovered || p.isSurge) ? 1 : 0}
 									className="transition-opacity duration-150"
 								/>
+								{/* Surge label for the max point */}
+								{p.isMax && p.isSurge && !isHovered && (
+									<text 
+										x={p.x} 
+										y={p.y - 15} 
+										fontSize="7" 
+										fontWeight="bold"
+										fill="#ef4444"
+										textAnchor="middle"
+										className="animate-bounce uppercase tracking-widest"
+									>
+										Surge Detected
+									</text>
+								)}
 								{/* Invisible hover target */}
 								<circle cx={p.x} cy={p.y} r='16' fill='transparent' />
 							</g>
@@ -395,6 +421,67 @@ function KPIMetricsGrid({ kpis }) {
 	);
 }
 
+function ContentDNAPropagationGraph({ data }) {
+	if (!data || !data.topAssetPropagations || data.topAssetPropagations.length === 0) {
+		return null;
+	}
+
+	const graph = data.topAssetPropagations[0]; // Render the top propagated asset for demo
+
+	return (
+		<Card className='border-(--app-color-border) shadow-sm bg-gradient-to-br from-slate-900 to-teal-950/40 text-white'>
+			<div className="flex flex-col gap-1 mb-6">
+				<div className="flex items-center gap-2">
+					<Fingerprint size={18} className="text-teal-400" />
+					<h3 className="font-semibold text-white">Content DNA Propagation</h3>
+				</div>
+				<p className="text-sm text-slate-400">Visual lifecycle of the most spread pirated asset.</p>
+			</div>
+
+			<div className="flex items-center justify-between bg-slate-900/50 rounded-xl p-4 border border-teal-500/20 mb-6">
+				<div>
+					<p className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-500 mb-1">Spread Timeline</p>
+					<p className="text-xl font-bold text-white">{graph.timeSpanHours} hours</p>
+				</div>
+				<div className="text-right">
+					<p className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-500 mb-1">Total Surfaces</p>
+					<p className="text-xl font-bold text-white">{graph.totalPlatformsAffected} platforms</p>
+				</div>
+			</div>
+
+			<div className="relative pt-6 pb-2">
+				{/* Horizontal Timeline Line */}
+				<div className="absolute top-10 left-4 right-4 h-0.5 bg-slate-700/50 rounded-full" />
+				<div 
+					className="absolute top-10 left-4 h-0.5 bg-teal-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(20,184,166,0.8)]"
+					style={{ right: '1rem' }} 
+				/>
+
+				<div className="relative flex justify-between">
+					{graph.platformTimeline.map((pt, idx) => (
+						<div key={pt.platform} className="flex flex-col items-center group relative w-20">
+							<div className="text-xs font-bold text-slate-300 mb-2 whitespace-nowrap capitalize">
+								{pt.platform}
+							</div>
+							
+							<div className="w-4 h-4 rounded-full bg-teal-500 border-4 border-slate-900 z-10 group-hover:scale-150 transition-transform shadow-[0_0_12px_rgba(20,184,166,0.6)]" />
+							
+							<div className="mt-3 text-center">
+								<p className="text-[10px] font-bold text-teal-400">
+									+{pt.timeFromFirstDetectionHours}h
+								</p>
+								<p className="text-[9px] text-slate-500 font-semibold uppercase tracking-widest mt-0.5">
+									{pt.count} copies
+								</p>
+							</div>
+						</div>
+					))}
+				</div>
+			</div>
+		</Card>
+	);
+}
+
 export default function DashboardAnalyticsPage() {
 	const [range, setRange] = useState('30d');
 	const [customDates, setCustomDates] = useState({
@@ -436,23 +523,27 @@ export default function DashboardAnalyticsPage() {
 		return params;
 	}, [customDates.endDate, customDates.startDate, range]);
 
+	const [propagation, setPropagation] = useState(null);
+
 	const loadData = useCallback(async () => {
 		if (range === 'custom' && (!customDates.startDate || !customDates.endDate)) {
 			setOverview(null);
 			setTimeline([]);
 			setPlatforms([]);
 			setKpis(null);
+			setPropagation(null);
 			return;
 		}
 
 		try {
 			setIsLoading(true);
-			const [overviewResponse, timelineResponse, platformsResponse, kpisResponse, reportsResponse] = await Promise.all([
+			const [overviewResponse, timelineResponse, platformsResponse, kpisResponse, reportsResponse, propagationResponse] = await Promise.all([
 				api.get('/analytics/overview', { params: queryParams }),
 				api.get('/analytics/timeline', { params: queryParams }),
 				api.get('/analytics/platforms', { params: queryParams }),
 				api.get('/analytics/kpis', { params: queryParams }),
 				api.get('/reports', { params: { limit: 5 } }),
+				api.get('/analytics/propagation', { params: { ...queryParams, limit: 3 } }),
 			]);
 
 			setOverview(overviewResponse.data);
@@ -460,6 +551,7 @@ export default function DashboardAnalyticsPage() {
 			setPlatforms(platformsResponse.data.items || []);
 			setKpis(kpisResponse.data.kpis || null);
 			setReports(reportsResponse.data?.items || []);
+			setPropagation(propagationResponse.data);
 		} catch {
 			setError('Unable to load analytics right now.');
 		} finally {
@@ -728,6 +820,8 @@ export default function DashboardAnalyticsPage() {
 							)}
 						</Card>
 					</section>
+
+					<ContentDNAPropagationGraph data={propagation} />
 
 					<Card
 						ref={reportsRef}
