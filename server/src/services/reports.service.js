@@ -248,7 +248,11 @@ export async function generateAnalyticsReport({
 	const html = buildReportHtml({ organization, overview, timeline });
 
 	const puppeteer = await import('puppeteer');
-	const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+	const browser = await puppeteer.launch({
+		headless: true,
+		executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+		args: ['--no-sandbox', '--disable-setuid-sandbox'],
+	});
 
 	try {
 		const page = await browser.newPage();
