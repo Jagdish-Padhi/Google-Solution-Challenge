@@ -448,8 +448,8 @@ const seedData = async () => {
 		console.log('-----------------------------------');
 		console.log(`Seeded 1 Org, ${assets.length} Assets, ${scanJobs.length} Scans, ${scanResultData.length} Results, ${violations.length} Violations, ${alertData.length} Alerts.`);
 		console.log('Demo Credentials:');
-		console.log('Email: demo@sportshield.com');
-		console.log('Password: SportShield@123');
+		console.log('Admin Access: demo@sportshield.com / SportShield@123');
+		console.log('Legal Access: legal@sportshield.ai / password123');
 		console.log('-----------------------------------');
 
 		process.exit(0);
