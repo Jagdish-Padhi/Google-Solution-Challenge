@@ -45,6 +45,23 @@ function confidenceVariant(value) {
 	return 'secondary';
 }
 
+function statusVariant(status) {
+	switch (status) {
+		case 'open': return 'danger';
+		case 'reported': return 'warning';
+		case 'resolved': return 'success';
+		case 'false_positive': return 'neutral';
+		default: return 'secondary';
+	}
+}
+
+function statusLabel(status) {
+	switch (status) {
+		case 'false_positive': return 'False Positive';
+		default: return status.charAt(0).toUpperCase() + status.slice(1);
+	}
+}
+
 const getConfidenceBreakdown = (violation) => {
 	const confidence = violation.matchConfidence || 0;
 	const eb = violation.evidenceBundle || {};
@@ -271,7 +288,7 @@ export default function DashboardViolationsPage() {
 						value={filters.status}
 						onChange={(event) => handleFilterChange('status', event.target.value)}
 						options={statusFilters.map(s => ({
-							label: s ? s.replace('_', ' ').charAt(0).toUpperCase() + s.replace('_', ' ').slice(1) : 'All statuses',
+							label: s ? statusLabel(s) : 'All statuses',
 							value: s
 						}))}
 					/>
@@ -365,9 +382,8 @@ export default function DashboardViolationsPage() {
 												</Badge>
 											</td>
 											<td className='px-2 py-4'>
-												<Badge variant='outline' size='sm' className="font-bold uppercase tracking-widest text-[10px]">
-													<div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${item.status === 'resolved' ? 'bg-emerald-500' : (item.status === 'reported' ? 'bg-amber-500' : 'bg-red-500')}`} />
-													{item.status.replace('_', ' ')}
+												<Badge variant={statusVariant(item.status)} size='sm' className="font-black uppercase tracking-widest text-[10px]">
+													{statusLabel(item.status)}
 												</Badge>
 											</td>
 											<td className='px-2 py-4'>
@@ -387,7 +403,7 @@ export default function DashboardViolationsPage() {
 													>
 														{statusOptions.map((status) => (
 															<option key={status} value={status}>
-																{status.replace('_', ' ')}
+																{statusLabel(status)}
 															</option>
 														))}
 													</select>
@@ -565,11 +581,11 @@ export default function DashboardViolationsPage() {
 												onClick={() => updateStatus(selectedViolation._id, status)}
 												className={`px-4 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
 													selectedViolation.status === status 
-													? 'bg-teal-600 text-white shadow-md' 
+													? 'bg-[var(--app-color-primary)] text-white shadow-md' 
 													: 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
 												}`}
 											>
-												{status.replace('_', ' ')}
+												{statusLabel(status)}
 											</button>
 										))}
 									</div>
