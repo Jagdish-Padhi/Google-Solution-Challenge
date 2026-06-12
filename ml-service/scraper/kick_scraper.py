@@ -24,10 +24,8 @@ def scrape_kick(keyword: str, max_results: int = 6) -> list[dict]:
         from googlesearch import search as gsearch
         query = f'site:kick.com "{keyword}" live'
         urls = list(gsearch(query, num_results=max_results, sleep_interval=1))
-    except Exception:
-        # Static mock fallbacks for demo purposes
-        slug = keyword.lower().replace(" ", "")
-        urls = [f"https://kick.com/{slug}live", f"https://kick.com/{slug}hd"]
+    except Exception as e:
+        raise RuntimeError(f"Google Search query failed for Kick scraper: {e}") from e
 
     for url in urls[:max_results]:
         # Clean URL to match channel format https://kick.com/channel_name

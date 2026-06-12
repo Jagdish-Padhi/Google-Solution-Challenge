@@ -24,10 +24,8 @@ def scrape_twitch(keyword: str, max_results: int = 6) -> list[dict]:
         from googlesearch import search as gsearch
         query = f'site:twitch.tv "{keyword}" live'
         urls = list(gsearch(query, num_results=max_results, sleep_interval=1))
-    except Exception:
-        # Static mock fallbacks for demo purposes
-        slug = keyword.lower().replace(" ", "-")
-        urls = [f"https://www.twitch.tv/{slug}_live", f"https://www.twitch.tv/{slug}_stream"]
+    except Exception as e:
+        raise RuntimeError(f"Google Search query failed for Twitch scraper: {e}") from e
 
     for url in urls[:max_results]:
         # Clean URL to match channel format https://www.twitch.tv/channel_name
