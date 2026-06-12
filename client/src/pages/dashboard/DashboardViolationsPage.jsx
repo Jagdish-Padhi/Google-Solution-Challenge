@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { Badge, Button, Card, EmptyState, Loader, Modal, Pagination, Select, Spinner } from '../../components';
 import api from '../../services/api.js';
+import useAuthStore from '../../store/auth.store.js';
 
 const statusFilters = ['', 'open', 'reported', 'resolved', 'false_positive'];
 const platformFilters = ['', 'youtube', 'twitter', 'telegram', 'web'];
@@ -51,6 +52,7 @@ function statusVariant(status) {
 		case 'reported': return 'warning';
 		case 'resolved': return 'success';
 		case 'false_positive': return 'neutral';
+		case 'licensed': return 'success';
 		default: return 'secondary';
 	}
 }
@@ -58,6 +60,7 @@ function statusVariant(status) {
 function statusLabel(status) {
 	switch (status) {
 		case 'false_positive': return 'False Positive';
+		case 'licensed': return 'Licensed';
 		default: return status.charAt(0).toUpperCase() + status.slice(1);
 	}
 }
@@ -114,6 +117,7 @@ const getConfidenceBreakdown = (violation) => {
 
 export default function DashboardViolationsPage() {
 	const { violationId } = useParams();
+	const user = useAuthStore((state) => state.user);
 	const [violations, setViolations] = useState([]);
 	const [selectedViolation, setSelectedViolation] = useState(null);
 	const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -122,7 +126,7 @@ export default function DashboardViolationsPage() {
 	const [filters, setFilters] = useState({
 		status: '',
 		platform: '',
-		minConfidence: 0,
+		minConfidence: user?.role === 'legal' ? 85 : 0,
 	});
 	const [pagination, setPagination] = useState({
 		page: 1,
@@ -134,6 +138,14 @@ export default function DashboardViolationsPage() {
 	const [dmcaContactEmail, setDmcaContactEmail] = useState('');
 	const [dmcaSubject, setDmcaSubject] = useState('');
 	const [isDmcaModalOpen, setIsDmcaModalOpen] = useState(false);
+
+	useEffect(() => {
+		if (user?.role === 'legal') {
+			setFilters(prev => ({ ...prev, minConfidence: 85 }));
+		} else {
+			setFilters(prev => ({ ...prev, minConfidence: 0 }));
+		}
+	}, [user?.role]);
 
 	useEffect(() => {
 		if (violationId) {
@@ -214,6 +226,60 @@ export default function DashboardViolationsPage() {
 			toast.error(message);
 		} finally {
 			setIsDraftingDmca(false);
+		}
+	};
+
+	const [isDownloadingPackage, setIsDownloadingPackage] = useState(false);
+	const handleDownloadEvidencePackage = async () => {
+		if (!selectedViolation?._id) return;
+		setIsDownloadingPackage(true);
+		try {
+			const dmcaResponse = await api.post(`/violations/${selectedViolation._id}/draft-dmca`);
+			const dmcaText = dmcaResponse.data.draft || 'No DMCA generated.';
+
+			const JSZip = (await import('jszip')).default;
+			const zip = new JSZip();
+
+			zip.file("DMCA_Takedown_Notice.txt", dmcaText);
+
+			const metadata = {
+				violationId: selectedViolation._id,
+				detectedAt: selectedViolation.detectedAt,
+				sourceUrl: selectedViolation.sourceUrl,
+				platform: selectedViolation.platform,
+				confidenceScore: selectedViolation.matchConfidence,
+				evidence: selectedViolation.evidenceBundle
+			};
+			zip.file("evidence_metadata.json", JSON.stringify(metadata, null, 2));
+
+			if (selectedViolation.screenshotUrl) {
+				try {
+					const imgRes = await fetch(selectedViolation.screenshotUrl);
+					const imgBlob = await imgRes.blob();
+					zip.file("screenshot.png", imgBlob);
+				} catch (e) {
+					console.error("Failed to fetch screenshot for ZIP:", e);
+					zip.file("screenshot_error.txt", "Failed to download screenshot. URL: " + selectedViolation.screenshotUrl);
+				}
+			}
+
+			const content = await zip.generateAsync({ type: "blob" });
+			const blobUrl = window.URL.createObjectURL(content);
+			
+			const anchor = document.createElement('a');
+			anchor.href = blobUrl;
+			anchor.download = `SportShield_Evidence_${selectedViolation._id}.zip`;
+			document.body.appendChild(anchor);
+			anchor.click();
+			anchor.remove();
+			window.URL.revokeObjectURL(blobUrl);
+
+			toast.success('Evidence package downloaded.');
+		} catch (error) {
+			toast.error('Failed to generate evidence package.');
+			console.error(error);
+		} finally {
+			setIsDownloadingPackage(false);
 		}
 	};
 
@@ -575,15 +641,26 @@ export default function DashboardViolationsPage() {
 							<div className='pt-6 border-t border-(--app-color-border)/50 space-y-6'>
 								<div>
 									<p className='mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-(--app-color-text-muted)'>Primary Enforcement</p>
-									<button
-										onClick={handleDraftDmca}
-										disabled={isDraftingDmca}
-										className='group relative flex h-12 items-center justify-center gap-3 overflow-hidden rounded-xl bg-gradient-to-r from-teal-600 to-slate-900 px-8 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-teal-900/20 transition-all hover:scale-[1.02] hover:shadow-teal-900/30 active:scale-95 disabled:opacity-70 whitespace-nowrap'
-									>
-										<div className='absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700' />
-										{isDraftingDmca ? <Spinner size='xs' /> : <Sparkles size={16} className='animate-pulse' />}
-										<span>Draft DMCA Notice</span>
-									</button>
+									<div className='flex flex-col gap-2'>
+										<button
+											onClick={handleDraftDmca}
+											disabled={isDraftingDmca}
+											className='group relative flex h-12 items-center justify-center gap-3 overflow-hidden rounded-xl bg-gradient-to-r from-teal-600 to-slate-900 px-8 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-teal-900/20 transition-all hover:scale-[1.02] hover:shadow-teal-900/30 active:scale-95 disabled:opacity-70 whitespace-nowrap'
+										>
+											<div className='absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700' />
+											{isDraftingDmca ? <Spinner size='xs' /> : <Sparkles size={16} className='animate-pulse' />}
+											<span>Draft DMCA Notice</span>
+										</button>
+
+										<button
+											onClick={handleDownloadEvidencePackage}
+											disabled={isDownloadingPackage}
+											className='flex h-12 items-center justify-center gap-3 rounded-xl border border-(--app-color-border) bg-(--app-color-surface) px-8 text-xs font-black uppercase tracking-widest text-(--app-color-text) transition-all hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 disabled:opacity-70 whitespace-nowrap'
+										>
+											{isDownloadingPackage ? <Spinner size='xs' /> : <FolderOpen size={16} />}
+											<span>Download Evidence Package (ZIP)</span>
+										</button>
+									</div>
 								</div>
 
 								<div>

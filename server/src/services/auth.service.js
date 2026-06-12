@@ -90,6 +90,7 @@ function createAuthPayload(organization) {
 			email: organization.email,
 			plan: organization.plan,
 			userType: organization.userType || 'broadcaster',
+			role: 'admin', // For demo, primary login is admin
 			notificationPrefs: organization.notificationPrefs,
 			createdAt: organization.createdAt,
 			updatedAt: organization.updatedAt,

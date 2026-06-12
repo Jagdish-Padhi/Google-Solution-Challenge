@@ -29,6 +29,10 @@ export default function DashboardSettingsPage() {
 	const [webhookUrl, setWebhookUrl] = useState('');
 	const [lastDigestSentAt, setLastDigestSentAt] = useState(null);
 
+	const [inviteEmail, setInviteEmail] = useState('');
+	const [inviteRole, setInviteRole] = useState('analyst');
+	const [isInviting, setIsInviting] = useState(false);
+
 	const loadOrg = useCallback(async () => {
 		try {
 			const response = await api.get('/organization/me');
@@ -98,6 +102,24 @@ export default function DashboardSettingsPage() {
 			toast.error('Failed to trigger weekly digest.');
 		} finally {
 			setIsSendingDigest(false);
+		}
+	};
+
+	const handleInvite = async () => {
+		if (!inviteEmail) return;
+		setIsInviting(true);
+		try {
+			const response = await api.post('/organization/invite', {
+				email: inviteEmail,
+				role: inviteRole
+			});
+			toast.success('Invitation sent.');
+			setOrg(prev => ({ ...prev, members: response.data.members }));
+			setInviteEmail('');
+		} catch (error) {
+			toast.error(error.response?.data?.message || 'Failed to send invite.');
+		} finally {
+			setIsInviting(false);
 		}
 	};
 
@@ -178,6 +200,70 @@ export default function DashboardSettingsPage() {
 						</p>
 					</div>
 				</div>
+			</Card>
+
+			{/* ── Team Management ────────────────────────────────────────── */}
+			<Card
+				className='border-(--app-color-border) shadow-sm'
+				style={{ backgroundColor: 'var(--app-color-surface-panel)' }}
+			>
+				<div className='flex items-center gap-2 mb-1'>
+					<Building2 size={15} className='text-(--app-color-primary) shrink-0' />
+					<h3 className='text-sm font-black uppercase tracking-widest text-(--app-color-text) leading-none'>Team Management</h3>
+				</div>
+				<p className='text-xs text-(--app-color-text-muted) mb-4 leading-relaxed'>
+					Invite team members and assign roles to restrict access to sensitive operations. Legal roles can only view high-confidence violations.
+				</p>
+				
+				<div className='flex flex-wrap gap-2 mb-6'>
+					<input
+						type='email'
+						value={inviteEmail}
+						onChange={(e) => setInviteEmail(e.target.value)}
+						placeholder='colleague@sportshield.com'
+						className='flex-1 rounded-lg border border-(--app-color-border) bg-(--app-color-surface) px-3 py-2 text-sm text-(--app-color-text) placeholder:text-(--app-color-text-muted) focus:border-(--app-color-primary) focus:outline-none transition-colors'
+					/>
+					<select
+						value={inviteRole}
+						onChange={(e) => setInviteRole(e.target.value)}
+						className='rounded-lg border border-(--app-color-border) bg-(--app-color-surface) px-3 py-2 text-sm text-(--app-color-text) focus:border-(--app-color-primary) focus:outline-none transition-colors'
+					>
+						<option value='admin'>Admin (Full Access)</option>
+						<option value='analyst'>Analyst (View & Scan)</option>
+						<option value='legal'>Legal (Only {'>'}85% Violations)</option>
+					</select>
+					<Button onClick={handleInvite} disabled={isInviting || !inviteEmail} className='flex items-center gap-2 h-9 text-xs shrink-0'>
+						{isInviting ? <Spinner size='xs' /> : <Send size={13} />}
+						Send Invite
+					</Button>
+				</div>
+
+				{org?.members?.length > 0 && (
+					<div className='divide-y divide-(--app-color-border)/50 border-t border-(--app-color-border)/50 pt-2'>
+						{org.members.map((member, idx) => (
+							<div key={idx} className='flex items-center justify-between py-3'>
+								<div className='flex items-center gap-3'>
+									<div className='h-8 w-8 rounded-full bg-(--app-color-primary-soft) flex items-center justify-center text-(--app-color-primary) font-bold text-xs uppercase'>
+										{member.email.charAt(0)}
+									</div>
+									<div>
+										<p className='text-sm font-semibold text-(--app-color-text)'>{member.email}</p>
+										<p className='text-xs text-(--app-color-text-muted) capitalize'>{member.role}</p>
+									</div>
+								</div>
+								<div>
+									<span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
+										member.inviteStatus === 'active' 
+										? 'bg-emerald-50 text-emerald-600 border border-emerald-200/70' 
+										: 'bg-amber-50 text-amber-600 border border-amber-200/70'
+									}`}>
+										{member.inviteStatus}
+									</span>
+								</div>
+							</div>
+						))}
+					</div>
+				)}
 			</Card>
 
 			{/* ── Weekly Digest ─────────────────────────────────────────── */}

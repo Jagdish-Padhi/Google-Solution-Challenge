@@ -347,6 +347,11 @@ async function runMatchingForScan({ scanJob, results }) {
 
 			if (confidence > 70) {
 				violationsCount += 1;
+				
+				const isLicensed = asset.licensedDomains?.includes(sourceDomain) || 
+								   asset.licensedPartners?.some(p => p.domain === sourceDomain);
+				const violationStatus = isLicensed ? 'licensed' : 'open';
+
 				const violation = await Violation.create({
 					orgId: scanJob.orgId,
 					assetId: scanJob.assetId,
@@ -362,7 +367,7 @@ async function runMatchingForScan({ scanJob, results }) {
 					screenshotUrl: scanResult.thumbnailUrl || null,
 					matchConfidence: confidence,
 					matchType: match.matchType || 'partial',
-					status: 'open',
+					status: violationStatus,
 					evidenceBundle: {
 						hammingDistance: match.evidenceBundle?.hammingDistance ?? null,
 						colorSimilarity: match.evidenceBundle?.colorSimilarity ?? null,
@@ -377,13 +382,15 @@ async function runMatchingForScan({ scanJob, results }) {
 					detectedAt: new Date(),
 				});
 
-				await createAlertFromViolation({
-					orgId: scanJob.orgId,
-					violationId: violation._id,
-					platform: scanResult.platform,
-					matchConfidence: confidence,
-					sourceUrl: scanResult.sourceUrl,
-				});
+				if (violationStatus !== 'licensed') {
+					await createAlertFromViolation({
+						orgId: scanJob.orgId,
+						violationId: violation._id,
+						platform: scanResult.platform,
+						matchConfidence: confidence,
+						sourceUrl: scanResult.sourceUrl,
+					});
+				}
 			}
 		} catch (error) {
 			console.error(`Matching failed for result ${scanResult._id}:`, error);

@@ -178,7 +178,17 @@ export default function DashboardLayout() {
 					</Link>
 
 					<nav className='hidden items-center gap-1 lg:gap-2 md:flex'>
-						{navigationItems.map((item) => {
+						{navigationItems.filter(item => {
+							if (user?.role === 'legal') {
+								// Legal role only sees dashboard, violations, and alerts
+								return ['/dashboard', '/dashboard/violations', '/dashboard/alerts'].includes(item.path);
+							}
+							if (user?.role === 'analyst') {
+								// Analyst cannot see settings
+								return item.path !== '/dashboard/settings';
+							}
+							return true; // Admin sees all
+						}).map((item) => {
 							const isActive = location.pathname === item.path;
 							const Icon = item.icon;
 
@@ -203,6 +213,20 @@ export default function DashboardLayout() {
 					</nav>
 
 					<div className='flex items-center gap-3 shrink-0'>
+						{/* Demo Role Switcher */}
+						<div className='flex flex-col items-end mr-2'>
+							<span className='text-[9px] font-black uppercase tracking-widest text-(--app-color-text-muted)'>Demo Role View</span>
+							<select 
+								value={user?.role || 'admin'} 
+								onChange={(e) => useAuthStore.getState().setDemoRole(e.target.value)}
+								className='text-xs font-bold bg-transparent border-none text-(--app-color-primary) focus:ring-0 cursor-pointer p-0 appearance-none'
+							>
+								<option value='admin'>Admin</option>
+								<option value='analyst'>Analyst</option>
+								<option value='legal'>Legal</option>
+							</select>
+						</div>
+
 						<div className='tooltip-container'>
 							<div className='flex h-11 w-11 items-center justify-center rounded-full border border-(--app-color-border) bg-white/50 text-(--app-color-primary) transition-all hover:bg-white hover:border-(--app-color-primary)/30 hover:shadow-md cursor-help'>
 								<Building2 size={20} />

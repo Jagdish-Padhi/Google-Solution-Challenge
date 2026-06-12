@@ -27,11 +27,44 @@ organizationRouter.get('/me', async (req, res, next) => {
 				email: organization.email,
 				plan: organization.plan,
 				userType: organization.userType || 'broadcaster',
+				role: 'admin',
+				members: organization.members || [],
 				notificationPrefs: organization.notificationPrefs,
 				createdAt: organization.createdAt,
 				lastLoginAt: organization.lastLoginAt,
 				lastDigestSentAt: organization.lastDigestSentAt || null,
 			},
+		});
+	} catch (error) {
+		return next(error);
+	}
+});
+
+organizationRouter.post('/invite', async (req, res, next) => {
+	try {
+		// Only admin can invite (or default main user)
+		// For this demo, we'll assume the logged-in user can invite if they are the primary org owner
+		const { email, role } = req.body;
+		if (!email || !role) {
+			return res.status(400).json({ message: 'Email and role are required.' });
+		}
+
+		const org = await Organization.findById(req.auth.orgId);
+		if (!org) {
+			return res.status(404).json({ message: 'Organization not found.' });
+		}
+
+		// check if already a member
+		if (org.members.some((m) => m.email === email)) {
+			return res.status(400).json({ message: 'User is already a member.' });
+		}
+
+		org.members.push({ email, role, inviteStatus: 'pending', joinedAt: null });
+		await org.save();
+
+		return res.status(200).json({
+			message: 'Invitation sent.',
+			members: org.members,
 		});
 	} catch (error) {
 		return next(error);
