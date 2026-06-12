@@ -19,11 +19,13 @@ import {
 	LogOut,
 	Radar,
 	ShieldAlert,
+	Tv,
 } from 'lucide-react';
 
 const navigationItems = [
 	{ label: 'Overview', path: '/dashboard', icon: LayoutDashboard },
 	{ label: 'Assets', path: '/dashboard/assets', icon: Layers },
+	{ label: 'Streams', path: '/dashboard/streams', icon: Tv },
 	{ label: 'Scans', path: '/dashboard/scans', icon: Radar },
 	{ label: 'Analytics', path: '/dashboard/analytics', icon: BarChart3 },
 	{ label: 'Alerts', path: '/dashboard/alerts', icon: Bell },

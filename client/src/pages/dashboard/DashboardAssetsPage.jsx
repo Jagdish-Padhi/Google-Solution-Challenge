@@ -99,10 +99,10 @@ export default function DashboardAssetsPage() {
 	async function loadAssets(isBackground = false) {
 		if (!isBackground) setIsLoading(true);
 		setError('');
-
 		try {
 			const response = await api.get('/assets?page=1&limit=24');
-			setAssets(response.data.items || []);
+			const allItems = response.data.items || [];
+			setAssets(allItems.filter((asset) => asset.type !== 'livestream'));
 		} catch {
 			if (!isBackground) setError('Unable to load assets right now.');
 		} finally {
@@ -521,7 +521,6 @@ export default function DashboardAssetsPage() {
 						>
 							<option value='video'>Video file</option>
 							<option value='image'>Image file</option>
-							<option value='livestream'>Live HLS/RTMP stream</option>
 						</select>
 					</div>
 
