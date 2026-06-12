@@ -36,8 +36,8 @@ const ASSET_TEMPLATES = [
     }
 ];
 
-const PLATFORMS = ['youtube', 'twitter', 'telegram', 'web'];
-const DOMAINS = ['vipleague.st', 'totalsportek.to', 'hesgoal.com', 'buffstreams.sx', 'piratestream.tv'];
+const PLATFORMS = ['youtube', 'twitter', 'telegram', 'web', 'twitch', 'kick'];
+const DOMAINS = ['vipleague.st', 'totalsportek.to', 'hesgoal.com', 'buffstreams.sx', 'piratestream.tv', 'twitch.tv', 'kick.com'];
 
 async function seed() {
     try {
@@ -102,7 +102,9 @@ async function seed() {
         for (let i = 0; i < totalViolations; i++) {
             const asset = createdAssets[i % createdAssets.length];
             const platform = PLATFORMS[Math.floor(Math.random() * PLATFORMS.length)];
-            const domain = DOMAINS[Math.floor(Math.random() * DOMAINS.length)];
+            let domain = DOMAINS[Math.floor(Math.random() * DOMAINS.length)];
+            if (platform === 'twitch') domain = 'twitch.tv';
+            if (platform === 'kick') domain = 'kick.com';
             
             // Distribute across last 30 days
             const daysAgo = Math.floor(Math.random() * 30);
@@ -112,7 +114,8 @@ async function seed() {
             const statusRand = Math.random();
             const status = statusRand > 0.4 ? 'resolved' : (statusRand > 0.1 ? 'open' : 'false_positive');
             
-            const confidence = 45 + Math.floor(Math.random() * 50);
+            const confPool = [58, 62, 71, 78, 85, 87, 91, 95, 98];
+            const confidence = status === 'false_positive' ? 30 + Math.floor(Math.random() * 20) : confPool[i % confPool.length];
             
             // Generate a realistic sports thumbnail based on the asset
             let screenshotUrl = 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800&q=80'; // Generic Stadium
@@ -146,10 +149,13 @@ async function seed() {
                 discoveryKeyword: asset.tags[Math.floor(Math.random() * asset.tags.length)] + ' free stream',
                 evidenceBundle: {
                     hammingDistance: Math.floor(Math.random() * 15),
-                    colorSimilarity: 0.7 + (Math.random() * 0.25),
+                    colorSimilarity: Number((0.7 + (Math.random() * 0.25)).toFixed(2)),
                     visionConfidenceBoost: confidence > 80 ? 15 : 0,
                     visionLabels: asset.title.includes('Cricket') ? ['cricket', 'stadium', 'batsman'] : ['football', 'stadium', 'goal'],
-                    reasoning: 'AI Vision confirmed semantic match with broadcast elements.'
+                    reasoning: 'AI Vision confirmed semantic match with broadcast elements.',
+                    isMirrored: Math.random() > 0.65,
+                    orbVerified: Math.random() > 0.5,
+                    visionAvailable: Math.random() > 0.15,
                 }
             });
         }

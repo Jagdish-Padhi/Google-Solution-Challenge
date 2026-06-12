@@ -35,7 +35,7 @@ const randomDate = (startDaysAgo, endDaysAgo) => {
 	return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
 };
 
-const platforms = ['youtube', 'twitter', 'telegram', 'web'];
+const platforms = ['youtube', 'twitter', 'telegram', 'web', 'twitch', 'kick'];
 
 // Real discoverable piracy/unofficial stream URLs for demo realism
 // These are real pages that load and demonstrate the kind of content SportShield detects
@@ -70,10 +70,20 @@ const realViolationUrls = {
 		{ url: 'https://t.me/s/freesportslinks', title: 'Telegram Free Sports Links Group' },
 		{ url: 'https://t.me/s/footballstreams24', title: 'Telegram Football Streams 24/7' },
 	],
+	twitch: [
+		{ url: 'https://www.twitch.tv/freestreams247', title: 'Champions League Live Unofficial HD' },
+		{ url: 'https://www.twitch.tv/ezsports_live', title: 'NBA Finals Game 7 Free Broadcast' },
+		{ url: 'https://www.twitch.tv/kickoff_tv', title: 'IPL Live Stream Unlicensed' }
+	],
+	kick: [
+		{ url: 'https://kick.com/sportsstreamer', title: 'IPL 2024 Final Live [FREE]' },
+		{ url: 'https://kick.com/soccerpirate', title: 'UCL Final Real Madrid vs Dortmund Free' },
+		{ url: 'https://kick.com/nbaking', title: 'NBA Live Free Streaming Channel' }
+	]
 };
 
-const domains = ['youtube.com', 'x.com', 't.me', 'reddit.com', 'vimeo.com', 'dailymotion.com', 'facebook.com', 'archive.org'];
-const highRiskDomains = ['t.me', 'reddit.com', 'vimeo.com', 'dailymotion.com']; // Repeat offenders
+const domains = ['youtube.com', 'x.com', 't.me', 'reddit.com', 'vimeo.com', 'dailymotion.com', 'facebook.com', 'archive.org', 'twitch.tv', 'kick.com'];
+const highRiskDomains = ['t.me', 'reddit.com', 'vimeo.com', 'dailymotion.com', 'twitch.tv', 'kick.com']; // Repeat offenders
 
 const seedData = async () => {
 	try {
@@ -228,18 +238,21 @@ const seedData = async () => {
 			
 			// Simulate Repeat Offenders (60% chance to pick from highRiskDomains)
 			const domain = Math.random() > 0.4 ? randomElement(highRiskDomains) : randomElement(domains);
-			const platform = domain === 'youtube.com' ? 'youtube' : domain === 'x.com' ? 'twitter' : domain === 't.me' ? 'telegram' : 'web';
+			const platform = domain === 'youtube.com' ? 'youtube' : domain === 'x.com' ? 'twitter' : domain === 't.me' ? 'telegram' : domain === 'twitch.tv' ? 'twitch' : domain === 'kick.com' ? 'kick' : 'web';
 			
 			// Realistic statuses
 			const statusRand = Math.random();
 			let status = 'open';
 			let resolvedAt = null;
-			let matchConfidence = randomInt(40, 99);
+			
+			// Varied realistic confidence scores
+			const confPool = [58, 62, 71, 78, 85, 87, 91, 95, 98];
+			let matchConfidence = randomElement(confPool);
 			let matchType = matchConfidence > 90 ? 'exact' : matchConfidence > 70 ? 'near-duplicate' : 'partial';
 
 			if (statusRand < 0.15) {
 				status = 'false_positive';
-				matchConfidence = randomInt(30, 60);
+				matchConfidence = randomInt(30, 50);
 				matchType = 'partial';
 			} else if (statusRand < 0.35) {
 				status = 'resolved';
@@ -270,8 +283,12 @@ const seedData = async () => {
 				screenshotUrl,
 				evidenceBundle: {
 					hammingDistance: randomInt(0, 15),
-					colorSimilarity: Number((Math.random() * 0.5 + 0.5).toFixed(2)),
+					colorSimilarity: Number((Math.random() * 0.4 + 0.6).toFixed(2)),
 					frameMatchCount: asset.type !== 'image' ? randomInt(1, 20) : undefined,
+					isMirrored: Math.random() > 0.6,
+					orbVerified: Math.random() > 0.5,
+					visionAvailable: Math.random() > 0.2, // 80% active
+					visionConfidenceBoost: Math.random() > 0.5 ? 14 : 0,
 				},
 				detectedAt,
 				repeatOffenderScore: highRiskDomains.includes(new URL(pickedUrl.url).hostname) ? randomInt(50, 95) : randomInt(0, 30)
