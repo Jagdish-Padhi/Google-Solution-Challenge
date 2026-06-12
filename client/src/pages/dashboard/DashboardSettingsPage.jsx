@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-import { Badge, Button, Card, Loader, Spinner } from '../../components';
+import { Button, Card, Loader, Spinner } from '../../components';
 import api from '../../services/api.js';
 
 export default function DashboardSettingsPage() {
@@ -154,26 +154,23 @@ export default function DashboardSettingsPage() {
 					</div>
 				</div>
 
-				{/* Metadata row — uniform grid columns */}
-				<div className='mt-5 pt-4 border-t border-(--app-color-border)/60 grid grid-cols-1 sm:grid-cols-3 gap-4'>
-					<div>
+				{/* Metadata row — always horizontal, fits comfortably */}
+				<div className='mt-5 pt-4 border-t border-(--app-color-border)/60 flex flex-row items-start gap-10'>
+					<div className='min-w-0'>
 						<p className='text-[10px] font-black uppercase tracking-[0.15em] text-(--app-color-text-muted) mb-1'>Email</p>
-						<p className='text-sm font-medium text-(--app-color-text) flex items-center gap-1.5 truncate'>
+						<p className='text-sm font-medium text-(--app-color-text) flex items-center gap-1.5'>
 							<Mail size={12} className='text-(--app-color-text-muted) shrink-0' />
 							{org?.email}
 						</p>
 					</div>
-					<div>
+					<div className='shrink-0'>
 						<p className='text-[10px] font-black uppercase tracking-[0.15em] text-(--app-color-text-muted) mb-1'>Plan</p>
-						<Badge
-							variant={org?.plan === 'pro' ? 'success' : 'secondary'}
-							size='xs'
-							className='font-black uppercase tracking-widest'
-						>
+						<span className={`inline-flex items-center gap-1 text-xs font-black uppercase tracking-widest ${org?.plan === 'pro' ? 'text-emerald-600' : 'text-(--app-color-text-muted)'}`}>
+							<span className={`h-1.5 w-1.5 rounded-full ${org?.plan === 'pro' ? 'bg-emerald-500' : 'bg-slate-400'}`} />
 							{org?.plan === 'pro' ? 'Pro' : 'Free'}
-						</Badge>
+						</span>
 					</div>
-					<div>
+					<div className='shrink-0'>
 						<p className='text-[10px] font-black uppercase tracking-[0.15em] text-(--app-color-text-muted) mb-1'>Member since</p>
 						<p className='text-sm font-medium text-(--app-color-text) flex items-center gap-1.5'>
 							<Calendar size={12} className='text-(--app-color-text-muted) shrink-0' />
