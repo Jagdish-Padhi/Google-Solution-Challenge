@@ -24,9 +24,9 @@ const Button = ({
 			'bg-[var(--app-color-primary)] text-white hover:bg-[var(--app-color-primary-hover)] active:scale-95',
 		secondary: 'bg-[var(--app-color-surface-elevated)] text-[var(--app-color-text)] border border-[var(--app-color-border)] hover:bg-[var(--app-color-canvas-glow)]',
 		tertiary: 'text-[var(--app-color-primary)] hover:bg-[var(--app-color-primary-soft)]',
-		danger: 'bg-red-600 text-white hover:bg-red-700 active:scale-95',
-		success: 'bg-green-600 text-white hover:bg-green-700 active:scale-95',
-		ghost: 'bg-transparent text-(--app-color-text-muted) hover:bg-(--app-color-surface-elevated)',
+		danger: 'bg-[var(--app-color-danger)] text-white hover:bg-[var(--app-color-danger)]/90 hover:shadow-sm active:scale-95',
+		success: 'bg-[var(--app-color-success)] text-white hover:bg-[var(--app-color-success)]/90 hover:shadow-sm active:scale-95',
+		ghost: 'bg-transparent text-[var(--app-color-text-muted)] hover:bg-[var(--app-color-surface-elevated)]',
 	};
 
 	const sizeStyles = {
