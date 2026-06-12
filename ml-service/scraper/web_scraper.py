@@ -77,12 +77,77 @@ def _scrape_via_googlesearch(keyword: str, max_results: int = 6) -> list[dict]:
         try:
             resp = requests.get(url, headers=_HEADERS, timeout=10)
             soup = BeautifulSoup(resp.text, "html.parser")
+            from urllib.parse import urljoin
             og_img = soup.find("meta", property="og:image")
             thumbnail = og_img["content"] if og_img and og_img.get("content") else ""
 
             if not thumbnail:
                 img_tag = soup.find("img", src=True)
                 thumbnail = img_tag["src"] if img_tag else ""
+
+            if thumbnail:
+                thumbnail = urljoin(url, thumbnail)
+
+            title_tag = soup.find("title")
+            title = title_tag.get_text(strip=True) if title_tag else url
+
+            return {
+                "platform": "web",
+                "sourceUrl": url,
+                "thumbnailUrl": thumbnail,
+                "videoUrl": None,
+                "pageTitle": title,
+                "status": "pending_match",
+                "scrapedAt": now,
+            }
+        except Exception:
+            return None
+
+    with ThreadPoolExecutor(max_workers=max_results) as executor:
+        future_to_url = {executor.submit(_fetch_page_metadata, url): url for url in urls}
+        for future in future_to_url:
+            metadata = future.result()
+            if metadata:
+                results.append(metadata)
+
+    return results
+
+
+def _scrape_via_duckduckgo(keyword: str, max_results: int = 6) -> list[dict]:
+    """
+    Second Fallback: Use DuckDuckGo (HTML search) to get URLs, then extract metadata/og:image.
+    """
+    from scraper.search_utils import search_duckduckgo_links
+    from bs4 import BeautifulSoup
+    from concurrent.futures import ThreadPoolExecutor
+
+    now = datetime.now(timezone.utc).isoformat()
+    results = []
+    query = f'{keyword} highlights'
+
+    try:
+        urls = search_duckduckgo_links(query, max_results=max_results)
+    except Exception as e:
+        print(f"[web_scraper] DuckDuckGo search query failed: {e}")
+        return []
+
+    if not urls:
+        return []
+
+    def _fetch_page_metadata(url):
+        try:
+            resp = requests.get(url, headers=_HEADERS, timeout=10)
+            soup = BeautifulSoup(resp.text, "html.parser")
+            from urllib.parse import urljoin
+            og_img = soup.find("meta", property="og:image")
+            thumbnail = og_img["content"] if og_img and og_img.get("content") else ""
+
+            if not thumbnail:
+                img_tag = soup.find("img", src=True)
+                thumbnail = img_tag["src"] if img_tag else ""
+
+            if thumbnail:
+                thumbnail = urljoin(url, thumbnail)
 
             title_tag = soup.find("title")
             title = title_tag.get_text(strip=True) if title_tag else url
@@ -111,6 +176,29 @@ def _scrape_via_googlesearch(keyword: str, max_results: int = 6) -> list[dict]:
 
 def scrape_web(keyword: str, max_results: int = 6) -> list[dict]:
     """Entry point called by scraper_service. Auto-selects CSE or fallback."""
+    results = []
+
+    # 1. Try Google CSE first if configured
     if GOOGLE_CSE_KEY and GOOGLE_CSE_ID:
-        return _scrape_via_cse(keyword, max_results=max_results)
-    return _scrape_via_googlesearch(keyword, max_results=max_results)
+        try:
+            results = _scrape_via_cse(keyword, max_results=max_results)
+            if results:
+                return results
+        except Exception as e:
+            print(f"[web_scraper] Google CSE search failed: {e}. Falling back to standard search.")
+
+    # 2. Try Google Search fallback
+    try:
+        results = _scrape_via_googlesearch(keyword, max_results=max_results)
+        if results:
+            return results
+    except Exception as e:
+        print(f"[web_scraper] Google Search scraper failed: {e}. Falling back to DuckDuckGo.")
+
+    # 3. Try DuckDuckGo Search fallback
+    try:
+        results = _scrape_via_duckduckgo(keyword, max_results=max_results)
+    except Exception as e:
+        print(f"[web_scraper] DuckDuckGo search scraper failed: {e}")
+
+    return results
