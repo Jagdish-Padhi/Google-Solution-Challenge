@@ -4,12 +4,20 @@ import crypto from 'node:crypto';
 
 import Violation from '../models/violation.model.js';
 
-export async function listViolationsByOrg({ orgId, page = 1, limit = 10, status = '', platform = '', minConfidence = 0 }) {
+export async function listViolationsByOrg({ orgId, page = 1, limit = 10, status = '', platform = '', minConfidence = 0, date = '' }) {
 	const skip = (page - 1) * limit;
 	const query = {
 		orgId,
 		matchConfidence: { $gte: minConfidence },
 	};
+
+	if (date) {
+		const start = new Date(date);
+		start.setHours(0, 0, 0, 0);
+		const end = new Date(date);
+		end.setHours(23, 59, 59, 999);
+		query.detectedAt = { $gte: start, $lte: end };
+	}
 
 	if (status) {
 		query.status = status;

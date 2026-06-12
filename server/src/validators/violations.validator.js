@@ -16,12 +16,15 @@ export function validateListViolationsQuery(query) {
 	const allowedStatuses = new Set(['open', 'reported', 'resolved', 'false_positive']);
 	const allowedPlatforms = new Set(['youtube', 'twitter', 'telegram', 'web']);
 
+	const date = typeof query.date === 'string' ? query.date.trim() : '';
+
 	return {
 		page,
 		limit,
 		status: allowedStatuses.has(status) ? status : '',
 		platform: allowedPlatforms.has(platform) ? platform : '',
 		minConfidence: Number.isNaN(minConfidence) ? 0 : Math.min(100, Math.max(0, minConfidence)),
+		date,
 	};
 }
 
