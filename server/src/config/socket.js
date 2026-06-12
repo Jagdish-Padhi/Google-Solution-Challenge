@@ -96,3 +96,14 @@ export function emitAlertsUpdated({ orgId, unreadCount }) {
 		unreadCount,
 	});
 }
+
+export function emitLivestreamTelemetry({ orgId, jobId, telemetry }) {
+	if (!io) {
+		return;
+	}
+
+	io.to(getSocketRoom(orgId)).emit('livestream:telemetry', {
+		jobId,
+		telemetry,
+	});
+}

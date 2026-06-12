@@ -332,6 +332,9 @@ async function runMatchingForScan({ scanJob, results }) {
 					visionLabelOverlapScore: visionEvidence?.labelOverlapScore ?? null,
 					visionConfidenceBoost: visionEvidence?.confidenceBoost ?? null,
 					visionLabels: visionEvidence?.labelOverlap ?? [],
+					isMirrored: Boolean(match.evidenceBundle?.isMirrored),
+					orbVerified: Boolean(match.evidenceBundle?.orbVerified),
+					visionAvailable: visionEvidence ? Boolean(visionEvidence.available) : null,
 				},
 				persistenceSignals: {
 					domainPriorViolations,
@@ -367,6 +370,9 @@ async function runMatchingForScan({ scanJob, results }) {
 						visionLabelOverlapScore: visionEvidence?.labelOverlapScore ?? null,
 						visionConfidenceBoost: visionEvidence?.confidenceBoost ?? null,
 						visionLabels: visionEvidence?.labelOverlap ?? [],
+						isMirrored: Boolean(match.evidenceBundle?.isMirrored),
+						orbVerified: Boolean(match.evidenceBundle?.orbVerified),
+						visionAvailable: visionEvidence ? Boolean(visionEvidence.available) : null,
 					},
 					detectedAt: new Date(),
 				});
@@ -415,6 +421,7 @@ export async function createScanJob({ orgId, assetId, keywords, platforms, multi
 		orgId,
 		assetId,
 		status: 'queued',
+		multiLanguage,
 		platforms,
 		keywords: expandedKeywords,
 		resultsCount: 0,
@@ -639,6 +646,7 @@ export async function getAssetsForScheduledScans() {
 
 const activeMonitors = new Map();
 const livestreamReconnects = new Map();
+const livestreamTelemetryStats = new Map();
 
 export async function stopLiveStreamJob({ orgId, scanJobId }) {
 	const scanJob = await ScanJob.findOne({ _id: scanJobId, orgId });
@@ -654,6 +662,7 @@ export async function stopLiveStreamJob({ orgId, scanJobId }) {
 		ffmpeg.kill('SIGKILL');
 		activeMonitors.delete(jobIdStr);
 	}
+	livestreamTelemetryStats.delete(jobIdStr);
 
 	scanJob.status = 'completed';
 	scanJob.progress = 100;
@@ -839,6 +848,32 @@ async function processLiveStreamFrame(jpegFrame, scanJob, asset) {
 			type: { $ne: 'livestream' },
 			status: 'active'
 		}).lean();
+
+		const jobIdStr = scanJob._id.toString();
+		if (!livestreamTelemetryStats.has(jobIdStr)) {
+			livestreamTelemetryStats.set(jobIdStr, {
+				framesAnalyzed: 0,
+				lastFrameTime: new Date(),
+				matchesChecked: 0
+			});
+		}
+		const stats = livestreamTelemetryStats.get(jobIdStr);
+		stats.framesAnalyzed += 1;
+		stats.lastFrameTime = new Date();
+		stats.matchesChecked = stats.framesAnalyzed * referenceAssets.length;
+
+		// Emit socket telemetry in the background
+		import('../config/socket.js').then(({ emitLivestreamTelemetry }) => {
+			emitLivestreamTelemetry({
+				orgId: scanJob.orgId,
+				jobId: jobIdStr,
+				telemetry: {
+					framesAnalyzed: stats.framesAnalyzed,
+					lastFrameTime: stats.lastFrameTime,
+					matchesChecked: stats.matchesChecked,
+				}
+			});
+		}).catch(err => console.error('[LIVESTREAM TELEMETRY SOCKET ERROR]', err));
 
 		for (const refAsset of referenceAssets) {
 			const refPHashes = [];
