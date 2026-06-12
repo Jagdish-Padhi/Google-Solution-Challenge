@@ -395,8 +395,8 @@ export default function DashboardAssetsPage() {
 										style={{ backgroundColor: 'var(--app-color-surface)' }}
 										onClick={() => !isProcessing && handleOpenDetail(asset)}
 									>
-										{(asset.thumbnailUrl || asset.gcsUrl) ? (
-											<AssetThumbnail src={asset.thumbnailUrl || asset.gcsUrl} alt={asset.title} />
+										{(asset.thumbnailUrl || asset.storageUrl) ? (
+											<AssetThumbnail src={asset.thumbnailUrl || asset.storageUrl} alt={asset.title} />
 										) : null}
 
 										<div className='flex items-start justify-between gap-3'>

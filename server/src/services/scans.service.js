@@ -208,10 +208,10 @@ async function requestVisionVerify({ referenceUrl, candidateUrl, baseConfidence 
 async function runMatchingForScan({ scanJob, results }) {
 	let asset = await Asset.findById(scanJob.assetId).lean();
 
-	if (asset && !asset?.fingerprint?.pHash && asset.gcsUrl) {
+	if (asset && !asset?.fingerprint?.pHash && asset.storageUrl) {
 		await enrichAssetFingerprint({
 			assetId: asset._id.toString(),
-			sourceUrl: asset.gcsUrl,
+			sourceUrl: asset.storageUrl,
 		});
 		asset = await Asset.findById(scanJob.assetId).lean();
 	}
@@ -258,16 +258,16 @@ async function runMatchingForScan({ scanJob, results }) {
 			const match = await requestMatch({
 				scrapedUrl: compareUrl,
 				referenceFingerprint: asset.fingerprint,
-				referenceUrl: asset.thumbnailUrl || asset.gcsUrl,
+				referenceUrl: asset.thumbnailUrl || asset.storageUrl,
 			});
 
 			let confidence = Number(match.matchConfidence || 0);
 			let visionEvidence = null;
 
-			if (confidence >= 40 && confidence < 70 && asset?.gcsUrl && compareUrl) {
+			if (confidence >= 40 && confidence < 70 && asset?.storageUrl && compareUrl) {
 				try {
 					const vision = await requestVisionVerify({
-						referenceUrl: asset.gcsUrl,
+						referenceUrl: asset.storageUrl,
 						candidateUrl: compareUrl,
 						baseConfidence: confidence,
 					});

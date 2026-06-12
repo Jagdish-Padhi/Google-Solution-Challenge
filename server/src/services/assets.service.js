@@ -75,11 +75,11 @@ export async function createAsset({ orgId, title, description, file, publicUrl, 
 	if (type === 'livestream') {
 		assetData.livestreamUrl = livestreamUrl;
 		assetData.storageKey = 'livestream';
-		assetData.gcsUrl = livestreamUrl;
+		assetData.storageUrl = livestreamUrl;
 		assetData.fileSize = 0;
 	} else if (file) {
 		assetData.storageKey = file.filename;
-		assetData.gcsUrl = publicUrl;
+		assetData.storageUrl = publicUrl;
 		assetData.fileSize = file.size;
 	}
 
@@ -153,7 +153,7 @@ export async function suggestKeywordsForAsset({ orgId, assetId, count = 10 }) {
 	const suggestion = await requestSuggestedKeywords({
 		title: asset.title,
 		assetType: asset.type,
-		sourceUrl: asset.gcsUrl,
+		sourceUrl: asset.storageUrl,
 		count,
 	});
 
@@ -205,7 +205,7 @@ export async function retryFingerprint({ orgId, assetId }) {
 
 	void enrichAssetFingerprint({
 		assetId: asset._id.toString(),
-		sourceUrl: asset.gcsUrl,
+		sourceUrl: asset.storageUrl,
 	});
 
 	return asset;

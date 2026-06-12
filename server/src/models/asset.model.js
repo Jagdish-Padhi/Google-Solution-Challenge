@@ -37,7 +37,7 @@ const assetSchema = new mongoose.Schema(
 				return this.type !== 'livestream';
 			},
 		},
-		gcsUrl: {
+		storageUrl: {
 			type: String,
 			required: function () {
 				return this.type !== 'livestream';

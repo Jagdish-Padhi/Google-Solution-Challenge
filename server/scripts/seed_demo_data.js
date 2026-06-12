@@ -80,7 +80,7 @@ async function seed() {
                 status: 'active',
                 violationsFound: 0,
                 storageKey: `assets/${orgId}/${Date.now()}.mp4`,
-                gcsUrl: `https://storage.googleapis.com/sportshield-assets/demo/${template.title.replace(/\s+/g, '_')}.mp4`,
+                storageUrl: `https://storage.googleapis.com/sportshield-assets/demo/${template.title.replace(/\s+/g, '_')}.mp4`,
                 fileSize: 45000000, // 45MB
                 fingerprint: {
                     pHash: 'f0f0f0f0f0f0f0f0',
