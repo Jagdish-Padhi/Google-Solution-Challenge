@@ -28,7 +28,28 @@ const tickAnimationStyles = `
 export default function ReportGenerationModal({ isGenerating, progress, report, onClose, onBackground, onDownload }) {
 	if (!isGenerating && !report) return null;
 
-	const reportUrl = report?.fileUrl?.startsWith('http') ? report.fileUrl : null;
+	const getReportUrl = () => {
+		if (!report?.fileUrl) return null;
+		let url = report.fileUrl;
+		
+		if (window.location.hostname !== 'localhost' && /^https?:\/\/localhost/i.test(url)) {
+			try {
+				const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+				const apiOrigin = new URL(apiBaseUrl).origin;
+				const parsed = new URL(url);
+				url = `${apiOrigin}${parsed.pathname}`;
+			} catch (e) {}
+		}
+
+		if (!/^https?:\/\//i.test(url)) {
+			const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+			const apiOrigin = new URL(apiBaseUrl).origin;
+			url = `${apiOrigin}${url.startsWith('/') ? '' : '/'}${url}`;
+		}
+		return url;
+	};
+
+	const reportUrl = getReportUrl();
 
 	const handleView = () => {
 		if (reportUrl) window.open(reportUrl, '_blank', 'noopener,noreferrer');

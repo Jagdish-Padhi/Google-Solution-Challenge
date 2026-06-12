@@ -39,14 +39,24 @@ function resolveReportDownloadUrl(fileUrl) {
 		return '#';
 	}
 
-	if (/^https?:\/\//i.test(fileUrl)) {
-		return fileUrl;
-	}
+	let resolvedUrl = fileUrl;
 
 	const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 	const apiOrigin = new URL(apiBaseUrl).origin;
 
-	return `${apiOrigin}${fileUrl.startsWith('/') ? '' : '/'}${fileUrl}`;
+	// Resolve absolute localhost URLs if deployed
+	if (window.location.hostname !== 'localhost' && /^https?:\/\/localhost/i.test(resolvedUrl)) {
+		try {
+			const parsed = new URL(resolvedUrl);
+			resolvedUrl = `${apiOrigin}${parsed.pathname}`;
+		} catch (e) {}
+	}
+
+	if (/^https?:\/\//i.test(resolvedUrl)) {
+		return resolvedUrl;
+	}
+
+	return `${apiOrigin}${resolvedUrl.startsWith('/') ? '' : '/'}${resolvedUrl}`;
 }
 
 function inferDownloadFileName(report) {

@@ -9,6 +9,7 @@ import { errorHandler } from './middlewares/error.middleware.js';
 import routes from './routes/index.js';
 
 const app = express();
+app.set('trust proxy', true);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const uploadDirectory = path.resolve(__dirname, '../uploads');

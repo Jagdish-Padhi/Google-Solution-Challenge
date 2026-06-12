@@ -129,6 +129,17 @@ export default function DashboardLayout() {
 		try {
 			// Resolve absolute URL
 			let downloadUrl = report.fileUrl;
+
+			// Auto-correct localhost URLs on deployed environments
+			if (window.location.hostname !== 'localhost' && /^https?:\/\/localhost/i.test(downloadUrl)) {
+				try {
+					const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+					const apiOrigin = new URL(apiBaseUrl).origin;
+					const parsed = new URL(downloadUrl);
+					downloadUrl = `${apiOrigin}${parsed.pathname}`;
+				} catch (e) {}
+			}
+
 			if (!/^https?:\/\//i.test(downloadUrl)) {
 				const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 				const apiOrigin = new URL(apiBaseUrl).origin;
@@ -150,7 +161,7 @@ export default function DashboardLayout() {
 		} catch (error) {
 			console.error('Download error:', error);
 			// Fallback
-			window.open(report.fileUrl, '_blank');
+			window.open(downloadUrl, '_blank');
 		}
 	};
 
