@@ -18,6 +18,7 @@ import {
 	LayoutDashboard,
 	LogOut,
 	Radar,
+	Settings,
 	ShieldAlert,
 	Tv,
 } from 'lucide-react';
@@ -30,6 +31,7 @@ const navigationItems = [
 	{ label: 'Analytics', path: '/dashboard/analytics', icon: BarChart3 },
 	{ label: 'Alerts', path: '/dashboard/alerts', icon: Bell },
 	{ label: 'Violations', path: '/dashboard/violations', icon: ShieldAlert },
+	{ label: 'Settings', path: '/dashboard/settings', icon: Settings },
 ];
 
 const shellBackground = {

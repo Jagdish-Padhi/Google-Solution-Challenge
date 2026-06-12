@@ -5,6 +5,34 @@ import Violation from '../models/violation.model.js';
 // import { sendWeeklyDigestEmail } from '../services/emailService.js';
 
 /**
+ * Core digest logic for a single org.
+ * Exported so it can be called manually (e.g. from the /send-digest API route).
+ * Returns a summary object: { violationCount, sent, skipped }
+ */
+export async function runDigestForOrg(org) {
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+  const violations = await Violation.find({
+    orgId: org._id,
+    detectedAt: { $gte: sevenDaysAgo },
+  }).lean();
+
+  if (violations.length === 0) {
+    return { violationCount: 0, sent: false, skipped: true };
+  }
+
+  // TODO: Send actual email once emailService.js is implemented
+  // await sendWeeklyDigestEmail(org, violations);
+
+  // Stamp the last digest timestamp on the org record
+  await Organization.findByIdAndUpdate(org._id, {
+    lastDigestSentAt: new Date(),
+  });
+
+  return { violationCount: violations.length, sent: true, skipped: false };
+}
+
+/**
  * Weekly digest job — runs every Monday at 9:00 AM.
  * Per plan: aggregate last 7 days violations per org, send digest email
  * to orgs that have emailDigest: true.
@@ -16,31 +44,19 @@ export function startWeeklyDigestJob() {
     console.log('[weeklyDigest] Starting weekly digest job...');
 
     try {
-      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-
       // Only orgs with digest emails enabled
       const orgs = await Organization.find({
         'notificationPrefs.emailDigest': true,
-      }).select('email orgName notificationPrefs');
+      }).select('email orgName notificationPrefs lastDigestSentAt');
 
       let sent = 0;
       let skipped = 0;
 
       for (const org of orgs) {
         try {
-          const violations = await Violation.find({
-            orgId: org._id,
-            detectedAt: { $gte: sevenDaysAgo },
-          }).lean();
-
-          if (violations.length === 0) {
-            skipped++;
-            continue;
-          }
-
-          // TODO: Implement email sending once emailService.js is created
-          // await sendWeeklyDigestEmail(org, violations);
-          sent++;
+          const result = await runDigestForOrg(org);
+          if (result.sent) sent++;
+          else skipped++;
         } catch (orgError) {
           console.error(
             `[weeklyDigest] Failed for org ${org._id}:`,

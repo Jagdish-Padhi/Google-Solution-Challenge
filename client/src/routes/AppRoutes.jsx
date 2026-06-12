@@ -13,6 +13,7 @@ import DashboardScanResultsPage from '../pages/dashboard/DashboardScanResultsPag
 import DashboardAlertsPage from '../pages/dashboard/DashboardAlertsPage.jsx';
 import DashboardAnalyticsPage from '../pages/dashboard/DashboardAnalyticsPage.jsx';
 import DashboardViolationsPage from '../pages/dashboard/DashboardViolationsPage.jsx';
+import DashboardSettingsPage from '../pages/dashboard/DashboardSettingsPage.jsx';
 import useAuthStore from '../store/auth.store.js';
 import GlobalLoader from '../components/loaders/GlobalLoader.jsx';
 
@@ -72,6 +73,7 @@ export default function AppRoutes() {
 						<Route path='/dashboard/alerts' element={<DashboardAlertsPage />} />
 						<Route path='/dashboard/violations' element={<DashboardViolationsPage />} />
 						<Route path='/dashboard/violations/:violationId' element={<DashboardViolationsPage />} />
+						<Route path='/dashboard/settings' element={<DashboardSettingsPage />} />
 					</Route>
 				</Route>
 				<Route path='*' element={<Navigate to='/' replace />} />
