@@ -7,6 +7,7 @@ import {
 	Clock,
 	Mail,
 	Send,
+	User,
 	Webhook,
 	Zap,
 	X,
@@ -20,6 +21,7 @@ import useAuthStore from '../../store/auth.store.js';
 
 export default function DashboardSettingsPage() {
 	const { user, setDemoRole } = useAuthStore();
+	const isCreator = user?.userType === 'creator';
 	const [org, setOrg] = useState(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [isSendingDigest, setIsSendingDigest] = useState(false);
@@ -182,13 +184,15 @@ export default function DashboardSettingsPage() {
 	}
 
 	return (
-		<div className='space-y-6'>
+		<div className='max-w-[1000px] mx-auto space-y-6 lg:space-y-8 p-3 lg:p-6 animate-in fade-in slide-in-from-bottom-2 duration-500'>
 			{/* ── Page header ─────────────────────────────────────────── */}
 			<div className='flex items-start justify-between'>
 				<div>
-					<h2 className='text-2xl font-semibold text-(--app-color-text)'>Organization Settings</h2>
-					<p className='text-sm text-(--app-color-text-muted) mt-0.5'>
-						Manage your organization profile, notification preferences, and proactive monitoring settings.
+					<h2 className='text-2xl font-semibold text-[var(--app-color-text)]'>
+						{isCreator ? 'Account Settings' : 'Organization Settings'}
+					</h2>
+					<p className='text-sm text-[var(--app-color-text-muted)] mt-0.5'>
+						Manage your {isCreator ? 'account' : 'organization'} profile, notification preferences, and proactive monitoring settings.
 					</p>
 				</div>
 			</div>
@@ -200,11 +204,15 @@ export default function DashboardSettingsPage() {
 			>
 				<div className='flex items-center gap-4'>
 					<div className='h-12 w-12 rounded-xl bg-(--app-color-primary-soft) flex items-center justify-center shrink-0'>
-						<Building2 size={22} className='text-(--app-color-primary)' />
+						{isCreator ? <User size={22} className='text-(--app-color-primary)' /> : <Building2 size={22} className='text-(--app-color-primary)' />}
 					</div>
 					<div className='flex-1 min-w-0'>
-						<p className='text-[10px] font-black uppercase tracking-[0.2em] text-(--app-color-text-muted) mb-0.5'>Organization</p>
-						<p className='text-lg font-black text-(--app-color-text) uppercase tracking-tight truncate'>{org?.orgName}</p>
+						<p className='text-[10px] font-black uppercase tracking-[0.2em] text-(--app-color-text-muted) mb-0.5'>
+							{isCreator ? 'Account' : 'Organization'}
+						</p>
+						<p className='text-lg font-black text-(--app-color-text) uppercase tracking-tight truncate'>
+							{isCreator ? user?.name : org?.orgName}
+						</p>
 					</div>
 				</div>
 
@@ -235,10 +243,11 @@ export default function DashboardSettingsPage() {
 			</Card>
 
 			{/* ── Team Management ────────────────────────────────────────── */}
-			<Card
-				className='border-(--app-color-border) shadow-sm'
-				style={{ backgroundColor: 'var(--app-color-surface-panel)' }}
-			>
+			{!isCreator && (
+				<Card
+					className='border-(--app-color-border) shadow-sm'
+					style={{ backgroundColor: 'var(--app-color-surface-panel)' }}
+				>
 				<div className='flex items-center gap-2 mb-1'>
 					<Building2 size={15} className='text-(--app-color-primary) shrink-0' />
 					<h3 className='text-sm font-black uppercase tracking-widest text-(--app-color-text) leading-none'>Team Management</h3>
@@ -334,6 +343,7 @@ export default function DashboardSettingsPage() {
 					</div>
 				)}
 			</Card>
+			)}
 
 			{/* ── Weekly Digest ─────────────────────────────────────────── */}
 			<Card
