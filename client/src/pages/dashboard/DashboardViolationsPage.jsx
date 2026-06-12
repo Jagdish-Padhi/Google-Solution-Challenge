@@ -461,52 +461,66 @@ export default function DashboardViolationsPage() {
 									<p className='text-xs font-semibold uppercase tracking-[0.14em] text-(--app-color-text-muted)'>Confidence score breakdown</p>
 									{(() => {
 										const breakdown = getConfidenceBreakdown(selectedViolation);
+										const eb = selectedViolation.evidenceBundle || {};
+										const rawHash = Math.max(0, 100 - ((eb.hammingDistance ?? 15) * 7.0));
+										const rawColor = Math.min(100, (eb.colorSimilarity ?? 0) * 100.0);
+										const rawFrames = eb.frameMatchCount ? Math.min(100, eb.frameMatchCount * 20) : 0;
+										
+										const renderBar = (percent, colorClass) => (
+											<div className="w-32 h-1.5 rounded-full bg-slate-100 overflow-hidden hidden sm:block">
+												<div style={{ width: `${percent}%` }} className={`h-full ${colorClass}`} />
+											</div>
+										);
+
 										return (
-											<div className="space-y-3">
-												<div className="h-3.5 w-full rounded-full bg-slate-100 overflow-hidden flex shadow-inner">
-													{breakdown.pHash > 0 && (
-														<div style={{ width: `${breakdown.pHash}%` }} className="bg-indigo-500 h-full transition-all" title={`pHash DNA: ${breakdown.pHash}%`} />
-													)}
-													{breakdown.color > 0 && (
-														<div style={{ width: `${breakdown.color}%` }} className="bg-teal-500 h-full transition-all" title={`Color Similarity: ${breakdown.color}%`} />
-													)}
-													{breakdown.frames > 0 && (
-														<div style={{ width: `${breakdown.frames}%` }} className="bg-amber-500 h-full transition-all" title={`Frame Analysis: ${breakdown.frames}%`} />
-													)}
-													{breakdown.orb > 0 && (
-														<div style={{ width: `${breakdown.orb}%` }} className="bg-purple-500 h-full transition-all" title={`ORB Homography Boost: ${breakdown.orb}%`} />
-													)}
-													{breakdown.vision > 0 && (
-														<div style={{ width: `${breakdown.vision}%` }} className="bg-emerald-500 h-full transition-all" title={`Vision AI Boost: ${breakdown.vision}%`} />
-													)}
+											<div className="space-y-3 font-mono text-xs">
+												<div className="flex items-center justify-between text-slate-600">
+													<div className="w-28 font-semibold">pHash Match</div>
+													{renderBar(rawHash, 'bg-indigo-500')}
+													<div className="w-12 text-right">{Math.round(rawHash)}%</div>
+													<div className="w-20 text-right text-indigo-600 font-bold">→ {breakdown.pHash} pts</div>
 												</div>
-												<div className="flex flex-wrap gap-x-4 gap-y-2 text-[10px] font-bold text-slate-500">
-													<div className="flex items-center gap-1">
-														<span className="w-2.5 h-2.5 rounded bg-indigo-500" />
-														<span>pHash DNA ({breakdown.pHash}%)</span>
-													</div>
-													<div className="flex items-center gap-1">
-														<span className="w-2.5 h-2.5 rounded bg-teal-500" />
-														<span>Color Match ({breakdown.color}%)</span>
-													</div>
-													{breakdown.frames > 0 && (
-														<div className="flex items-center gap-1">
-															<span className="w-2.5 h-2.5 rounded bg-amber-500" />
-															<span>Frame DNA ({breakdown.frames}%)</span>
-														</div>
-													)}
-													{breakdown.orb > 0 && (
-														<div className="flex items-center gap-1">
-															<span className="w-2.5 h-2.5 rounded bg-purple-500 animate-pulse" />
-															<span>ORB Boost ({breakdown.orb}%)</span>
-														</div>
-													)}
-													{breakdown.vision > 0 && (
-														<div className="flex items-center gap-1">
-															<span className="w-2.5 h-2.5 rounded bg-emerald-500 animate-pulse" />
-															<span>Vision AI Boost ({breakdown.vision}%)</span>
-														</div>
-													)}
+												<div className="flex items-center justify-between text-slate-600">
+													<div className="w-28 font-semibold">Color Match</div>
+													{renderBar(rawColor, 'bg-teal-500')}
+													<div className="w-12 text-right">{Math.round(rawColor)}%</div>
+													<div className="w-20 text-right text-teal-600 font-bold">→ {breakdown.color} pts</div>
+												</div>
+												<div className="flex items-center justify-between text-slate-600">
+													<div className="w-28 font-semibold">Frame Match</div>
+													{renderBar(rawFrames, 'bg-amber-500')}
+													<div className="w-12 text-right">{Math.round(rawFrames)}%</div>
+													<div className="w-20 text-right text-amber-600 font-bold">→ {breakdown.frames} pts</div>
+												</div>
+												
+												<div className="h-px bg-slate-200 my-2" />
+												
+												<div className="flex items-center justify-between text-slate-600">
+													<div className="w-28 font-semibold">ORB Verified</div>
+													<div className="w-32 hidden sm:block"></div>
+													<div className="w-12 text-right font-bold text-emerald-600">{eb.orbVerified ? '✓' : '—'}</div>
+													<div className="w-20 text-right text-purple-600 font-bold">→ {breakdown.orb > 0 ? `+${breakdown.orb} boost` : '—'}</div>
+												</div>
+												<div className="flex items-center justify-between text-slate-600">
+													<div className="w-28 font-semibold">Mirror Detect</div>
+													<div className="w-32 hidden sm:block"></div>
+													<div className="w-12 text-right font-bold text-amber-600">{eb.isMirrored ? '✓' : '—'}</div>
+													<div className="w-20 text-right text-slate-400 font-bold text-[10px]">{eb.isMirrored ? '(mirrored copy)' : '—'}</div>
+												</div>
+												<div className="flex items-center justify-between text-slate-600">
+													<div className="w-28 font-semibold">Vision API</div>
+													<div className="w-32 hidden sm:block"></div>
+													<div className="w-12 text-right font-bold text-emerald-600">{eb.visionAvailable ? '✓' : '—'}</div>
+													<div className="w-20 text-right text-emerald-600 font-bold">→ {breakdown.vision > 0 ? `+${breakdown.vision} boost` : '—'}</div>
+												</div>
+												
+												<div className="h-px bg-slate-200 my-2" />
+												
+												<div className="flex items-center justify-between">
+													<div className="w-28 font-black text-slate-800 text-sm">Final Score</div>
+													<div className="w-32 hidden sm:block"></div>
+													<div className="w-12"></div>
+													<div className="w-20 text-right text-(--app-color-primary) font-black text-lg">{selectedViolation.matchConfidence}%</div>
 												</div>
 											</div>
 										);

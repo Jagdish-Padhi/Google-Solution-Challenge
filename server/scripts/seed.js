@@ -56,6 +56,9 @@ const realViolationUrls = {
 		{ url: 'https://x.com/search?q=sports+highlights+leaked', title: 'Leaked Sports Highlights - Twitter' },
 	],
 	web: [
+		{ url: 'https://cricfree.sc/watch/ipl-live', title: 'IPL Live Match Free Stream' },
+		{ url: 'https://mylivecricket.com/', title: 'India vs Pakistan Live HD' },
+		{ url: 'https://smartcric.com/', title: 'SmartCric T20 Broadcast' },
 		{ url: 'https://www.reddit.com/r/soccerstreams', title: 'Reddit SoccerStreams - Free UCL Streams' },
 		{ url: 'https://www.reddit.com/r/nbastreams', title: 'Reddit NBA Streams - Watch Free' },
 		{ url: 'https://archive.org/search?query=sports+highlights', title: 'Archive.org Unauthorized Sports Uploads' },
@@ -66,6 +69,7 @@ const realViolationUrls = {
 		{ url: 'https://www.facebook.com/watch/search/?q=ucl+final+stream', title: 'Facebook UCL Final Live Stream' },
 	],
 	telegram: [
+		{ url: 'https://t.me/s/t20_world_cup_live_hindi', title: 'टी20 वर्ल्ड कप लाइव' },
 		{ url: 'https://t.me/s/sportsstreams', title: 'Telegram Sports Streams Channel' },
 		{ url: 'https://t.me/s/freesportslinks', title: 'Telegram Free Sports Links Group' },
 		{ url: 'https://t.me/s/footballstreams24', title: 'Telegram Football Streams 24/7' },
@@ -82,8 +86,8 @@ const realViolationUrls = {
 	]
 };
 
-const domains = ['youtube.com', 'x.com', 't.me', 'reddit.com', 'vimeo.com', 'dailymotion.com', 'facebook.com', 'archive.org', 'twitch.tv', 'kick.com'];
-const highRiskDomains = ['t.me', 'reddit.com', 'vimeo.com', 'dailymotion.com', 'twitch.tv', 'kick.com']; // Repeat offenders
+const domains = ['youtube.com', 'x.com', 't.me', 'reddit.com', 'vimeo.com', 'dailymotion.com', 'facebook.com', 'archive.org', 'twitch.tv', 'kick.com', 'cricfree.sc', 'mylivecricket.com', 'smartcric.com'];
+const highRiskDomains = ['t.me', 'reddit.com', 'vimeo.com', 'dailymotion.com', 'twitch.tv', 'kick.com', 'cricfree.sc', 'mylivecricket.com', 'smartcric.com']; // Repeat offenders
 
 const seedData = async () => {
 	try {
