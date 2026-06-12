@@ -18,9 +18,9 @@ def test_run_scrape_job_returns_results_for_supported_platforms(monkeypatch):
         scraper_service,
         "PLATFORM_HANDLERS",
         {
-            "youtube": lambda _keyword: [_build_item("youtube", "https://youtube.com/watch?v=test1234567")],
-            "web": lambda _keyword: [_build_item("web", "https://example.org/video")],
-            "telegram": lambda _keyword: [_build_item("telegram", "https://t.me/s/example")],
+            "youtube": lambda _keyword, *args, **kwargs: [_build_item("youtube", "https://youtube.com/watch?v=test1234567")],
+            "web": lambda _keyword, *args, **kwargs: [_build_item("web", "https://example.org/video")],
+            "telegram": lambda _keyword, *args, **kwargs: [_build_item("telegram", "https://t.me/s/example")],
         },
     )
 
@@ -38,7 +38,7 @@ def test_run_scrape_job_ignores_unknown_platforms(monkeypatch):
         scraper_service,
         "PLATFORM_HANDLERS",
         {
-            "web": lambda _keyword: [_build_item("web", "https://example.org/video")],
+            "web": lambda _keyword, *args, **kwargs: [_build_item("web", "https://example.org/video")],
         },
     )
 

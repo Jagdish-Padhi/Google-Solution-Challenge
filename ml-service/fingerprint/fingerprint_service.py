@@ -76,6 +76,12 @@ def _to_image_phash(image_rgb: np.ndarray) -> str:
     return str(imagehash.phash(pil_image))
 
 
+def _to_image_phash_flipped(image_rgb: np.ndarray) -> str:
+    pil_image = Image.fromarray(image_rgb)
+    flipped = pil_image.transpose(Image.FLIP_LEFT_RIGHT)
+    return str(imagehash.phash(flipped))
+
+
 def hamming_distance(left: str, right: str) -> int:
     return int(imagehash.hex_to_hash(left) - imagehash.hex_to_hash(right))
 
@@ -89,6 +95,7 @@ def compute_image_fingerprint(file_path: str) -> dict[str, Any]:
 
     return {
         "pHash": _to_image_phash(image_rgb),
+        "pHashFlipped": _to_image_phash_flipped(image_rgb),
         "videoHash": None,
         "colorHistogram": _image_histogram(image_bgr),
         "frameHashes": [],
@@ -122,6 +129,7 @@ def compute_video_fingerprint(file_path: str) -> dict[str, Any]:
     frame_interval = max(int(fps * 2), 1)
     frame_index = 0
     sampled_hashes: list[str] = []
+    sampled_hashes_flipped: list[str] = []
     sampled_histograms: list[list[float]] = []
 
     while True:
@@ -132,6 +140,7 @@ def compute_video_fingerprint(file_path: str) -> dict[str, Any]:
         if frame_index % frame_interval == 0:
             frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
             sampled_hashes.append(_to_image_phash(frame_rgb))
+            sampled_hashes_flipped.append(_to_image_phash_flipped(frame_rgb))
             sampled_histograms.append(_image_histogram(frame_bgr))
 
         frame_index += 1
@@ -146,9 +155,11 @@ def compute_video_fingerprint(file_path: str) -> dict[str, Any]:
 
     return {
         "pHash": sampled_hashes[0] if sampled_hashes else None,
+        "pHashFlipped": sampled_hashes_flipped[0] if sampled_hashes_flipped else None,
         "videoHash": _safe_video_hash(file_path),
         "colorHistogram": color_histogram,
         "frameHashes": sampled_hashes,
+        "frameHashesFlipped": sampled_hashes_flipped,
     }
 
 

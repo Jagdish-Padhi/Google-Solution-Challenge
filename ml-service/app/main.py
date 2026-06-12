@@ -29,6 +29,7 @@ class ScanRequest(BaseModel):
 class MatchRequest(BaseModel):
     scrapedUrl: str
     referenceFingerprint: dict
+    referenceUrl: str | None = None
 
 
 class SuggestKeywordsRequest(BaseModel):
@@ -93,6 +94,7 @@ def match(payload: MatchRequest) -> dict:
         return match_content(
             scraped_url=payload.scrapedUrl,
             reference_fingerprint=payload.referenceFingerprint,
+            reference_url=payload.referenceUrl,
         )
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
