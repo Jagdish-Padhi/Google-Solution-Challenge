@@ -101,6 +101,18 @@ const violationSchema = new mongoose.Schema(
 				type: [String],
 				default: [],
 			},
+			isMirrored: {
+				type: Boolean,
+				default: false,
+			},
+			orbVerified: {
+				type: Boolean,
+				default: false,
+			},
+			visionAvailable: {
+				type: Boolean,
+				default: null,
+			},
 		},
 		detectedAt: {
 			type: Date,
