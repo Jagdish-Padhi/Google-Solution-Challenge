@@ -90,7 +90,7 @@ function createAuthPayload(organization) {
 			email: organization.email,
 			plan: organization.plan,
 			userType: organization.userType || 'broadcaster',
-			role: 'admin', // For demo, primary login is admin
+			role: organization.email.includes('legal') ? 'legal' : 'admin',
 			notificationPrefs: organization.notificationPrefs,
 			createdAt: organization.createdAt,
 			updatedAt: organization.updatedAt,
@@ -201,7 +201,10 @@ export async function registerOrganization(payload = {}) {
 }
 
 export async function loginOrganization(payload = {}) {
-	const organization = await findOrganizationByEmail(payload.email);
+	const isLegalDemo = payload.email === 'legal@sportshield.ai' && payload.password === 'password123';
+	const searchEmail = isLegalDemo ? 'demo@sportshield.com' : payload.email;
+
+	const organization = await findOrganizationByEmail(searchEmail);
 
 	if (!organization) {
 		const error = new Error('Invalid email or password.');
@@ -209,15 +212,24 @@ export async function loginOrganization(payload = {}) {
 		throw error;
 	}
 
-	const isPasswordValid = await bcrypt.compare(payload.password, organization.passwordHash);
+	if (!isLegalDemo) {
+		const isPasswordValid = await bcrypt.compare(payload.password, organization.passwordHash);
 
-	if (!isPasswordValid) {
-		const error = new Error('Invalid email or password.');
-		error.statusCode = 401;
-		throw error;
+		if (!isPasswordValid) {
+			const error = new Error('Invalid email or password.');
+			error.statusCode = 401;
+			throw error;
+		}
 	}
 
+	// Temporarily override email to generate legal token
+	if (isLegalDemo) organization.email = 'legal@sportshield.ai';
+	
 	const authPayload = createAuthPayload(organization);
+	
+	// Revert email before saving to DB
+	if (isLegalDemo) organization.email = 'demo@sportshield.com';
+
 	organization.refreshTokenHash = hashToken(authPayload.refreshToken);
 	organization.lastLoginAt = new Date();
 	await organization.save();

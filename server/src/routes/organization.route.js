@@ -24,10 +24,10 @@ organizationRouter.get('/me', async (req, res, next) => {
 			organization: {
 				id: organization._id.toString(),
 				orgName: organization.orgName,
-				email: organization.email,
+				email: req.auth.email || organization.email,
 				plan: organization.plan,
 				userType: organization.userType || 'broadcaster',
-				role: 'admin',
+				role: (req.auth.email || organization.email).includes('legal') ? 'legal' : 'admin',
 				members: organization.members || [],
 				notificationPrefs: organization.notificationPrefs,
 				createdAt: organization.createdAt,
@@ -81,6 +81,27 @@ organizationRouter.delete('/member/:email', async (req, res, next) => {
 		await org.save();
 
 		return res.status(200).json({ message: 'Member removed.', members: org.members });
+	} catch (error) {
+		return next(error);
+	}
+});
+
+organizationRouter.patch('/member/:email/role', async (req, res, next) => {
+	try {
+		const { email } = req.params;
+		const { role } = req.body;
+		if (!role) return res.status(400).json({ message: 'Role is required.' });
+
+		const org = await Organization.findById(req.auth.orgId);
+		if (!org) return res.status(404).json({ message: 'Organization not found.' });
+
+		const member = org.members.find(m => m.email === email);
+		if (!member) return res.status(404).json({ message: 'Member not found.' });
+
+		member.role = role;
+		await org.save();
+
+		return res.status(200).json({ message: 'Member role updated.', members: org.members });
 	} catch (error) {
 		return next(error);
 	}
