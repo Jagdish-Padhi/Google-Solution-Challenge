@@ -504,26 +504,26 @@ export default function DashboardViolationsPage() {
 				isOpen={isDetailsOpen}
 				onClose={() => setIsDetailsOpen(false)}
 				title='Violation evidence'
-				size='5xl'
+				size='7xl'
 			>
 				{selectedViolation ? (
-					<div className='grid grid-cols-1 gap-6 lg:grid-cols-2 text-sm'>
+					<div className='grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-5 text-sm'>
 						{/* Left Column: Details & Actions */}
-						<div className='flex flex-col justify-between space-y-4'>
+						<div className='flex flex-col justify-between space-y-4 xl:col-span-2'>
 							<div className='space-y-4'>
 								<div className='grid gap-3 sm:grid-cols-2'>
-									<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-3'>
+									<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-3 shadow-sm'>
 										<p className='text-xs uppercase tracking-[0.12em] text-(--app-color-text-muted)'>Match confidence</p>
-										<p className='mt-1 text-xl font-semibold text-(--app-color-text)'>{selectedViolation.matchConfidence}%</p>
+										<p className='mt-1 text-2xl font-black text-(--app-color-text)'>{selectedViolation.matchConfidence}%</p>
 									</div>
-									<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-3'>
+									<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-3 shadow-sm'>
 										<p className='text-xs uppercase tracking-[0.12em] text-(--app-color-text-muted)'>Match type</p>
-										<p className='mt-1 text-xl font-semibold capitalize text-(--app-color-text)'>{selectedViolation.matchType}</p>
+										<p className='mt-1 text-xl font-bold capitalize text-(--app-color-text)'>{selectedViolation.matchType}</p>
 									</div>
 								</div>
 
 								{/* Confidence Breakdown Bar */}
-								<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-4 space-y-3'>
+								<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-4 space-y-3 shadow-sm'>
 									<p className='text-xs font-semibold uppercase tracking-[0.14em] text-(--app-color-text-muted)'>Confidence score breakdown</p>
 									{(() => {
 										const breakdown = getConfidenceBreakdown(selectedViolation);
@@ -533,7 +533,7 @@ export default function DashboardViolationsPage() {
 										const rawFrames = eb.frameMatchCount ? Math.min(100, eb.frameMatchCount * 20) : 0;
 										
 										const renderBar = (percent, colorClass) => (
-											<div className="w-32 h-1.5 rounded-full bg-slate-100 overflow-hidden hidden sm:block">
+											<div className="w-24 lg:w-32 h-1.5 rounded-full bg-slate-100 overflow-hidden hidden sm:block">
 												<div style={{ width: `${percent}%` }} className={`h-full ${colorClass}`} />
 											</div>
 										);
@@ -563,19 +563,19 @@ export default function DashboardViolationsPage() {
 												
 												<div className="flex items-center justify-between text-slate-600">
 													<div className="w-28 font-semibold">ORB Verified</div>
-													<div className="w-32 hidden sm:block"></div>
+													<div className="w-24 lg:w-32 hidden sm:block"></div>
 													<div className="w-12 text-right font-bold text-emerald-600">{eb.orbVerified ? '✓' : '—'}</div>
 													<div className="w-20 text-right text-purple-600 font-bold">→ {breakdown.orb > 0 ? `+${breakdown.orb} boost` : '—'}</div>
 												</div>
 												<div className="flex items-center justify-between text-slate-600">
 													<div className="w-28 font-semibold">Mirror Detect</div>
-													<div className="w-32 hidden sm:block"></div>
+													<div className="w-24 lg:w-32 hidden sm:block"></div>
 													<div className="w-12 text-right font-bold text-amber-600">{eb.isMirrored ? '✓' : '—'}</div>
 													<div className="w-20 text-right text-slate-400 font-bold text-[10px]">{eb.isMirrored ? '(mirrored copy)' : '—'}</div>
 												</div>
 												<div className="flex items-center justify-between text-slate-600">
 													<div className="w-28 font-semibold">Vision API</div>
-													<div className="w-32 hidden sm:block"></div>
+													<div className="w-24 lg:w-32 hidden sm:block"></div>
 													<div className="w-12 text-right font-bold text-emerald-600">{eb.visionAvailable ? '✓' : '—'}</div>
 													<div className="w-20 text-right text-emerald-600 font-bold">→ {breakdown.vision > 0 ? `+${breakdown.vision} boost` : '—'}</div>
 												</div>
@@ -584,7 +584,7 @@ export default function DashboardViolationsPage() {
 												
 												<div className="flex items-center justify-between">
 													<div className="w-28 font-black text-slate-800 text-sm">Final Score</div>
-													<div className="w-32 hidden sm:block"></div>
+													<div className="w-24 lg:w-32 hidden sm:block"></div>
 													<div className="w-12"></div>
 													<div className="w-20 text-right text-(--app-color-primary) font-black text-lg">{selectedViolation.matchConfidence}%</div>
 												</div>
@@ -593,14 +593,13 @@ export default function DashboardViolationsPage() {
 									})()}
 								</div>
 
-								<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-4'>
+								<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-4 shadow-sm'>
 									<p className='text-xs font-semibold uppercase tracking-[0.14em] text-(--app-color-text-muted)'>Evidence explainability</p>
 									<div className='mt-3 grid gap-2 sm:grid-cols-3'>
 										<p className='text-(--app-color-text-muted)'>Hamming: <span className='font-semibold text-(--app-color-text)'>{selectedViolation.evidenceBundle?.hammingDistance ?? '-'}</span></p>
 										<p className='text-(--app-color-text-muted)'>Color: <span className='font-semibold text-(--app-color-text)'>{selectedViolation.evidenceBundle?.colorSimilarity ?? '-'}</span></p>
 										<p className='text-(--app-color-text-muted)'>Frames: <span className='font-semibold text-(--app-color-text)'>{selectedViolation.evidenceBundle?.frameMatchCount ?? '-'}</span></p>
 									</div>
-									
 									<div className="mt-4 pt-3 border-t border-(--app-color-border)/40 flex flex-wrap gap-2 items-center">
 										{selectedViolation.evidenceBundle?.isMirrored && (
 											<Badge variant="warning" size="xs" className="font-bold uppercase tracking-wider bg-amber-50 border-amber-200/50 text-amber-700">
@@ -621,15 +620,15 @@ export default function DashboardViolationsPage() {
 									</div>
 								</div>
 
-								<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-4'>
+								<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-4 shadow-sm'>
 									<p className='text-xs font-semibold uppercase tracking-[0.14em] text-(--app-color-text-muted)'>Source</p>
-									<a href={selectedViolation.sourceUrl} target='_blank' rel='noreferrer' className='mt-1 block break-all text-(--app-color-primary) hover:underline'>
+									<a href={selectedViolation.sourceUrl} target='_blank' rel='noreferrer' className='mt-1 block break-all text-(--app-color-primary) font-medium hover:underline'>
 										{selectedViolation.sourceUrl}
 									</a>
 								</div>
 
 								{selectedViolation.discoveryKeyword && (
-									<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-4'>
+									<div className='rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-4 shadow-sm'>
 										<p className='text-xs font-semibold uppercase tracking-[0.14em] text-(--app-color-text-muted)'>Found via search</p>
 										<p className='mt-1 font-mono text-xs font-semibold text-(--app-color-text) bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded inline-block'>
 											{selectedViolation.discoveryKeyword}
@@ -685,16 +684,25 @@ export default function DashboardViolationsPage() {
 						</div>
 
 						{/* Right Column: Screenshot */}
-						<div className='flex h-full flex-col'>
+						<div className='flex h-full flex-col xl:col-span-3'>
 							{selectedViolation.screenshotUrl ? (
-								<div className='flex h-full flex-col rounded-xl border border-(--app-color-border) bg-(--app-color-surface) p-4'>
-									<p className='mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-(--app-color-text-muted)'>Captured evidence</p>
-									<div className='flex min-h-[300px] flex-1 items-center justify-center overflow-hidden rounded-lg border border-(--app-color-border) bg-black/5 dark:bg-black/20'>
-										<img src={selectedViolation.screenshotUrl} alt='Violation evidence screenshot' className='max-h-[500px] max-w-full object-contain' />
+								<div className='flex h-full flex-col rounded-xl border border-(--app-color-border) bg-(--app-color-surface) shadow-inner overflow-hidden relative group/evidence'>
+									<div className='absolute top-0 inset-x-0 h-12 bg-gradient-to-b from-black/60 to-transparent z-10 flex items-center px-4'>
+										<p className='text-[10px] font-black uppercase tracking-[0.2em] text-white drop-shadow-md flex items-center gap-2'>
+											<span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+											Captured Evidence
+										</p>
+									</div>
+									<div className='flex flex-1 items-center justify-center bg-slate-900/5 dark:bg-black/40 min-h-[400px]'>
+										<img 
+											src={selectedViolation.screenshotUrl} 
+											alt='Violation evidence screenshot' 
+											className='max-h-[65vh] w-full object-contain drop-shadow-2xl' 
+										/>
 									</div>
 								</div>
 							) : (
-								<div className='flex min-h-[300px] flex-1 items-center justify-center rounded-xl border border-dashed border-(--app-color-border) bg-(--app-color-surface) p-4 text-(--app-color-text-muted)'>
+								<div className='flex min-h-[300px] flex-1 items-center justify-center rounded-xl border border-dashed border-(--app-color-border) bg-(--app-color-surface) p-4 text-(--app-color-text-muted) shadow-inner'>
 									No screenshot captured yet.
 								</div>
 							)}
