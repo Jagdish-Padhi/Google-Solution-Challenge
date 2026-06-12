@@ -70,11 +70,10 @@ SportShield is an end-to-end intelligence suite that protects digital assets usi
 |-------------------|-----------------------|--------|
 | **Gemini Pro (Google AI)** | **AI Enforcement:** Generates high-accuracy legal context and platform-specific DMCA drafts in <3s using structured JSON outputs. | 🚀 Active |
 | **Firebase Authentication** | **Identity Management:** Seamless Google One-Tap integration for verified rights-holder sessions. | 🚀 Active |
-| **Google Cloud Platform** | **Microservice Target:** Proposed for serverless Cloud Run deployment to handle bursty ML workloads during live match events. | 🛡️ Target |
+| **Google Cloud Run** | **Target Deployment:** Proposed for serverless execution to handle bursty ML workloads during live match events. | 🛡️ Target |
 | **Chrome DevTools Protocol** | **Evidence Engine:** Native Puppeteer integration for high-fidelity PDF renders and automated screenshot evidence. | 🚀 Active |
 | **Google Search API** | **Smart Scrapers:** Used specialized Puppeteer nodes to bypass **API rate-limits** and monitor dynamic 'pirate' domains in real-time. | 💎 Optimized |
 | **Google Vision AI** | **Hybrid Matching:** Local **pHash & Transformers** used for 1M+ frame analysis to ensure **low-latency throughput** and cost scaling. | 💎 Optimized |
-| **Google Maps Platform** | **Tactical Viz:** SVG-based Geo-Mapping used for **zero-latency distribution tracking** during high-traffic match windows. | 💎 Optimized |
 
 ---
 
