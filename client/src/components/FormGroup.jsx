@@ -1,8 +1,3 @@
-/**
- * FormGroup Component
- * Wrapper for grouping related form fields
- */
-
 const FormGroup = ({
 	children,
 	title = '',

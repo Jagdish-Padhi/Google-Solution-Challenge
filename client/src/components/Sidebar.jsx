@@ -1,8 +1,3 @@
-/**
- * Sidebar Component
- * Collapsible navigation sidebar with menu items
- */
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 

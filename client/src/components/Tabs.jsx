@@ -1,8 +1,3 @@
-/**
- * Tabs Component
- * Tabbed interface for organizing content
- */
-
 import { useState } from 'react';
 
 const Tabs = ({

@@ -142,11 +142,7 @@ organizationRouter.patch('/notification-prefs', async (req, res, next) => {
 	}
 });
 
-/**
- * POST /organization/send-digest
- * Manually trigger the weekly digest for the current org.
- * Used in the settings page for demo purposes.
- */
+	// Manually trigger the weekly digest for the current organization
 organizationRouter.post('/send-digest', async (req, res, next) => {
 	try {
 		const org = await Organization.findById(req.auth.orgId)

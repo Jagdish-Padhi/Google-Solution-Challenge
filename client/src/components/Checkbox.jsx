@@ -1,8 +1,3 @@
-/**
- * Checkbox Component
- * Accessible checkbox with label
- */
-
 const Checkbox = ({
 	checked = false,
 	onChange,

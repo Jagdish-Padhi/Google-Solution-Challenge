@@ -1,8 +1,3 @@
-/**
- * Collapse / Accordion Component
- * Expandable content sections
- */
-
 import { useState } from 'react';
 
 const Collapse = ({

@@ -1,8 +1,3 @@
-/**
- * Toggle Component
- * Switch/Toggle button for boolean states
- */
-
 const Toggle = ({
 	checked = false,
 	onChange,

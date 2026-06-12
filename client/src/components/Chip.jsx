@@ -1,8 +1,3 @@
-/**
- * Chip/Tag Component
- * Small removable badges/chips
- */
-
 const Chip = ({
 	label,
 	onRemove = null,

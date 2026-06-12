@@ -1,9 +1,3 @@
-/**
- * Input Component
- * Reusable text input with label and error states
- * Supports various types: text, email, password, number, etc.
- */
-
 const Input = ({
 	label,
 	type = 'text',

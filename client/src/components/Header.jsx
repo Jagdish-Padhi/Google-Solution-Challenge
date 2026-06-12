@@ -1,10 +1,5 @@
 import { Link } from 'react-router-dom';
 
-/**
- * Header Component
- * Top navigation bar with logo, nav items, and user menu
- */
-
 const Header = ({
 	logo = 'SportShield',
 	logoHref = '/',

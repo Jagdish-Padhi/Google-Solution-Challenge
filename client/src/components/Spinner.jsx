@@ -1,8 +1,3 @@
-/**
- * Spinner Component
- * Loading indicator with multiple sizes and variants
- */
-
 const Spinner = ({
 	size = 'md',
 	variant = 'primary',

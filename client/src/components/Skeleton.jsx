@@ -1,8 +1,3 @@
-/**
- * Skeleton Component
- * Loading skeleton for placeholder while content loads
- */
-
 const Skeleton = ({
 	variant = 'text',
 	width = '100%',

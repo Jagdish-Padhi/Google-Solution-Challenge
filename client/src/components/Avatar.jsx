@@ -1,8 +1,3 @@
-/**
- * Avatar Component
- * Display user avatars with initials or image
- */
-
 const Avatar = ({
 	src = null,
 	initials = '',

@@ -1,8 +1,3 @@
-/**
- * TextArea Component
- * Multi-line text input with character count and resize
- */
-
 const TextArea = ({
 	label,
 	placeholder = '',

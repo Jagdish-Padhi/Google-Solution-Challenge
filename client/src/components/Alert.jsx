@@ -1,7 +1,3 @@
-/**
- * Alert Component
- * Dismissible alert messages for different severity levels*/
-
 const Alert = ({
 	type = 'info',
 	title = '',

@@ -1,8 +1,3 @@
-/**
- * Table Component
- * Reusable data table with sorting, pagination, and responsive design
- */
-
 const Table = ({
 	columns = [],
 	data = [],

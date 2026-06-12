@@ -1,8 +1,3 @@
-/**
- * EmptyState Component
- * Display when no data is available with helpful message
- */
-
 const EmptyState = ({
 	icon: Icon = null,
 	title = 'No data available',

@@ -1,8 +1,3 @@
-/**
- * Breadcrumb Component
- * Navigation breadcrumb trail
- */
-
 const Breadcrumb = ({
 	items = [],
 	separator = '/',
