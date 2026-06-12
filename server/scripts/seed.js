@@ -35,7 +35,7 @@ const randomDate = (startDaysAgo, endDaysAgo) => {
 	return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
 };
 
-const platforms = ['youtube', 'twitter', 'telegram', 'web'];
+const platforms = ['youtube', 'twitter', 'telegram', 'web', 'twitch', 'kick'];
 
 // Real discoverable piracy/unofficial stream URLs for demo realism
 // These are real pages that load and demonstrate the kind of content SportShield detects
@@ -70,10 +70,20 @@ const realViolationUrls = {
 		{ url: 'https://t.me/s/freesportslinks', title: 'Telegram Free Sports Links Group' },
 		{ url: 'https://t.me/s/footballstreams24', title: 'Telegram Football Streams 24/7' },
 	],
+	twitch: [
+		{ url: 'https://www.twitch.tv/freestreams247', title: 'Champions League Live Unofficial HD' },
+		{ url: 'https://www.twitch.tv/ezsports_live', title: 'NBA Finals Game 7 Free Broadcast' },
+		{ url: 'https://www.twitch.tv/kickoff_tv', title: 'IPL Live Stream Unlicensed' }
+	],
+	kick: [
+		{ url: 'https://kick.com/sportsstreamer', title: 'IPL 2024 Final Live [FREE]' },
+		{ url: 'https://kick.com/soccerpirate', title: 'UCL Final Real Madrid vs Dortmund Free' },
+		{ url: 'https://kick.com/nbaking', title: 'NBA Live Free Streaming Channel' }
+	]
 };
 
-const domains = ['youtube.com', 'x.com', 't.me', 'reddit.com', 'vimeo.com', 'dailymotion.com', 'facebook.com', 'archive.org'];
-const highRiskDomains = ['t.me', 'reddit.com', 'vimeo.com', 'dailymotion.com']; // Repeat offenders
+const domains = ['youtube.com', 'x.com', 't.me', 'reddit.com', 'vimeo.com', 'dailymotion.com', 'facebook.com', 'archive.org', 'twitch.tv', 'kick.com'];
+const highRiskDomains = ['t.me', 'reddit.com', 'vimeo.com', 'dailymotion.com', 'twitch.tv', 'kick.com']; // Repeat offenders
 
 const seedData = async () => {
 	try {
@@ -115,7 +125,7 @@ const seedData = async () => {
 				title: 'UEFA Champions League Final: Real Madrid vs Dortmund',
 				description: 'Official 4K broadcast highlights of the 2024 UEFA Champions League Final. Contains exclusive multi-angle camera feeds, post-match celebrations, and official trophy lift. Protected under UEFA Global Rights division.',
 				type: 'video',
-				gcsUrl: 'https://res.cloudinary.com/diqmfvdzi/video/upload/v1714030000/demo/ucl.mp4',
+				storageUrl: 'https://res.cloudinary.com/diqmfvdzi/video/upload/v1714030000/demo/ucl.mp4',
 				// Football/soccer stadium & match - verified Unsplash ID
 				thumbnailUrl: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=800',
 			},
@@ -123,7 +133,7 @@ const seedData = async () => {
 				title: 'NBA Finals: Lakers vs Celtics Game 7',
 				description: 'Full match recording of the historic NBA Finals Game 7. Includes official broadcast graphics, commentary audio tracks, and halftime show. Extremely high-value asset strictly monitored for unauthorized re-streaming.',
 				type: 'video',
-				gcsUrl: 'https://res.cloudinary.com/diqmfvdzi/video/upload/v1714030000/demo/nba.mp4',
+				storageUrl: 'https://res.cloudinary.com/diqmfvdzi/video/upload/v1714030000/demo/nba.mp4',
 				// Basketball game action - verified Unsplash ID
 				thumbnailUrl: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&q=80&w=800',
 			},
@@ -131,7 +141,7 @@ const seedData = async () => {
 				title: "Wimbledon Men's Final Match Point",
 				description: "The defining match point of the Wimbledon Men's Singles Final. Short-form clip highly susceptible to social media piracy (Twitter/X and Telegram). Protected by All England Lawn Tennis Club.",
 				type: 'highlight',
-				gcsUrl: 'https://res.cloudinary.com/diqmfvdzi/video/upload/v1714030000/demo/tennis.mp4',
+				storageUrl: 'https://res.cloudinary.com/diqmfvdzi/video/upload/v1714030000/demo/tennis.mp4',
 				// Tennis player serving on grass court - verified Unsplash ID
 				thumbnailUrl: 'https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?auto=format&fit=crop&q=80&w=800',
 			},
@@ -139,7 +149,7 @@ const seedData = async () => {
 				title: 'UFC 300: Heavyweight Championship Knockout',
 				description: 'Pay-per-view main event knockout sequence from UFC 300. This 30-second clip is the most highly pirated segment of the event. Monitored strictly across Reddit, Telegram, and illegal IPTV streams.',
 				type: 'highlight',
-				gcsUrl: 'https://res.cloudinary.com/diqmfvdzi/video/upload/v1714030000/demo/ufc.mp4',
+				storageUrl: 'https://res.cloudinary.com/diqmfvdzi/video/upload/v1714030000/demo/ufc.mp4',
 				// MMA / boxing gloves - verified Unsplash ID
 				thumbnailUrl: 'https://images.unsplash.com/photo-1599058917212-d750089bc07e?auto=format&fit=crop&q=80&w=800',
 			},
@@ -147,7 +157,7 @@ const seedData = async () => {
 				title: 'Formula 1: Red Bull RB20 Official Reveal',
 				description: 'Pre-season confidential imagery of the Red Bull Racing RB20 aerodynamics package. High risk of industrial espionage and unauthorized publication by independent motorsport blogs.',
 				type: 'image',
-				gcsUrl: 'https://res.cloudinary.com/diqmfvdzi/image/upload/v1714030000/demo/f1.jpg',
+				storageUrl: 'https://res.cloudinary.com/diqmfvdzi/image/upload/v1714030000/demo/f1.jpg',
 				// Formula 1 race car on track - verified Unsplash ID
 				thumbnailUrl: 'https://images.unsplash.com/photo-1541417904950-b855846fe074?auto=format&fit=crop&q=80&w=800',
 			},
@@ -155,7 +165,7 @@ const seedData = async () => {
 				title: 'ICC Cricket World Cup 2024 Official Promo Poster',
 				description: 'High-resolution promotional artwork for the ICC T20 World Cup. Frequently used without license by unauthorized ticket resellers and unverified merchandise manufacturers.',
 				type: 'image',
-				gcsUrl: 'https://res.cloudinary.com/diqmfvdzi/image/upload/v1714030000/demo/cricket.jpg',
+				storageUrl: 'https://res.cloudinary.com/diqmfvdzi/image/upload/v1714030000/demo/cricket.jpg',
 				// Cricket match, batsman hitting - verified Unsplash ID
 				thumbnailUrl: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&q=80&w=800',
 			},
@@ -163,7 +173,7 @@ const seedData = async () => {
 				title: 'Manchester City Official Home Kit 24/25',
 				description: 'Licensed apparel imagery used for counterfeit detection. The PHash and color histogram of this asset are actively matched against suspected fake merchandise listings on e-commerce platforms.',
 				type: 'image',
-				gcsUrl: 'https://res.cloudinary.com/diqmfvdzi/image/upload/v1714030000/demo/jersey.jpg',
+				storageUrl: 'https://res.cloudinary.com/diqmfvdzi/image/upload/v1714030000/demo/jersey.jpg',
 				// Sports jersey / kit on hanger - verified Unsplash ID
 				thumbnailUrl: 'https://images.unsplash.com/photo-1580087256394-dc596e1c8f4f?auto=format&fit=crop&q=80&w=800',
 			},
@@ -171,7 +181,7 @@ const seedData = async () => {
 				title: 'Player Exclusive Sneaker Release (Merch)',
 				description: 'Unreleased limited-edition player signature sneaker. Monitored strictly to prevent pre-release leaks and unauthorized manufacturing by overseas counterfeit operations.',
 				type: 'image',
-				gcsUrl: 'https://res.cloudinary.com/diqmfvdzi/image/upload/v1714030000/demo/sneaker.jpg',
+				storageUrl: 'https://res.cloudinary.com/diqmfvdzi/image/upload/v1714030000/demo/sneaker.jpg',
 				// Sports sneaker close-up - verified Unsplash ID
 				thumbnailUrl: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=800',
 			}
@@ -228,18 +238,21 @@ const seedData = async () => {
 			
 			// Simulate Repeat Offenders (60% chance to pick from highRiskDomains)
 			const domain = Math.random() > 0.4 ? randomElement(highRiskDomains) : randomElement(domains);
-			const platform = domain === 'youtube.com' ? 'youtube' : domain === 'x.com' ? 'twitter' : domain === 't.me' ? 'telegram' : 'web';
+			const platform = domain === 'youtube.com' ? 'youtube' : domain === 'x.com' ? 'twitter' : domain === 't.me' ? 'telegram' : domain === 'twitch.tv' ? 'twitch' : domain === 'kick.com' ? 'kick' : 'web';
 			
 			// Realistic statuses
 			const statusRand = Math.random();
 			let status = 'open';
 			let resolvedAt = null;
-			let matchConfidence = randomInt(40, 99);
+			
+			// Varied realistic confidence scores
+			const confPool = [58, 62, 71, 78, 85, 87, 91, 95, 98];
+			let matchConfidence = randomElement(confPool);
 			let matchType = matchConfidence > 90 ? 'exact' : matchConfidence > 70 ? 'near-duplicate' : 'partial';
 
 			if (statusRand < 0.15) {
 				status = 'false_positive';
-				matchConfidence = randomInt(30, 60);
+				matchConfidence = randomInt(30, 50);
 				matchType = 'partial';
 			} else if (statusRand < 0.35) {
 				status = 'resolved';
@@ -270,8 +283,12 @@ const seedData = async () => {
 				screenshotUrl,
 				evidenceBundle: {
 					hammingDistance: randomInt(0, 15),
-					colorSimilarity: Number((Math.random() * 0.5 + 0.5).toFixed(2)),
+					colorSimilarity: Number((Math.random() * 0.4 + 0.6).toFixed(2)),
 					frameMatchCount: asset.type !== 'image' ? randomInt(1, 20) : undefined,
+					isMirrored: Math.random() > 0.6,
+					orbVerified: Math.random() > 0.5,
+					visionAvailable: Math.random() > 0.2, // 80% active
+					visionConfidenceBoost: Math.random() > 0.5 ? 14 : 0,
 				},
 				detectedAt,
 				repeatOffenderScore: highRiskDomains.includes(new URL(pickedUrl.url).hostname) ? randomInt(50, 95) : randomInt(0, 30)

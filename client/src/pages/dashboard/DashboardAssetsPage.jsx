@@ -82,6 +82,8 @@ export default function DashboardAssetsPage() {
 		title: '',
 		description: '',
 		file: null,
+		type: 'video',
+		livestreamUrl: '',
 	});
 	const [isDragging, setIsDragging] = useState(false);
 	const fileInputRef = useRef(null);
@@ -97,10 +99,10 @@ export default function DashboardAssetsPage() {
 	async function loadAssets(isBackground = false) {
 		if (!isBackground) setIsLoading(true);
 		setError('');
-
 		try {
 			const response = await api.get('/assets?page=1&limit=24');
-			setAssets(response.data.items || []);
+			const allItems = response.data.items || [];
+			setAssets(allItems.filter((asset) => asset.type !== 'livestream'));
 		} catch {
 			if (!isBackground) setError('Unable to load assets right now.');
 		} finally {
@@ -176,6 +178,32 @@ export default function DashboardAssetsPage() {
 	const handleUploadSubmit = async (event) => {
 		event.preventDefault();
 
+		if (uploadForm.type === 'livestream') {
+			if (!uploadForm.livestreamUrl.trim()) {
+				toast.error('Please enter a livestream URL.');
+				return;
+			}
+			setIsSubmitting(true);
+			try {
+				await api.post('/assets/upload', {
+					title: uploadForm.title.trim(),
+					description: uploadForm.description.trim(),
+					type: 'livestream',
+					livestreamUrl: uploadForm.livestreamUrl.trim(),
+				});
+				setIsUploadModalOpen(false);
+				setUploadForm({ title: '', description: '', file: null, type: 'video', livestreamUrl: '' });
+				toast.success('Livestream registered successfully.');
+				await loadAssets(true);
+			} catch (requestError) {
+				const message = requestError.response?.data?.message || 'Failed to register livestream.';
+				toast.error(message);
+			} finally {
+				setIsSubmitting(false);
+			}
+			return;
+		}
+
 		if (!uploadForm.file) {
 			toast.error('Please choose a file before uploading.');
 			return;
@@ -202,7 +230,7 @@ export default function DashboardAssetsPage() {
 			});
 
 			setIsUploadModalOpen(false);
-			setUploadForm({ title: '', description: '', file: null });
+			setUploadForm({ title: '', description: '', file: null, type: 'video', livestreamUrl: '' });
 			toast.success('Asset uploaded. Fingerprint processing started.');
 			await loadAssets(true);
 		} catch (requestError) {
@@ -367,8 +395,8 @@ export default function DashboardAssetsPage() {
 										style={{ backgroundColor: 'var(--app-color-surface)' }}
 										onClick={() => !isProcessing && handleOpenDetail(asset)}
 									>
-										{(asset.thumbnailUrl || asset.gcsUrl) ? (
-											<AssetThumbnail src={asset.thumbnailUrl || asset.gcsUrl} alt={asset.title} />
+										{(asset.thumbnailUrl || asset.storageUrl) ? (
+											<AssetThumbnail src={asset.thumbnailUrl || asset.storageUrl} alt={asset.title} />
 										) : null}
 
 										<div className='flex items-start justify-between gap-3'>
@@ -428,7 +456,7 @@ export default function DashboardAssetsPage() {
 											<div className="mt-4 pt-4 border-t border-(--app-color-border)/50 space-y-3">
 												<div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-(--app-color-text-muted)">
 													<span className="flex items-center gap-1.5 font-bold">
-														{asset.type === 'image' ? <ImageIcon size={12} /> : <FileVideo size={12} />}
+														{asset.type === 'image' ? <ImageIcon size={12} /> : asset.type === 'livestream' ? <Activity size={12} /> : <FileVideo size={12} />}
 														{asset.type}
 													</span>
 													<span className="flex items-center gap-1.5">
@@ -483,51 +511,79 @@ export default function DashboardAssetsPage() {
 						/>
 					</div>
 
-				<div
-					className={`rounded-xl border-2 border-dashed transition-all duration-200 cursor-pointer ${
-						isDragging
-							? 'border-(--app-color-primary) bg-blue-50/50 scale-[1.01]'
-							: uploadForm.file
-								? 'border-emerald-400 bg-emerald-50/50'
-								: 'border-(--app-color-border) bg-(--app-color-surface) hover:border-(--app-color-primary)/60 hover:bg-blue-50/20'
-					}`}
-					onDragEnter={(e) => { e.preventDefault(); setIsDragging(true); }}
-					onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-					onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
-					onDrop={handleFileDrop}
-					onClick={() => fileInputRef.current?.click()}
-				>
-					<input
-						ref={fileInputRef}
-						type='file'
-						accept={acceptedFileTypes}
-						onChange={handleFileSelect}
-						className='hidden'
-					/>
-					<div className='flex flex-col items-center justify-center gap-2 py-8 px-4 select-none pointer-events-none'>
-						{uploadForm.file ? (
-							<>
-								<div className='h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center'>
-									<FileCheck className='h-5 w-5 text-emerald-600' />
-								</div>
-								<p className='text-sm font-bold text-emerald-700 text-center truncate max-w-[240px]'>{uploadForm.file.name}</p>
-								<p className='text-xs text-emerald-600/70'>{(uploadForm.file.size / (1024 * 1024)).toFixed(2)} MB &middot; <span className='underline'>Click to change</span></p>
-							</>
-						) : (
-							<>
-								<div className={`h-12 w-12 rounded-full flex items-center justify-center transition-colors ${isDragging ? 'bg-(--app-color-primary) text-white' : 'bg-(--app-color-surface-elevated) text-(--app-color-text-muted)'}`}>
-									<UploadCloud className='h-6 w-6' />
-								</div>
-								<p className='text-sm font-semibold text-(--app-color-text)'>
-									{isDragging ? 'Drop file here!' : 'Drag & drop or click to browse'}
-								</p>
-								<p className='text-xs text-(--app-color-text-muted)'>MP4, MOV, JPEG, PNG &middot; Max 2 GB</p>
-							</>
-						)}
+					<div>
+						<label className='mb-1 block text-sm font-medium text-(--app-color-text)'>Asset type</label>
+						<select
+							name='type'
+							value={uploadForm.type}
+							onChange={handleUploadFormChange}
+							className='w-full rounded-lg border border-(--app-color-border) bg-(--app-color-surface) px-3 py-2 text-sm text-(--app-color-text) focus:border-(--app-color-primary) focus:outline-none font-bold'
+						>
+							<option value='video'>Video file</option>
+							<option value='image'>Image file</option>
+						</select>
 					</div>
-				</div>
 
-					{isSubmitting && (
+					{uploadForm.type === 'livestream' ? (
+						<div>
+							<label className='mb-1 block text-sm font-medium text-(--app-color-text)'>Livestream stream URL</label>
+							<input
+								type='text'
+								name='livestreamUrl'
+								value={uploadForm.livestreamUrl}
+								onChange={handleUploadFormChange}
+								placeholder='e.g. https://example.com/live/playlist.m3u8 or rtmp://example.com/live/stream'
+								required
+								className='w-full rounded-lg border border-(--app-color-border) bg-(--app-color-surface) px-3 py-2 text-sm text-(--app-color-text) focus:border-(--app-color-primary) focus:outline-none'
+							/>
+						</div>
+					) : (
+						<div
+							className={`rounded-xl border-2 border-dashed transition-all duration-200 cursor-pointer ${
+								isDragging
+									? 'border-(--app-color-primary) bg-blue-50/50 scale-[1.01]'
+									: uploadForm.file
+										? 'border-emerald-400 bg-emerald-50/50'
+										: 'border-(--app-color-border) bg-(--app-color-surface) hover:border-(--app-color-primary)/60 hover:bg-blue-50/20'
+							}`}
+							onDragEnter={(e) => { e.preventDefault(); setIsDragging(true); }}
+							onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+							onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
+							onDrop={handleFileDrop}
+							onClick={() => fileInputRef.current?.click()}
+						>
+							<input
+								ref={fileInputRef}
+								type='file'
+								accept={acceptedFileTypes}
+								onChange={handleFileSelect}
+								className='hidden'
+							/>
+							<div className='flex flex-col items-center justify-center gap-2 py-8 px-4 select-none pointer-events-none'>
+								{uploadForm.file ? (
+									<>
+										<div className='h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center'>
+											<FileCheck className='h-5 w-5 text-emerald-600' />
+										</div>
+										<p className='text-sm font-bold text-emerald-700 text-center truncate max-w-[240px]'>{uploadForm.file.name}</p>
+										<p className='text-xs text-emerald-600/70'>{(uploadForm.file.size / (1024 * 1024)).toFixed(2)} MB &middot; <span className='underline'>Click to change</span></p>
+									</>
+								) : (
+									<>
+										<div className={`h-12 w-12 rounded-full flex items-center justify-center transition-colors ${isDragging ? 'bg-(--app-color-primary) text-white' : 'bg-(--app-color-surface-elevated) text-(--app-color-text-muted)'}`}>
+											<UploadCloud className='h-6 w-6' />
+										</div>
+										<p className='text-sm font-semibold text-(--app-color-text)'>
+											{isDragging ? 'Drop file here!' : 'Drag & drop or click to browse'}
+										</p>
+										<p className='text-xs text-(--app-color-text-muted)'>MP4, MOV, JPEG, PNG &middot; Max 2 GB</p>
+									</>
+								)}
+							</div>
+						</div>
+					)}
+
+					{isSubmitting && uploadForm.type !== 'livestream' && (
 						<div className='space-y-2'>
 							<div className='h-2 w-full overflow-hidden rounded-full bg-(--app-color-surface-elevated)'>
 								<div className='h-full bg-(--app-color-primary) transition-all duration-300' style={{ width: `${uploadProgress}%` }} />
@@ -542,7 +598,7 @@ export default function DashboardAssetsPage() {
 						</Button>
 						<Button type='submit' loading={isSubmitting} disabled={isSubmitting} className="flex items-center gap-2">
 							<UploadCloud size={16} />
-							Upload and fingerprint
+							{uploadForm.type === 'livestream' ? 'Register livestream' : 'Upload and fingerprint'}
 						</Button>
 					</div>
 				</form>
@@ -617,25 +673,39 @@ export default function DashboardAssetsPage() {
 								</p>
 							</div>
 
-							<div className="space-y-1">
-								<p className="text-[10px] font-black uppercase tracking-widest text-(--app-color-text-muted) flex items-center gap-1.5">
-									<Fingerprint size={12} className="text-(--app-color-primary)" />
-									PHash (Image)
-								</p>
-								<p className="text-sm font-mono text-(--app-color-text) bg-(--app-color-surface-elevated) px-2 py-1 rounded-md inline-block">
-									{selectedAsset.fingerprint?.pHash || 'Pending'}
-								</p>
-							</div>
+							{selectedAsset.type === 'livestream' ? (
+								<div className="space-y-1 col-span-2">
+									<p className="text-[10px] font-black uppercase tracking-widest text-(--app-color-text-muted) flex items-center gap-1.5">
+										<Activity size={12} className="text-(--app-color-primary)" />
+										Livestream URL
+									</p>
+									<p className="text-sm font-mono text-(--app-color-text) bg-(--app-color-surface-elevated) px-2 py-1 rounded-md break-all">
+										{selectedAsset.livestreamUrl}
+									</p>
+								</div>
+							) : (
+								<>
+									<div className="space-y-1">
+										<p className="text-[10px] font-black uppercase tracking-widest text-(--app-color-text-muted) flex items-center gap-1.5">
+											<Fingerprint size={12} className="text-(--app-color-primary)" />
+											PHash (Image)
+										</p>
+										<p className="text-sm font-mono text-(--app-color-text) bg-(--app-color-surface-elevated) px-2 py-1 rounded-md inline-block">
+											{selectedAsset.fingerprint?.pHash || 'Pending'}
+										</p>
+									</div>
 
-							<div className="space-y-1">
-								<p className="text-[10px] font-black uppercase tracking-widest text-(--app-color-text-muted) flex items-center gap-1.5">
-									<Activity size={12} className="text-(--app-color-primary)" />
-									Video DNA
-								</p>
-								<p className="text-sm font-mono text-(--app-color-text) bg-(--app-color-surface-elevated) px-2 py-1 rounded-md inline-block">
-									{selectedAsset.fingerprint?.videoHash || 'N/A'}
-								</p>
-							</div>
+									<div className="space-y-1">
+										<p className="text-[10px] font-black uppercase tracking-widest text-(--app-color-text-muted) flex items-center gap-1.5">
+											<Activity size={12} className="text-(--app-color-primary)" />
+											Video DNA
+										</p>
+										<p className="text-sm font-mono text-(--app-color-text) bg-(--app-color-surface-elevated) px-2 py-1 rounded-md inline-block">
+											{selectedAsset.fingerprint?.videoHash || 'N/A'}
+										</p>
+									</div>
+								</>
+							)}
 
 							<div className="space-y-1">
 								<p className="text-[10px] font-black uppercase tracking-widest text-(--app-color-text-muted) flex items-center gap-1.5">

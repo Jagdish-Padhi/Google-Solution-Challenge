@@ -37,7 +37,7 @@ function severityVariant(severity) {
 }
 
 function typeLabel(type) {
-	return type.replace('_', ' ');
+	return type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }
 
 export default function DashboardAlertsPage() {
@@ -265,7 +265,7 @@ export default function DashboardAlertsPage() {
 													<Badge variant={severityVariant(alert.severity)} size='sm' className="font-bold uppercase tracking-wider">
 														{alert.severity}
 													</Badge>
-													<Badge variant='outline' size='sm' className="font-bold uppercase tracking-wider">
+													<Badge variant='neutral' size='sm' className="font-bold uppercase tracking-wider">
 														{typeLabel(alert.type)}
 													</Badge>
 													{!alert.read ? <Badge variant='primary' size='sm' className="font-bold tracking-wider">NEW</Badge> : null}
@@ -327,7 +327,7 @@ export default function DashboardAlertsPage() {
 					<div className='space-y-4 text-sm'>
 						<div className='flex flex-wrap items-center gap-2'>
 							<Badge variant={severityVariant(selectedAlert.severity)}>{selectedAlert.severity}</Badge>
-							<Badge variant='outline'>{typeLabel(selectedAlert.type)}</Badge>
+							<Badge variant='neutral'>{typeLabel(selectedAlert.type)}</Badge>
 							<Badge variant={selectedAlert.read ? 'secondary' : 'primary'}>{selectedAlert.read ? 'Read' : 'Unread'}</Badge>
 						</div>
 

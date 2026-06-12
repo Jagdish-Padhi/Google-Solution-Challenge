@@ -33,6 +33,15 @@ const organizationSchema = new mongoose.Schema(
 			type: Date,
 			default: null,
 		},
+		lastDigestSentAt: {
+			type: Date,
+			default: null,
+		},
+		userType: {
+			type: String,
+			enum: ['broadcaster', 'creator'],
+			default: 'broadcaster',
+		},
 		notificationPrefs: {
 			emailOnHighConfidence: {
 				type: Boolean,
@@ -45,6 +54,10 @@ const organizationSchema = new mongoose.Schema(
 			inAppAlerts: {
 				type: Boolean,
 				default: true,
+			},
+			webhookUrl: {
+				type: String,
+				default: '',
 			},
 		},
 	},

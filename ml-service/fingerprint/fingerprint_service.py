@@ -25,10 +25,56 @@ VIDEO_EXTENSIONS = {".mp4", ".mov", ".avi", ".mkv", ".webm"}
 
 
 def _download_to_tempfile(source_url: str) -> tuple[str, bool]:
+    # Handle base64 Data URIs
+    if isinstance(source_url, str) and source_url.startswith("data:"):
+        import base64
+        try:
+            header, encoded = source_url.split(",", 1)
+            mime_type = "image/jpeg"
+            if ";base64" in header:
+                parts = header.split(";")
+                for part in parts:
+                    if part.startswith("data:"):
+                        mime_type = part.replace("data:", "")
+            
+            data = base64.b64decode(encoded)
+            content_type_suffixes = {
+                "image/jpeg": ".jpg",
+                "image/jpg": ".jpg",
+                "image/png": ".png",
+                "image/webp": ".webp",
+                "image/bmp": ".bmp",
+                "video/mp4": ".mp4",
+                "video/quicktime": ".mov",
+                "video/x-msvideo": ".avi",
+                "video/x-matroska": ".mkv",
+                "video/webm": ".webm",
+            }
+            suffix = content_type_suffixes.get(mime_type, ".bin")
+            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
+                temp_file.write(data)
+                return temp_file.name, True
+        except Exception as e:
+            print(f"[fingerprint_service] Failed to decode data URI: {e}")
+
     parsed = urlparse(source_url)
 
+    # Handle file:// scheme
+    if parsed.scheme == "file":
+        from urllib.request import url2pathname
+        local_path = url2pathname(parsed.path)
+        return local_path, False
+
     if parsed.scheme in {"http", "https"}:
-        with requests.get(source_url, stream=True, timeout=20) as response:
+        headers = {
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/124.0.0.0 Safari/537.36"
+            ),
+            "Accept": "image/avif,image/webp,image/apng,image/*,*/*;q=0.8"
+        }
+        with requests.get(source_url, stream=True, timeout=20, headers=headers) as response:
             response.raise_for_status()
 
             suffix = Path(parsed.path).suffix.lower()
@@ -76,19 +122,41 @@ def _to_image_phash(image_rgb: np.ndarray) -> str:
     return str(imagehash.phash(pil_image))
 
 
+def _to_image_phash_flipped(image_rgb: np.ndarray) -> str:
+    pil_image = Image.fromarray(image_rgb)
+    flipped = pil_image.transpose(Image.FLIP_LEFT_RIGHT)
+    return str(imagehash.phash(flipped))
+
+
 def hamming_distance(left: str, right: str) -> int:
     return int(imagehash.hex_to_hash(left) - imagehash.hex_to_hash(right))
 
 
 def compute_image_fingerprint(file_path: str) -> dict[str, Any]:
-    image_bgr = cv2.imread(file_path)
-    if image_bgr is None:
-        raise ValueError("Unable to read image file for fingerprinting.")
+    image_bgr = None
+    image_rgb = None
 
-    image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
+    # Try decoding with PIL first (extremely robust, avoids Windows/WSL OpenCV bugs & extension issues)
+    try:
+        with Image.open(file_path) as img:
+            img_rgb = img.convert("RGB")
+            image_rgb = np.array(img_rgb)
+            image_bgr = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2BGR)
+    except Exception as pil_err:
+        print(f"[fingerprint_service] PIL decoding failed for {file_path}: {pil_err}")
+
+    # Fallback to cv2.imread if PIL failed
+    if image_bgr is None:
+        image_bgr = cv2.imread(file_path)
+        if image_bgr is not None:
+            image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
+
+    if image_bgr is None or image_rgb is None:
+        raise ValueError("Unable to read image file for fingerprinting.")
 
     return {
         "pHash": _to_image_phash(image_rgb),
+        "pHashFlipped": _to_image_phash_flipped(image_rgb),
         "videoHash": None,
         "colorHistogram": _image_histogram(image_bgr),
         "frameHashes": [],
@@ -122,6 +190,7 @@ def compute_video_fingerprint(file_path: str) -> dict[str, Any]:
     frame_interval = max(int(fps * 2), 1)
     frame_index = 0
     sampled_hashes: list[str] = []
+    sampled_hashes_flipped: list[str] = []
     sampled_histograms: list[list[float]] = []
 
     while True:
@@ -132,6 +201,7 @@ def compute_video_fingerprint(file_path: str) -> dict[str, Any]:
         if frame_index % frame_interval == 0:
             frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
             sampled_hashes.append(_to_image_phash(frame_rgb))
+            sampled_hashes_flipped.append(_to_image_phash_flipped(frame_rgb))
             sampled_histograms.append(_image_histogram(frame_bgr))
 
         frame_index += 1
@@ -146,9 +216,11 @@ def compute_video_fingerprint(file_path: str) -> dict[str, Any]:
 
     return {
         "pHash": sampled_hashes[0] if sampled_hashes else None,
+        "pHashFlipped": sampled_hashes_flipped[0] if sampled_hashes_flipped else None,
         "videoHash": _safe_video_hash(file_path),
         "colorHistogram": color_histogram,
         "frameHashes": sampled_hashes,
+        "frameHashesFlipped": sampled_hashes_flipped,
     }
 
 
@@ -168,7 +240,14 @@ def generate_fingerprint(source_url: str | None = None, local_file_path: str | N
         elif extension in VIDEO_EXTENSIONS:
             fingerprint = compute_video_fingerprint(resolved_path)
         else:
-            raise ValueError("Unsupported file extension for fingerprinting.")
+            # Fallback: try to read by file signature/header (OpenCV/FFmpeg checks content, not extension)
+            try:
+                fingerprint = compute_image_fingerprint(resolved_path)
+            except ValueError:
+                try:
+                    fingerprint = compute_video_fingerprint(resolved_path)
+                except ValueError as error:
+                    raise ValueError(f"Unsupported or corrupted file content: {error}") from error
 
         return {
             "sourceUrl": source_url,

@@ -89,6 +89,7 @@ function createAuthPayload(organization) {
 			orgName: organization.orgName,
 			email: organization.email,
 			plan: organization.plan,
+			userType: organization.userType || 'broadcaster',
 			notificationPrefs: organization.notificationPrefs,
 			createdAt: organization.createdAt,
 			updatedAt: organization.updatedAt,
@@ -179,11 +180,15 @@ export async function registerOrganization(payload = {}) {
 	}
 
 	const passwordHash = await bcrypt.hash(password, 12);
+	const userType = ['broadcaster', 'creator'].includes(payload.userType)
+		? payload.userType
+		: 'broadcaster';
 	const organization = await Organization.create({
 		orgName,
 		email,
 		passwordHash,
 		plan: 'free',
+		userType,
 	});
 
 	const authPayload = createAuthPayload(organization);
@@ -301,6 +306,7 @@ export async function updateOrganizationNotificationPrefs({ organizationId, payl
 		emailOnHighConfidence: Boolean(payload.emailOnHighConfidence),
 		emailDigest: Boolean(payload.emailDigest),
 		inAppAlerts: payload.inAppAlerts === undefined ? true : Boolean(payload.inAppAlerts),
+		webhookUrl: typeof payload.webhookUrl === 'string' ? payload.webhookUrl.trim() : '',
 	};
 
 	return Organization.findByIdAndUpdate(

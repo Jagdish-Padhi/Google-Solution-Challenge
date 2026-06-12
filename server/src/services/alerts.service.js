@@ -46,6 +46,10 @@ export async function createAlertFromViolation({
   const unreadCount = await getUnreadAlertCount(orgId);
   emitAlertsCreated({ orgId, alerts: insertedAlerts, unreadCount });
 
+  for (const alert of insertedAlerts) {
+    void sendWebhookNotification(orgId, alert);
+  }
+
   // ── Email for high-confidence violations ──
   try {
     if (Number(matchConfidence || 0) > 70) {
@@ -108,6 +112,7 @@ export async function checkPlatformSurge({ orgId, platform }) {
 
     const unreadCount = await getUnreadAlertCount(orgId);
     emitAlertsCreated({ orgId, alerts: [surgeAlert], unreadCount });
+    void sendWebhookNotification(orgId, surgeAlert);
 
     // Email surge alert
     const org = await Organization.findById(orgId).select(
@@ -211,4 +216,30 @@ export async function markAllAlertsRead({ orgId }) {
 
 export async function getUnreadAlertCount(orgId) {
   return Alert.countDocuments({ orgId, read: false });
+}
+
+async function sendWebhookNotification(orgId, alert) {
+  try {
+    const org = await Organization.findById(orgId).select('notificationPrefs');
+    const webhookUrl = org?.notificationPrefs?.webhookUrl?.trim();
+    if (!webhookUrl) return;
+
+    await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event: 'alert_created',
+        alert: {
+          id: alert._id.toString(),
+          title: alert.title,
+          message: alert.message,
+          type: alert.type,
+          severity: alert.severity,
+          createdAt: alert.createdAt,
+        },
+      }),
+    });
+  } catch (error) {
+    console.error('[alertService] Webhook post failed:', error.message);
+  }
 }

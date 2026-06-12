@@ -6,6 +6,7 @@ import {
 	listScanResultsByJob,
 	listScanJobsByOrg,
 	retryScanJob,
+	stopLiveStreamJob,
 } from '../services/scans.service.js';
 import {
 	validateListScanResultsQuery,
@@ -110,6 +111,23 @@ export async function runScheduledScansNowController(req, res, next) {
 			message: 'Scheduled scans queued successfully.',
 			queuedJobs: jobs.length,
 			jobIds: jobs.map((job) => job._id.toString()),
+		});
+	} catch (error) {
+		return next(error);
+	}
+}
+
+export async function stopScanController(req, res, next) {
+	try {
+		const scanJob = await stopLiveStreamJob({
+			orgId: req.auth.orgId,
+			scanJobId: req.params.jobId,
+		});
+
+		return res.status(200).json({
+			message: 'Stream monitoring stopped successfully.',
+			scanJobId: scanJob._id.toString(),
+			status: scanJob.status,
 		});
 	} catch (error) {
 		return next(error);

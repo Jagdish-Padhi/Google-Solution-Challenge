@@ -10,7 +10,7 @@ const initialState = {
 
 const useAuthStore = create(
   persist(
-    (set) => ({
+    (set, get) => ({
       ...initialState,
       isTransitioning: false,
       isExiting: false,
@@ -30,6 +30,7 @@ const useAuthStore = create(
       setTransitioning: (isTransitioning, showTagline = false) => 
         set({ isTransitioning, transitionShowTagline: showTagline, isExiting: false }),
       setExiting: (isExiting) => set({ isExiting }),
+      getIsCreator: () => get().user?.userType === 'creator',
     }),
     {
       name: 'sportshield-auth-store',
