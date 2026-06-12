@@ -1,10 +1,22 @@
-import { isValidEmail, validateStringField } from './common.js';
+import { isValidEmail } from './common.js';
 
 function buildResult(valid, errors = []) {
   return {
     valid,
     errors,
   };
+}
+
+/**
+ * Name must be 2-100 chars, start with a letter, and contain only
+ * letters, numbers, spaces, hyphens, apostrophes, and dots.
+ */
+function isValidName(value) {
+  if (typeof value !== 'string') return false;
+  const trimmed = value.trim();
+  if (trimmed.length < 2 || trimmed.length > 100) return false;
+  // Must start with a letter; rest can be letters, digits, spaces, hyphens, apostrophes, dots
+  return /^[A-Za-z][A-Za-z0-9 '\-.]{1,99}$/.test(trimmed);
 }
 
 export function validateRegisterPayload(payload = {}) {
@@ -16,10 +28,8 @@ export function validateRegisterPayload(payload = {}) {
 
   if (!orgName) {
     errors.push('Organization name is required.');
-  } else if (orgName.length < 2) {
-    errors.push('Organization name must be at least 2 characters.');
-  } else if (orgName.length > 100) {
-    errors.push('Organization name must be 100 characters or fewer.');
+  } else if (!isValidName(orgName)) {
+    errors.push('Name must be 2-100 characters, start with a letter, and contain only letters, numbers, spaces, hyphens, or dots.');
   }
 
   if (!email) {

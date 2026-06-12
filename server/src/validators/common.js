@@ -27,13 +27,18 @@ export function isValidUrl(value) {
 }
 
 /**
- * RFC-5322-ish email validation.
- * Covers the vast majority of real-world addresses without false negatives.
+ * Email validation.
+ * Local part must start with a letter or digit.
+ * Allows dots, hyphens, underscores, and plus signs in the middle.
+ * Domain must have at least one dot and a 2+ char TLD.
  */
 export function isValidEmail(value) {
 	if (typeof value !== 'string') return false;
-	// Standard email regex: local@domain.tld
-	return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value.trim());
+	const trimmed = value.trim();
+	if (trimmed.length > 254) return false; // RFC max email length
+	// Local part: starts with alphanumeric, can contain . _ + -
+	// Domain: alphanumeric with hyphens, at least one dot, 2+ char TLD
+	return /^[a-zA-Z0-9][a-zA-Z0-9._+\-]*@[a-zA-Z0-9][a-zA-Z0-9.\-]*\.[a-zA-Z]{2,}$/.test(trimmed);
 }
 
 /**

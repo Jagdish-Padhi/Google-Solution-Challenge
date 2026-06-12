@@ -40,8 +40,26 @@ export default function LoginPage() {
     setFormData((current) => ({ ...current, [name]: value }));
   };
 
+  const isValidEmail = (email) => /^[a-zA-Z0-9][a-zA-Z0-9._+\-]*@[a-zA-Z0-9][a-zA-Z0-9.\-]*\.[a-zA-Z]{2,}$/.test(email);
+
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    const email = formData.email.trim().toLowerCase();
+
+    if (!email) {
+      toast.error('Email address is required.');
+      return;
+    }
+    if (!isValidEmail(email)) {
+      toast.error('Please enter a valid email address.');
+      return;
+    }
+    if (!formData.password) {
+      toast.error('Password is required.');
+      return;
+    }
+
     setIsSubmitting(true);
     setTransitioning(true, true);
 

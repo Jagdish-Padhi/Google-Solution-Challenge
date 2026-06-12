@@ -31,8 +31,38 @@ export default function RegisterPage() {
 		setFormData((current) => ({ ...current, [name]: value }));
 	};
 
+	const isValidName = (name) => /^[A-Za-z][A-Za-z0-9 '\-.]{1,99}$/.test(name);
+	const isValidEmail = (email) => /^[a-zA-Z0-9][a-zA-Z0-9._+\-]*@[a-zA-Z0-9][a-zA-Z0-9.\-]*\.[a-zA-Z]{2,}$/.test(email);
+
 	const handleSubmit = async (event) => {
 		event.preventDefault();
+
+		const name = formData.orgName.trim();
+		const email = formData.email.trim().toLowerCase();
+
+		// ── Client-side validation ──────────────────────────────
+		if (!name) {
+			toast.error('Name is required.');
+			return;
+		}
+		if (!isValidName(name)) {
+			toast.error('Name must start with a letter and contain only letters, numbers, spaces, or hyphens.');
+			return;
+		}
+
+		if (!email) {
+			toast.error('Email address is required.');
+			return;
+		}
+		if (!isValidEmail(email)) {
+			toast.error('Please enter a valid email address (e.g. user@example.com).');
+			return;
+		}
+
+		if (formData.password.length < 8) {
+			toast.error('Password must be at least 8 characters.');
+			return;
+		}
 
 		if (formData.password !== formData.confirmPassword) {
 			toast.error('Passwords do not match.');
