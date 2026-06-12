@@ -158,8 +158,8 @@ export default function DashboardLayout() {
 				/>
 			)}
 			<header className='sticky top-0 z-20 border-b border-white/60 bg-white/75 backdrop-blur-xl'>
-				<Container className='flex min-h-20 items-center justify-between gap-4 py-4'>
-					<Link to='/' className='flex items-center gap-3 group'>
+				<Container size='xl' className='flex min-h-20 items-center justify-between gap-4 py-4'>
+					<Link to='/' className='flex items-center gap-3 group shrink-0'>
 						<img src='/navlogo.png' alt='SportShield' className='h-12 w-12 object-contain transition-transform duration-500 group-hover:scale-110' />
 						<div className="logo-brand">
 							<div className="flex items-baseline gap-0.5">
@@ -169,7 +169,7 @@ export default function DashboardLayout() {
 						</div>
 					</Link>
 
-					<nav className='hidden items-center gap-2 md:flex'>
+					<nav className='hidden items-center gap-1 lg:gap-2 md:flex'>
 						{navigationItems.map((item) => {
 							const isActive = location.pathname === item.path;
 							const Icon = item.icon;
@@ -178,11 +178,11 @@ export default function DashboardLayout() {
 								<Link
 									key={item.path}
 									to={item.path}
-									className={`nav-link-underline px-4 py-2 text-sm font-medium ${isActive ? 'active' : ''}`}
+									className={`nav-link-underline px-2 lg:px-3 xl:px-4 py-2 text-sm font-medium ${isActive ? 'active' : ''}`}
 								>
-									<span className='flex items-center gap-2.5'>
+									<span className='flex items-center gap-2'>
 										<Icon size={16} className={`${isActive ? 'text-(--app-color-success)' : 'text-(--app-color-text-muted)'} transition-colors duration-300`} />
-										{item.label}
+										<span className='hidden lg:inline'>{item.label}</span>
 										{item.label === 'Alerts' && unreadAlerts > 0 ? (
 											<Badge variant='danger' size='sm' className='min-w-6 justify-center px-2 py-0.5 text-[10px]'>
 												{unreadAlerts > 99 ? '99+' : unreadAlerts}
@@ -194,7 +194,7 @@ export default function DashboardLayout() {
 						})}
 					</nav>
 
-					<div className='flex items-center gap-3'>
+					<div className='flex items-center gap-3 shrink-0'>
 						<div className='tooltip-container'>
 							<div className='flex h-11 w-11 items-center justify-center rounded-full border border-(--app-color-border) bg-white/50 text-(--app-color-primary) transition-all hover:bg-white hover:border-(--app-color-primary)/30 hover:shadow-md cursor-help'>
 								<Building2 size={20} />
