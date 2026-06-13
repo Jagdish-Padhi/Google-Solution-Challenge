@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Images, LayoutDashboard, ShieldAlert, Settings, LogOut } from 'lucide-react';
+import { Images, LayoutDashboard, ShieldAlert, Settings, LogOut, User } from 'lucide-react';
 import useAuthStore from '../../store/auth.store.js';
 
 const navigationItems = [
@@ -40,8 +40,11 @@ export default function CreatorLayout() {
 
 				<div className='px-6 py-4'>
 					<div className='mb-6 rounded-xl bg-slate-50 p-4'>
-						<p className='text-[10px] font-black uppercase tracking-widest text-slate-400'>Creator</p>
-						<p className='mt-0.5 truncate text-sm font-bold text-slate-800'>{user?.orgName || 'Independent Creator'}</p>
+						<div className='flex items-center gap-1.5 text-slate-400 mb-1'>
+							<User size={12} className='text-(--app-color-primary)' />
+							<p className='text-[10px] font-black uppercase tracking-widest'>Creator</p>
+						</div>
+						<p className='truncate text-sm font-bold text-slate-800'>{user?.orgName || 'Independent Creator'}</p>
 					</div>
 
 					<nav className='space-y-1.5'>

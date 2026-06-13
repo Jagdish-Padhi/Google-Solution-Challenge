@@ -84,7 +84,9 @@ export default function CreatorPortfolioPage() {
           <UploadCloud size={40} className='mx-auto text-(--app-color-primary)' />
           <h2 className='mt-4 text-xl font-black text-(--app-color-text)'>Your portfolio is empty</h2>
           <p className='mt-2 text-sm text-(--app-color-text-muted)'>Upload your first photo or video to start fingerprinting and protecting it.</p>
-          <Button onClick={() => window.location.assign('/creator')} className='mt-5'>Protect Your First Work →</Button>
+          <div className='mt-5 flex justify-center'>
+            <Button onClick={() => window.location.assign('/creator')}>Protect Your First Work →</Button>
+          </div>
         </Card>
       ) : (
         <div className='grid gap-6 md:grid-cols-2 xl:grid-cols-3'>
