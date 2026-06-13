@@ -6,6 +6,11 @@ function isConfiguredValue(value) {
 	return Boolean(value && !String(value).startsWith('your_'));
 }
 
+//FireStore live feed
+export function getFirestore(projectId) {
+  return initializeFirebaseAdmin(projectId).firestore();
+}
+
 function getServiceAccountFromFile() {
 	const serviceAccountFileUrl = new URL('./serviceAccountKey.json', import.meta.url);
 
