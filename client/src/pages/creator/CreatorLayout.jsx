@@ -1,10 +1,11 @@
 import { useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, ShieldAlert, Settings, LogOut } from 'lucide-react';
+import { Images, LayoutDashboard, ShieldAlert, Settings, LogOut } from 'lucide-react';
 import useAuthStore from '../../store/auth.store.js';
 
 const navigationItems = [
 	{ label: 'My Portfolio', path: '/creator', icon: LayoutDashboard },
+	{ label: 'My Works', path: '/creator/portfolio', icon: Images },
 	{ label: 'Theft Findings', path: '/creator/findings', icon: ShieldAlert },
 	{ label: 'Account', path: '/creator/account', icon: Settings },
 ];
