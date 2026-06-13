@@ -24,6 +24,14 @@ import {
 import { Card, Badge, Button, Loader } from '../../components';
 import api from '../../services/api.js';
 import useAuthStore from '../../store/auth.store.js';
+import { db } from "../auth/firebase.js";
+import {
+  collection,
+  query,
+  orderBy,
+  limit,
+  onSnapshot,
+} from 'firebase/firestore';
 
 const defaultStats = {
   totalAssets: 0,
@@ -105,6 +113,107 @@ export default function DashboardHomePage() {
       window.removeEventListener('sportshield:alerts:new', handleNewAlerts);
     };
   }, []);
+
+  // Firestore live feed
+  useEffect(() => {
+  try {
+    const q = query(
+      collection(db, 'live_violations'),
+      orderBy('createdAt', 'desc'),
+      limit(5)
+    );
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const logs = snapshot.docs.map((doc) => {
+          const violation = doc.data();
+
+          return {
+            id: doc.id,
+            platform: violation.platform || 'web',
+            text: `CRITICAL MATCH FOUND (${violation.confidence}% confidence) - ${violation.sourceUrl}`,
+            time: new Date(
+              violation.detectedAt?.seconds
+                ? violation.detectedAt.seconds * 1000
+                : Date.now()
+            ).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+            }),
+          };
+        });
+
+        setLiveLogs(logs);
+      },
+      (error) => {
+        console.error('Firestore subscription failed:', error);
+      }
+    );
+
+    return () => unsubscribe();
+  } catch (error) {
+    console.error('Firestore initialization failed:', error);
+  }
+}, []);
+
+//FireStore live feed
+useEffect(() => {
+  let unsubscribe;
+  let fallbackInterval;
+
+  const startFallback = () => {
+    if (fallbackInterval) return;
+
+    console.warn(
+      "Firestore subscription failed. Activating fallback feed."
+    );
+
+    // Existing fallback logic
+    fallbackInterval = setInterval(() => {
+      loadDashboardData(true);
+    }, 5000);
+  };
+
+  try {
+    const q = query(
+      collection(db, "live_violations"),
+      orderBy("createdAt", "desc"),
+      limit(5)
+    );
+
+    unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const logs = snapshot.docs.map((doc) => {
+          const violation = doc.data();
+
+          return {
+            id: doc.id,
+            platform: violation.platform || "web",
+            text: `CRITICAL MATCH FOUND (${violation.confidence}% confidence) - ${violation.sourceUrl}`,
+            time: new Date().toLocaleTimeString(),
+          };
+        });
+
+        setLiveLogs(logs);
+      },
+      (error) => {
+        console.error("Firestore subscription failed:", error);
+        startFallback();
+      }
+    );
+  } catch (error) {
+    console.error("Firestore initialization failed:", error);
+    startFallback();
+  }
+
+  return () => {
+    if (unsubscribe) unsubscribe();
+    if (fallbackInterval) clearInterval(fallbackInterval);
+  };
+}, []);
 
   const loadDashboardData = async (silent = false) => {
     try {

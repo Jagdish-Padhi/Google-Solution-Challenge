@@ -8,7 +8,8 @@ import { spawn } from 'node:child_process';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import os from 'node:os';
-
+import { getFirestore } from "../config/firebaseAdmin.js";
+const firestore = getFirestore();
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://localhost:8000';
 const GOOGLE_TRANSLATE_API_URL = 'https://translation.googleapis.com/language/translate/v2';
 const MULTI_LANGUAGE_TARGETS = ['es', 'ar', 'hi', 'pt', 'fr'];
@@ -381,6 +382,28 @@ async function runMatchingForScan({ scanJob, results }) {
 					},
 					detectedAt: new Date(),
 				});
+
+                //Added for firestore live feed
+				try {
+					await firestore
+						.collection("live_violations")
+						.doc(violation._id.toString())
+						.set({
+							id: violation._id.toString(),
+							orgId: violation.orgId.toString(),
+							sourceUrl: violation.sourceUrl,
+							platform: violation.platform,
+							confidence: violation.matchConfidence,
+							status: violation.status,
+							detectedAt: violation.detectedAt,
+							createdAt: new Date(),
+						});
+				} catch (error) {
+					console.error(
+						"[FIRESTORE] Failed to publish violation:",
+						error.message
+					);
+				}
 
 				if (violationStatus !== 'licensed') {
 					await createAlertFromViolation({
@@ -936,6 +959,28 @@ async function processLiveStreamFrame(jpegFrame, scanJob, asset) {
 					},
 					detectedAt: new Date()
 				});
+
+				//Added for firestore live feed
+				try {
+					await firestore
+						.collection("live_violations")
+						.doc(violation._id.toString())
+						.set({
+							id: violation._id.toString(),
+							orgId: violation.orgId.toString(),
+							sourceUrl: violation.sourceUrl,
+							platform: violation.platform,
+							confidence: violation.matchConfidence,
+							status: violation.status,
+							detectedAt: violation.detectedAt,
+							createdAt: new Date(),
+						});
+				} catch (error) {
+					console.error(
+						"[FIRESTORE] Failed to publish violation:",
+						error.message
+					);
+				}
 
 				// Create alert
 				await createAlertFromViolation({
