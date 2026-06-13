@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Camera, PencilLine, Search, Trash2, UploadCloud } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-import { Badge, Button, Card, Spinner } from '../../components';
+import { Badge, Button, Card, Spinner, Loader } from '../../components';
 import api from '../../services/api.js';
 
 export default function CreatorPortfolioPage() {
@@ -66,7 +66,7 @@ export default function CreatorPortfolioPage() {
   if (isLoading) {
     return (
       <div className='flex h-full flex-col items-center justify-center gap-6 py-24 text-sm text-(--app-color-text-muted)'>
-        <Spinner size='md' />
+        <Loader size={0.7} />
         <p className='font-bold uppercase tracking-widest animate-pulse'>Loading portfolio...</p>
       </div>
     );
