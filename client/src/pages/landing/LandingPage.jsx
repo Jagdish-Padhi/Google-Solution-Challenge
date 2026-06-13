@@ -5,6 +5,8 @@ import {
 	BarChart3,
 	BellRing,
 	Box,
+	Cpu,
+	Database,
 	FileSearch,
 	Globe2,
 	Layers3,
@@ -22,44 +24,56 @@ import { Button, Container, Header, Loader, Footer } from '../../components';
 const navItems = [
 	{ label: 'Product', href: '#product', icon: Box },
 	{ label: 'Capabilities', href: '#capabilities', icon: Zap },
-	{ label: 'Security', href: '#security', icon: Lock },
+	{ label: 'Ecosystem', href: '#ecosystem', icon: Layers3 },
 	{ label: 'Contact', href: '#contact', icon: Mail },
 ];
 
 const featureCards = [
 	{
-		title: 'Always-on fingerprinting',
-		description: 'Register images and video clips with multi-signal fingerprints that hold up through crop, compression, reposting, and re-encoding.',
+		title: 'Forensic Fingerprinting',
+		description: 'Onboard image and video assets with multi-signal reference fingerprints resilient against compression, cropping, and mirroring.',
+		tag: 'PATENTED ENGINE',
+		tech: 'Forensics',
 		icon: ShieldCheck,
 		accent: 'from-sky-500/20 to-cyan-500/10',
 	},
 	{
-		title: 'Public web discovery',
-		description: 'Scan social platforms, open web sources, and repeat offender domains with scheduled sweeps and coordinated monitoring.',
+		title: 'Multi-Channel Discovery',
+		description: 'Monitor Twitch, Kick, Telegram public channels, and web URLs with automatic background scrapers and socket telemetry.',
+		tag: 'LIVE WEB SCANNERS',
+		tech: 'Telemetry',
 		icon: Radar,
 		accent: 'from-emerald-500/20 to-teal-500/10',
 	},
 	{
-		title: 'Evidence you can act on',
-		description: 'Every match can carry screenshots, confidence scores, source details, and an audit trail for downstream review.',
+		title: 'Verified Piracy Evidence',
+		description: 'Every match registers visual screenshot evidence, component-level confidence details, and source URLs for downstream compliance review.',
+		tag: 'COMPLIANCE VAULT',
+		tech: 'Evidence',
 		icon: FileSearch,
 		accent: 'from-amber-500/20 to-orange-500/10',
 	},
 	{
-		title: 'Alerting that stays current',
-		description: 'Surface high-confidence violations through unread badges, dashboards, and notification-ready workflows.',
+		title: 'Automated Alerting',
+		description: 'Configure real-time webhook payloads, unread status indicators, and automated Brevo email alerts for instant surge response.',
+		tag: 'ZERO-LATENCY ALERTING',
+		tech: 'Automation',
 		icon: BellRing,
 		accent: 'from-violet-500/20 to-fuchsia-500/10',
 	},
 	{
-		title: 'Board-ready analytics',
-		description: 'Turn violation activity into decision-grade reporting with trends, source mix, and resolution metrics.',
+		title: 'Executive Analytics',
+		description: 'Compile custom-interval PDF intelligence summaries with daily trend timelines, platform risk assessments, and SLA compliance metrics.',
+		tag: 'EXECUTIVE BRIEFINGS',
+		tech: 'Analytics',
 		icon: BarChart3,
 		accent: 'from-indigo-500/20 to-blue-500/10',
 	},
 	{
-		title: 'Global distribution ready',
-		description: 'Built for distributed teams that need a secure, scalable command center for content protection operations.',
+		title: 'Role-Based Workspace',
+		description: 'Collaborate securely with granular Admin, Analyst, and Legal roles. Manage up to 20 workspace members with complete access scoping.',
+		tag: 'ENTERPRISE IDENTITY',
+		tech: 'RBAC Workspace',
 		icon: Globe2,
 		accent: 'from-slate-500/20 to-slate-700/10',
 	},
@@ -67,23 +81,23 @@ const featureCards = [
 
 const workflowSteps = [
 	{
-		title: 'Register assets',
-		description: 'Securely onboard protected content with organization-scoped access and fingerprint metadata.',
+		title: 'Onboard assets',
+		description: 'Register media assets under Broadcaster or Photographer scoped profiles to generate high-fidelity reference fingerprints.',
 		symbol: '01',
 	},
 	{
-		title: 'Monitor the web',
-		description: 'Continuously scan public channels for reposts, mirrors, and unauthorized distribution.',
+		title: 'Active scans run',
+		description: 'Continuously sweep public platforms, live video feeds (Twitch, Kick), and Telegram channels in the background.',
 		symbol: '02',
 	},
 	{
-		title: 'Review evidence',
-		description: 'Validate matches with screenshots, confidence signals, and a clear source history.',
+		title: 'Validate evidence',
+		description: 'Review the matches list, check weighted confidence breakdowns, and inspect auto-generated visual screenshots.',
 		symbol: '03',
 	},
 	{
-		title: 'Coordinate response',
-		description: 'Use alerts and reporting to move quickly from detection to enforcement.',
+		title: 'Secure enforcement',
+		description: 'Issue alerts, trigger secure webhooks, dispatch email alerts, and compile board-ready PDF intelligence summaries.',
 		symbol: '04',
 	},
 ];
@@ -283,17 +297,33 @@ export default function LandingPage() {
 
 							return (
 								<Reveal key={feature.title} className='group h-full' style={{ transitionDelay: `${index * 80}ms` }}>
-									<div className='feature-card h-full rounded-3xl border border-(--app-color-border) bg-(--app-color-surface) p-6 shadow-sm transition-all duration-500'>
-										<div className={`mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-linear-to-br ${feature.accent}`}>
-											<Icon className='h-5 w-5 text-(--app-color-primary)' />
+									<div className='relative h-full rounded-[2rem] border border-(--app-color-border) bg-(--app-color-surface) p-8 shadow-xs transition-all duration-500 hover:-translate-y-1 hover:border-teal-500/30 hover:shadow-lg hover:shadow-teal-950/[0.02] flex flex-col justify-between'>
+										<div>
+											<div className='flex items-center justify-between mb-6'>
+												<div className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${feature.accent}`}>
+													<Icon className='h-5 w-5 text-teal-600' />
+												</div>
+												<span className='rounded-full border border-teal-500/10 bg-teal-500/5 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-teal-600 shadow-xs'>
+													{feature.tag}
+												</span>
+											</div>
+											
+											<p className='text-[10px] font-bold uppercase tracking-widest text-(--app-color-text-muted)'>{feature.tech}</p>
+											<h3 className='mt-2 text-xl font-bold text-(--app-color-text)'>{feature.title}</h3>
+											<p className='mt-3 text-sm leading-relaxed text-(--app-color-text-muted)'>{feature.description}</p>
 										</div>
-										<p className='text-xs font-semibold uppercase tracking-[0.2em] text-(--app-color-text-muted)'>0{index + 1}</p>
-										<h3 className='mt-2 text-xl font-semibold text-(--app-color-text)'>{feature.title}</h3>
-										<p className='mt-3 text-sm leading-7 text-(--app-color-text-muted)'>{feature.description}</p>
-										<div className='mt-6 h-px w-full bg-linear-to-r from-transparent via-(--app-color-border) to-transparent' />
-										<div className='mt-4 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.16em] text-(--app-color-primary)'>
-											<span>Product ready</span>
-											<span className='opacity-0 transition-opacity duration-300 group-hover:opacity-100'>Explore</span>
+										
+										<div>
+											<div className='mt-6 h-px w-full bg-linear-to-r from-transparent via-(--app-color-border) to-transparent' />
+											<div className='mt-4 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-teal-600'>
+												<span className='flex items-center gap-1.5'>
+													<span className='h-1.5 w-1.5 rounded-full bg-teal-500 animate-pulse' />
+													Production Ready
+												</span>
+												<span className='flex items-center gap-1 opacity-60 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-1 cursor-pointer'>
+													Explore <ArrowRight size={12} />
+												</span>
+											</div>
 										</div>
 									</div>
 								</Reveal>
@@ -318,15 +348,93 @@ export default function LandingPage() {
 
 						<div className='grid gap-5 sm:grid-cols-2'>
 							{workflowSteps.map((step) => (
-								<Reveal key={step.symbol} className='group rounded-[2rem] border border-(--app-color-border) bg-(--app-color-surface-glass) p-8 shadow-sm backdrop-blur-md transition-all hover:border-(--app-color-primary)/30 hover:shadow-md'>
+								<Reveal key={step.symbol} className='group rounded-[2rem] border border-(--app-color-border) bg-(--app-color-surface-glass) p-8 shadow-sm backdrop-blur-md transition-all hover:border-teal-500/30 hover:shadow-md'>
 									<div className='flex items-center justify-between gap-4'>
-										<p className='font-mono text-3xl font-black text-(--app-color-primary)'>{step.symbol}</p>
-										<Workflow className='h-6 w-6 text-(--app-color-text-muted) group-hover:text-(--app-color-primary) transition-colors' />
+										<p className='font-mono text-3xl font-black text-teal-600'>{step.symbol}</p>
+										<Workflow className='h-6 w-6 text-(--app-color-text-muted) group-hover:text-teal-600 transition-colors' />
 									</div>
 									<h3 className='mt-6 text-xl font-bold text-(--app-color-text)'>{step.title}</h3>
 									<p className='mt-3 text-sm leading-7 text-(--app-color-text-muted)'>{step.description}</p>
 								</Reveal>
 							))}
+						</div>
+					</div>
+				</Container>
+			</section>
+
+			<section id='ecosystem' className='border-t border-(--app-color-border) bg-(--app-color-surface) py-20'>
+				<Container>
+					<div className='grid gap-12 lg:grid-cols-[1fr_1.2fr] items-center'>
+						<Reveal className='space-y-6'>
+							<p className='text-xs font-bold uppercase tracking-[0.3em] text-teal-600'>Enterprise Ecosystem</p>
+							<h2 className='text-4xl font-black tracking-tight text-(--app-color-text)'>
+								Built for production infrastructure.
+							</h2>
+							<p className='text-base leading-7 text-(--app-color-text-muted)'>
+								SportShield interfaces directly with modern scrapers, CDNs, and transactional mail services to ensure instant media forensics and alert propagation.
+							</p>
+							
+							<div className='grid grid-cols-2 gap-4 pt-4'>
+								<div className='border border-(--app-color-border) bg-(--app-color-surface-elevated)/40 rounded-2xl p-4'>
+									<p className='text-2xl font-black text-teal-600'>&lt; 1.5s</p>
+									<p className='text-[10px] font-bold uppercase tracking-widest text-(--app-color-text-muted) mt-1'>Analysis Latency</p>
+								</div>
+								<div className='border border-(--app-color-border) bg-(--app-color-surface-elevated)/40 rounded-2xl p-4'>
+									<p className='text-2xl font-black text-teal-600'>99.2%</p>
+									<p className='text-[10px] font-bold uppercase tracking-widest text-(--app-color-text-muted) mt-1'>Forensic Precision</p>
+								</div>
+								<div className='border border-(--app-color-border) bg-(--app-color-surface-elevated)/40 rounded-2xl p-4'>
+									<p className='text-2xl font-black text-teal-600'>24hr</p>
+									<p className='text-[10px] font-bold uppercase tracking-widest text-(--app-color-text-muted) mt-1'>Resolution SLA</p>
+								</div>
+								<div className='border border-(--app-color-border) bg-(--app-color-surface-elevated)/40 rounded-2xl p-4'>
+									<p className='text-2xl font-black text-teal-600'>100%</p>
+									<p className='text-[10px] font-bold uppercase tracking-widest text-(--app-color-text-muted) mt-1'>Audit Integrity</p>
+								</div>
+							</div>
+						</Reveal>
+
+						<div className='grid gap-4 sm:grid-cols-2'>
+							{[
+								{
+									title: 'Twitch & Kick Scraping',
+									desc: 'Automated live feed capture using custom headless scraper workers running at set intervals.',
+									tech: 'Streaming SDKs',
+									icon: Cpu
+								},
+								{
+									title: 'Telegram Monitoring',
+									desc: 'Extract public channels distribution nodes and mirror links automatically.',
+									tech: 'OSINT Nodes',
+									icon: Globe2
+								},
+								{
+									title: 'Cloudinary CDN',
+									desc: 'Visual assets and proof screenshots are cached securely using Cloudinary edge nodes.',
+									tech: 'Cloud Storage',
+									icon: Database
+								},
+								{
+									title: 'Brevo SMTP Alerts',
+									desc: 'Deliver transaction alert notifications and weekly summary reports dynamically.',
+									tech: 'Mail Delivery',
+									icon: Mail
+								}
+							].map((eco) => {
+								const EcoIcon = eco.icon;
+								return (
+									<Reveal key={eco.title} className='relative rounded-3xl border border-(--app-color-border) bg-(--app-color-surface-elevated)/30 p-6 flex gap-4 items-start transition-all hover:border-teal-500/20'>
+										<div className='h-10 w-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-600 shrink-0'>
+											<EcoIcon size={18} />
+										</div>
+										<div className='space-y-1.5'>
+											<p className='text-[9px] font-bold uppercase tracking-widest text-teal-600'>{eco.tech}</p>
+											<h4 className='text-base font-bold text-(--app-color-text)'>{eco.title}</h4>
+											<p className='text-xs text-(--app-color-text-muted) leading-relaxed'>{eco.desc}</p>
+										</div>
+									</Reveal>
+								);
+							})}
 						</div>
 					</div>
 				</Container>
