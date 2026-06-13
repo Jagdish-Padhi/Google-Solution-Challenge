@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-import { Badge, Button, Card, Spinner, Modal } from '../../components';
+import { Badge, Button, Card, Spinner, Modal, Loader } from '../../components';
 import api from '../../services/api.js';
 
 export default function CreatorHomePage() {
@@ -150,7 +150,7 @@ export default function CreatorHomePage() {
 	if (isLoading) {
 		return (
 			<div className='flex h-full flex-col items-center justify-center py-24 gap-6 text-sm text-(--app-color-text-muted)'>
-				<Spinner size='md' />
+				<Loader size={0.7} />
 				<p className='font-bold uppercase tracking-widest animate-pulse'>Loading Portfolio...</p>
 			</div>
 		);

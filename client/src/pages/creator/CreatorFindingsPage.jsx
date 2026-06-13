@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Camera, CheckCircle2, Download, ExternalLink, Info, ShieldAlert, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-import { Badge, Button, Card, Modal, Spinner } from '../../components';
+import { Badge, Button, Card, Modal, Spinner, Loader } from '../../components';
 import api from '../../services/api.js';
 
 export default function CreatorFindingsPage() {
@@ -36,7 +36,7 @@ export default function CreatorFindingsPage() {
 	if (isLoading) {
 		return (
 			<div className='flex h-full flex-col items-center justify-center py-24 gap-6 text-sm text-(--app-color-text-muted)'>
-				<Spinner size='md' />
+				<Loader size={0.7} />
 				<p className='font-bold uppercase tracking-widest animate-pulse'>Loading Findings...</p>
 			</div>
 		);
