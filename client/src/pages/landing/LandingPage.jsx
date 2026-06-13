@@ -32,7 +32,6 @@ const featureCards = [
 	{
 		title: 'Forensic Fingerprinting',
 		description: 'Onboard image and video assets with multi-signal reference fingerprints resilient against compression, cropping, and mirroring.',
-		tag: 'PATENTED ENGINE',
 		tech: 'Forensics',
 		icon: ShieldCheck,
 		accent: 'from-sky-500/20 to-cyan-500/10',
@@ -40,7 +39,6 @@ const featureCards = [
 	{
 		title: 'Multi-Channel Discovery',
 		description: 'Monitor Twitch, Kick, Telegram public channels, and web URLs with automatic background scrapers and socket telemetry.',
-		tag: 'LIVE WEB SCANNERS',
 		tech: 'Telemetry',
 		icon: Radar,
 		accent: 'from-emerald-500/20 to-teal-500/10',
@@ -48,7 +46,6 @@ const featureCards = [
 	{
 		title: 'Verified Piracy Evidence',
 		description: 'Every match registers visual screenshot evidence, component-level confidence details, and source URLs for downstream compliance review.',
-		tag: 'COMPLIANCE VAULT',
 		tech: 'Evidence',
 		icon: FileSearch,
 		accent: 'from-amber-500/20 to-orange-500/10',
@@ -56,7 +53,6 @@ const featureCards = [
 	{
 		title: 'Automated Alerting',
 		description: 'Configure real-time webhook payloads, unread status indicators, and automated Brevo email alerts for instant surge response.',
-		tag: 'ZERO-LATENCY ALERTING',
 		tech: 'Automation',
 		icon: BellRing,
 		accent: 'from-violet-500/20 to-fuchsia-500/10',
@@ -64,7 +60,6 @@ const featureCards = [
 	{
 		title: 'Executive Analytics',
 		description: 'Compile custom-interval PDF intelligence summaries with daily trend timelines, platform risk assessments, and SLA compliance metrics.',
-		tag: 'EXECUTIVE BRIEFINGS',
 		tech: 'Analytics',
 		icon: BarChart3,
 		accent: 'from-indigo-500/20 to-blue-500/10',
@@ -72,7 +67,6 @@ const featureCards = [
 	{
 		title: 'Role-Based Workspace',
 		description: 'Collaborate securely with granular Admin, Analyst, and Legal roles. Manage up to 20 workspace members with complete access scoping.',
-		tag: 'ENTERPRISE IDENTITY',
 		tech: 'RBAC Workspace',
 		icon: Globe2,
 		accent: 'from-slate-500/20 to-slate-700/10',
@@ -297,28 +291,26 @@ export default function LandingPage() {
 
 							return (
 								<Reveal key={feature.title} className='group h-full' style={{ transitionDelay: `${index * 80}ms` }}>
-									<div className='relative h-full rounded-[2rem] border border-(--app-color-border) bg-(--app-color-surface) p-8 shadow-xs transition-all duration-500 hover:-translate-y-1 hover:border-teal-500/30 hover:shadow-lg hover:shadow-teal-950/[0.02] flex flex-col justify-between'>
+									<div className='feature-card relative h-full rounded-[2rem] border border-[var(--app-color-border)] bg-[var(--app-color-surface)] p-8 flex flex-col justify-between'>
 										<div>
 											<div className='flex items-center justify-between mb-6'>
-												<div className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${feature.accent}`}>
-													<Icon className='h-5 w-5 text-teal-600' />
+												<div className='inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-500/10 text-teal-700 group-hover:bg-teal-500/20 transition-colors duration-300'>
+													<Icon className='h-5 w-5' />
 												</div>
-												<span className='rounded-full border border-teal-500/10 bg-teal-500/5 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-teal-600 shadow-xs'>
-													{feature.tag}
+												<span className='font-mono text-xs font-bold text-teal-600/40 group-hover:text-teal-600/80 transition-colors duration-300'>
+													0{index + 1}
 												</span>
 											</div>
 											
-											<p className='text-[10px] font-bold uppercase tracking-widest text-(--app-color-text-muted)'>{feature.tech}</p>
-											<h3 className='mt-2 text-xl font-bold text-(--app-color-text)'>{feature.title}</h3>
-											<p className='mt-3 text-sm leading-relaxed text-(--app-color-text-muted)'>{feature.description}</p>
+											<h3 className='text-xl font-bold tracking-tight text-[var(--app-color-text)]'>{feature.title}</h3>
+											<p className='mt-3 text-sm leading-relaxed text-[var(--app-color-text-muted)]'>{feature.description}</p>
 										</div>
 										
 										<div>
-											<div className='mt-6 h-px w-full bg-linear-to-r from-transparent via-(--app-color-border) to-transparent' />
-											<div className='mt-4 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-teal-600'>
-												<span className='flex items-center gap-1.5'>
-													<span className='h-1.5 w-1.5 rounded-full bg-teal-500 animate-pulse' />
-													Production Ready
+											<div className='mt-6 h-px w-full bg-linear-to-r from-transparent via-[var(--app-color-border)] to-transparent' />
+											<div className='mt-4 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-teal-600/70 group-hover:text-teal-600 transition-colors duration-300'>
+												<span>
+													{feature.tech}
 												</span>
 												<span className='flex items-center gap-1 opacity-60 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-1 cursor-pointer'>
 													Explore <ArrowRight size={12} />
@@ -423,7 +415,7 @@ export default function LandingPage() {
 							].map((eco) => {
 								const EcoIcon = eco.icon;
 								return (
-									<Reveal key={eco.title} className='relative rounded-3xl border border-(--app-color-border) bg-(--app-color-surface-elevated)/30 p-6 flex gap-4 items-start transition-all hover:border-teal-500/20'>
+									<Reveal key={eco.title} className='feature-card relative rounded-3xl border border-[var(--app-color-border)] bg-[var(--app-color-surface)] p-6 flex gap-4 items-start transition-all duration-300'>
 										<div className='h-10 w-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-600 shrink-0'>
 											<EcoIcon size={18} />
 										</div>
