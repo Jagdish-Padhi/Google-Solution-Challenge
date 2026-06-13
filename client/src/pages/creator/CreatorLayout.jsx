@@ -72,9 +72,9 @@ export default function CreatorLayout() {
 					<button
 						type='button'
 						onClick={handleLogout}
-						className='flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-slate-500 transition-all hover:bg-slate-50 hover:text-slate-800'
+						className='group flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-slate-500 transition-all hover:bg-red-50 hover:text-red-600'
 					>
-						<LogOut size={18} className='text-slate-400' />
+						<LogOut size={18} className='text-slate-400 transition-colors group-hover:text-red-500' />
 						Sign Out
 					</button>
 				</div>
