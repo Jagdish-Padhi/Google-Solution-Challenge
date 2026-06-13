@@ -114,106 +114,57 @@ export default function DashboardHomePage() {
     };
   }, []);
 
-  // Firestore live feed
+  // Firestore live feed with graceful fallback
   useEffect(() => {
-  try {
-    const q = query(
-      collection(db, 'live_violations'),
-      orderBy('createdAt', 'desc'),
-      limit(5)
-    );
+    let unsubscribe;
 
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const logs = snapshot.docs.map((doc) => {
-          const violation = doc.data();
+    try {
+      if (db && import.meta.env.VITE_FIREBASE_PROJECT_ID) {
+        const q = query(
+          collection(db, 'live_violations'),
+          orderBy('createdAt', 'desc'),
+          limit(5)
+        );
 
-          return {
-            id: doc.id,
-            platform: violation.platform || 'web',
-            text: `CRITICAL MATCH FOUND (${violation.confidence}% confidence) - ${violation.sourceUrl}`,
-            time: new Date(
-              violation.detectedAt?.seconds
-                ? violation.detectedAt.seconds * 1000
-                : Date.now()
-            ).toLocaleTimeString([], {
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-            }),
-          };
-        });
+        unsubscribe = onSnapshot(
+          q,
+          (snapshot) => {
+            const logs = snapshot.docs.map((doc) => {
+              const violation = doc.data();
 
-        setLiveLogs(logs);
-      },
-      (error) => {
-        console.error('Firestore subscription failed:', error);
+              return {
+                id: doc.id,
+                platform: violation.platform || 'web',
+                text: `CRITICAL MATCH FOUND (${violation.confidence}% confidence) - ${violation.sourceUrl}`,
+                time: new Date(
+                  violation.detectedAt?.seconds
+                    ? violation.detectedAt.seconds * 1000
+                    : Date.now()
+                ).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit',
+                }),
+              };
+            });
+
+            setLiveLogs(logs);
+          },
+          (error) => {
+            console.warn('[FIRESTORE] Subscription failed, using local feed fallback:', error.message);
+          }
+        );
+      } else {
+        console.warn('[FIRESTORE] VITE_FIREBASE_PROJECT_ID not set. Firestore live feed disabled.');
       }
-    );
+    } catch (error) {
+      console.warn('[FIRESTORE] Initialization failed:', error.message);
+    }
 
-    return () => unsubscribe();
-  } catch (error) {
-    console.error('Firestore initialization failed:', error);
-  }
-}, []);
-
-//FireStore live feed
-useEffect(() => {
-  let unsubscribe;
-  let fallbackInterval;
-
-  const startFallback = () => {
-    if (fallbackInterval) return;
-
-    console.warn(
-      "Firestore subscription failed. Activating fallback feed."
-    );
-
-    // Existing fallback logic
-    fallbackInterval = setInterval(() => {
-      loadDashboardData(true);
-    }, 5000);
-  };
-
-  try {
-    const q = query(
-      collection(db, "live_violations"),
-      orderBy("createdAt", "desc"),
-      limit(5)
-    );
-
-    unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const logs = snapshot.docs.map((doc) => {
-          const violation = doc.data();
-
-          return {
-            id: doc.id,
-            platform: violation.platform || "web",
-            text: `CRITICAL MATCH FOUND (${violation.confidence}% confidence) - ${violation.sourceUrl}`,
-            time: new Date().toLocaleTimeString(),
-          };
-        });
-
-        setLiveLogs(logs);
-      },
-      (error) => {
-        console.error("Firestore subscription failed:", error);
-        startFallback();
-      }
-    );
-  } catch (error) {
-    console.error("Firestore initialization failed:", error);
-    startFallback();
-  }
-
-  return () => {
-    if (unsubscribe) unsubscribe();
-    if (fallbackInterval) clearInterval(fallbackInterval);
-  };
-}, []);
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
 
   const loadDashboardData = async (silent = false) => {
     try {
