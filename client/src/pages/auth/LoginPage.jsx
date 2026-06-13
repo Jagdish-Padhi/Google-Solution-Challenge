@@ -34,6 +34,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);
   const setTransitioning = useAuthStore((state) => state.setTransitioning);
+  const getIsCreator = useAuthStore((state) => state.getIsCreator);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -67,7 +68,7 @@ export default function LoginPage() {
       const response = await api.post('/auth/login', formData);
       setAuth({ user: response.data.organization, accessToken: response.data.accessToken });
       toast.success('Logged in successfully.');
-      navigate('/dashboard');
+      navigate(getIsCreator() ? '/creator' : '/dashboard');
     } catch (error) {
       const message = error.response?.data?.errors?.[0] || error.response?.data?.message || 'Login failed.';
       toast.error(message);

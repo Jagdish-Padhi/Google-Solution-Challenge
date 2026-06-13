@@ -24,6 +24,14 @@ import {
 import { Card, Badge, Button, Loader } from '../../components';
 import api from '../../services/api.js';
 import useAuthStore from '../../store/auth.store.js';
+import { db } from "../auth/firebase.js";
+import {
+  collection,
+  query,
+  orderBy,
+  limit,
+  onSnapshot,
+} from 'firebase/firestore';
 
 const defaultStats = {
   totalAssets: 0,
@@ -103,6 +111,58 @@ export default function DashboardHomePage() {
     window.addEventListener('sportshield:alerts:new', handleNewAlerts);
     return () => {
       window.removeEventListener('sportshield:alerts:new', handleNewAlerts);
+    };
+  }, []);
+
+  // Firestore live feed with graceful fallback
+  useEffect(() => {
+    let unsubscribe;
+
+    try {
+      if (db && import.meta.env.VITE_FIREBASE_PROJECT_ID) {
+        const q = query(
+          collection(db, 'live_violations'),
+          orderBy('createdAt', 'desc'),
+          limit(5)
+        );
+
+        unsubscribe = onSnapshot(
+          q,
+          (snapshot) => {
+            const logs = snapshot.docs.map((doc) => {
+              const violation = doc.data();
+
+              return {
+                id: doc.id,
+                platform: violation.platform || 'web',
+                text: `CRITICAL MATCH FOUND (${violation.confidence}% confidence) - ${violation.sourceUrl}`,
+                time: new Date(
+                  violation.detectedAt?.seconds
+                    ? violation.detectedAt.seconds * 1000
+                    : Date.now()
+                ).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit',
+                }),
+              };
+            });
+
+            setLiveLogs(logs);
+          },
+          (error) => {
+            console.warn('[FIRESTORE] Subscription failed, using local feed fallback:', error.message);
+          }
+        );
+      } else {
+        console.warn('[FIRESTORE] VITE_FIREBASE_PROJECT_ID not set. Firestore live feed disabled.');
+      }
+    } catch (error) {
+      console.warn('[FIRESTORE] Initialization failed:', error.message);
+    }
+
+    return () => {
+      if (unsubscribe) unsubscribe();
     };
   }, []);
 

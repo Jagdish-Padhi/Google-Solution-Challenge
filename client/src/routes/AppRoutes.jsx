@@ -17,6 +17,8 @@ import DashboardViolationsPage from '../pages/dashboard/DashboardViolationsPage.
 import DashboardSettingsPage from '../pages/dashboard/DashboardSettingsPage.jsx';
 import CreatorHomePage from '../pages/creator/CreatorHomePage.jsx';
 import CreatorFindingsPage from '../pages/creator/CreatorFindingsPage.jsx';
+import CreatorAccountPage from '../pages/creator/CreatorAccountPage.jsx';
+import CreatorPortfolioPage from '../pages/creator/CreatorPortfolioPage.jsx';
 import useAuthStore from '../store/auth.store.js';
 import GlobalLoader from '../components/loaders/GlobalLoader.jsx';
 
@@ -97,8 +99,9 @@ export default function AppRoutes() {
 				<Route element={<PrivateRoute requiredRole="creator" />}>
 					<Route element={<CreatorLayout />}>
 						<Route path='/creator' element={<CreatorHomePage />} />
+						<Route path='/creator/portfolio' element={<CreatorPortfolioPage />} />
 						<Route path='/creator/findings' element={<CreatorFindingsPage />} />
-						<Route path='/creator/account' element={<DashboardSettingsPage />} />
+						<Route path='/creator/account' element={<CreatorAccountPage />} />
 					</Route>
 				</Route>
 
