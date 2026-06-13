@@ -13,6 +13,7 @@ import {
 	ShieldCheck,
 	UploadCloud,
 	Zap,
+	LayoutDashboard,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -246,7 +247,9 @@ export default function CreatorHomePage() {
 		<div className='mx-auto max-w-4xl p-6 lg:p-10 space-y-8'>
 
 			<div>
-				<h1 className='text-3xl font-black text-(--app-color-text) tracking-tight mb-2'>Protect Your Work</h1>
+				<h1 className='text-3xl font-black text-(--app-color-text) tracking-tight mb-2 flex items-center gap-3'>
+					<LayoutDashboard className='text-(--app-color-primary)' /> Protect Your Work
+				</h1>
 				<p className='text-base text-(--app-color-text-muted)'>
 					Upload your photography and videography to our secure vault. We fingerprint it and scan the web for unauthorized uses.
 				</p>

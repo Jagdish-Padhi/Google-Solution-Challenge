@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Camera, PencilLine, Search, Trash2, UploadCloud } from 'lucide-react';
+import { Camera, PencilLine, Search, Trash2, UploadCloud, Images } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import { Badge, Button, Card, Spinner, Loader } from '../../components';
@@ -75,7 +75,9 @@ export default function CreatorPortfolioPage() {
   return (
     <div className='mx-auto max-w-7xl space-y-8 p-6 lg:p-10'>
       <div>
-        <h1 className='text-3xl font-black tracking-tight text-(--app-color-text)'>My Works</h1>
+        <h1 className='text-3xl font-black tracking-tight text-(--app-color-text) flex items-center gap-3'>
+          <Images className='text-(--app-color-primary)' /> My Works
+        </h1>
         <p className='text-base text-(--app-color-text-muted)'>Keep your uploaded photography and video visible, editable, and protected in one place.</p>
       </div>
 
