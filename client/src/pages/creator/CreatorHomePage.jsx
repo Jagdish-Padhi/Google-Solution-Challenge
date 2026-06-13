@@ -1,53 +1,63 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-	Camera, 
-	CheckCircle2, 
-	ChevronRight, 
-	FileImage, 
-	FileVideo, 
-	Globe, 
-	Info, 
-	Search, 
-	Shield, 
-	ShieldAlert, 
-	ShieldCheck, 
+import {
+	Camera,
+	CheckCircle2,
+	ChevronRight,
+	Download,
+	ExternalLink,
+	Globe,
+	Search,
+	Shield,
+	ShieldAlert,
+	ShieldCheck,
 	UploadCloud,
 	Zap,
-    Download,
-    ExternalLink
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-import { Badge, Button, Card, Spinner, Modal } from '../../components';
+import { Badge, Button, Card, Modal, Spinner } from '../../components';
 import api from '../../services/api.js';
+
+const PORTAL_URLS = {
+	youtube: 'https://support.google.com/youtube/answer/2807622',
+	twitter: 'https://help.twitter.com/forms/dmca',
+	telegram: 'https://telegram.org/dmca',
+	web: 'https://www.lumendatabase.org/',
+};
+
+const PLATFORM_INSTRUCTIONS = {
+	youtube: "Use YouTube's Copyright Removal form at the link below. Attach your downloaded evidence ZIP when prompted.",
+	twitter: "Use Twitter's DMCA webform linked below. Paste your notice into the description field.",
+	telegram: 'Email dmca@telegram.org directly with your evidence package attached.',
+	web: "Submit via the Lumen Database or contact the hosting domain's abuse team directly.",
+};
 
 export default function CreatorHomePage() {
 	const navigate = useNavigate();
 	const [assets, setAssets] = useState([]);
 	const [violations, setViolations] = useState([]);
 	const [isLoading, setIsLoading] = useState(true);
-	
-	// Upload State
+
 	const fileInputRef = useRef(null);
 	const [isUploading, setIsUploading] = useState(false);
 	const [uploadProgress, setUploadProgress] = useState(0);
-	
-	// Scan State
+
 	const [isScanning, setIsScanning] = useState(false);
 	const [scanProgress, setScanProgress] = useState(0);
 
-    // DMCA Modal State
-    const [isDMCAModalOpen, setIsDMCAModalOpen] = useState(false);
-    const [selectedViolation, setSelectedViolation] = useState(null);
+	const [isDMCAModalOpen, setIsDMCAModalOpen] = useState(false);
+	const [selectedViolation, setSelectedViolation] = useState(null);
+	const [dmcaStep, setDmcaStep] = useState(1);
+	const [dmcaText, setDmcaText] = useState('');
+	const [isGenerating, setIsGenerating] = useState(false);
 
 	const loadData = useCallback(async () => {
 		try {
 			const [assetsRes, violationsRes] = await Promise.all([
 				api.get('/assets?page=1&limit=5'),
-				api.get('/violations?page=1&limit=5')
+				api.get('/violations?page=1&limit=5'),
 			]);
-			
 			setAssets(assetsRes.data.items || []);
 			setViolations(violationsRes.data.items || []);
 		} catch {
@@ -58,6 +68,7 @@ export default function CreatorHomePage() {
 	}, []);
 
 	useEffect(() => {
+		document.title = 'My Portfolio — SportShield Creator';
 		loadData();
 	}, [loadData]);
 
@@ -99,39 +110,70 @@ export default function CreatorHomePage() {
 		}
 	};
 
+	const pollScanJob = async (jobId, fakeProgressRef) => {
+		const MAX_POLLS = 40; // 40 × 3s = 2 min timeout
+		for (let i = 0; i < MAX_POLLS; i++) {
+			await new Promise((r) => setTimeout(r, 3000));
+			try {
+				const res = await api.get(`/scans/${jobId}`);
+				const status = res.data?.status || res.data?.scanJob?.status;
+				if (status === 'completed' || status === 'failed') return status;
+			} catch {
+			}
+		}
+		return 'timeout';
+	};
+
 	const handleStartScan = async () => {
 		if (assets.length === 0) {
 			toast.error('Upload some work first before scanning.');
 			return;
 		}
 
+		const validAssets = assets.filter((a) => a.status === 'active');
+		if (validAssets.length === 0) {
+			toast.error('Your assets are still processing. Please wait.');
+			return;
+		}
+
 		setIsScanning(true);
-		setScanProgress(0);
+		setScanProgress(5);
 
 		try {
-			const validAssets = assets.filter(a => a.status === 'active');
-			
-			if (validAssets.length === 0) {
-				toast.error('Your assets are still processing. Please wait.');
-				setIsScanning(false);
-				return;
+			const jobResponses = await Promise.all(
+				validAssets.map((asset) =>
+					api.post('/scans/start', {
+						assetId: asset._id,
+						searchKeywords: [asset.title || 'portfolio', 'copyright', 'repost'],
+						platforms: ['youtube', 'twitter', 'web'],
+						multiLanguage: false,
+					})
+				)
+			);
+
+			const jobIds = jobResponses
+				.map((r) => r.data?.scanJob?._id || r.data?._id || r.data?.jobId)
+				.filter(Boolean);
+
+			setScanProgress(15);
+
+			let fakeProgress = 15;
+			const fakeInterval = setInterval(() => {
+				fakeProgress = Math.min(fakeProgress + 2, 90);
+				setScanProgress(fakeProgress);
+			}, 1500);
+
+			// Poll each job; wait for the first one to finish (they run in parallel on the server)
+			if (jobIds.length > 0) {
+				await Promise.race(jobIds.map((id) => pollScanJob(id)));
+			} else {
+				// No job IDs returned — backend may not expose them; fall back to a fixed wait
+				await new Promise((r) => setTimeout(r, 8000));
 			}
 
-			await Promise.all(validAssets.map(asset => 
-				api.post('/scans/start', {
-					assetId: asset._id,
-					searchKeywords: [asset.title || 'portfolio', 'copyright', 'repost'],
-					platforms: ['youtube', 'twitter', 'web'],
-					multiLanguage: false
-				})
-			));
-			
-			// Simulate progress for the "Scan Now" button UX
-			for (let i = 1; i <= 100; i += 5) {
-				await new Promise((resolve) => setTimeout(resolve, 150));
-				setScanProgress(i);
-			}
-			
+			clearInterval(fakeInterval);
+			setScanProgress(100);
+
 			toast.success('Scan complete. Results updated.');
 			await loadData();
 		} catch {
@@ -142,10 +184,51 @@ export default function CreatorHomePage() {
 		}
 	};
 
-    const handleOpenDMCA = (violation) => {
-        setSelectedViolation(violation);
-        setIsDMCAModalOpen(true);
-    };
+	const handleOpenDMCA = async (violation) => {
+		setSelectedViolation(violation);
+		setDmcaStep(1);
+		setDmcaText('');
+		setIsGenerating(true);
+		setIsDMCAModalOpen(true);
+
+		try {
+			const res = await api.post(`/violations/${violation._id}/draft-dmca`);
+			setDmcaText(res.data.draft || '');
+		} catch {
+			setDmcaText('Unable to generate a DMCA notice right now. Please try again.');
+		} finally {
+			setIsGenerating(false);
+		}
+	};
+
+	const handleCloseModal = () => {
+		setIsDMCAModalOpen(false);
+		setSelectedViolation(null);
+		setDmcaStep(1);
+		setDmcaText('');
+	};
+
+	const handleDownloadEvidence = () => {
+		const content =
+			dmcaText ||
+			`DMCA Evidence\nAsset: ${selectedViolation?.assetId?.title}\nURL: ${selectedViolation?.sourceUrl}\nConfidence: ${selectedViolation?.matchConfidence}%\nDetected: ${new Date(selectedViolation?.detectedAt).toUTCString()}`;
+		const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+		const url = URL.createObjectURL(blob);
+		const link = document.createElement('a');
+		link.href = url;
+		link.download = `${(selectedViolation?.assetId?.title || 'evidence').replace(/\s+/g, '-').toLowerCase()}-dmca.txt`;
+		link.click();
+		URL.revokeObjectURL(url);
+	};
+
+	const handleCopyDMCA = async () => {
+		try {
+			await navigator.clipboard.writeText(dmcaText);
+			toast.success('DMCA notice copied to clipboard.');
+		} catch {
+			toast.error('Unable to copy DMCA notice.');
+		}
+	};
 
 	if (isLoading) {
 		return (
@@ -157,11 +240,11 @@ export default function CreatorHomePage() {
 	}
 
 	const hasAssets = assets.length > 0;
-	const activeViolations = violations.filter(v => v.status === 'open');
+	const activeViolations = violations.filter((v) => v.status === 'open');
 
 	return (
 		<div className='mx-auto max-w-4xl p-6 lg:p-10 space-y-8'>
-			{/* Header */}
+
 			<div>
 				<h1 className='text-3xl font-black text-(--app-color-text) tracking-tight mb-2'>Protect Your Work</h1>
 				<p className='text-base text-(--app-color-text-muted)'>
@@ -169,7 +252,6 @@ export default function CreatorHomePage() {
 				</p>
 			</div>
 
-			{/* Protection Status Bar */}
 			<div className='flex flex-wrap items-center gap-4 p-5 rounded-2xl bg-(--app-color-surface-panel) border border-(--app-color-border) shadow-sm'>
 				<div className='flex items-center gap-3'>
 					<div className='h-10 w-10 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center'>
@@ -203,7 +285,6 @@ export default function CreatorHomePage() {
 			</div>
 
 			<div className='grid gap-6 md:grid-cols-[1fr_24px_1fr] items-start'>
-				{/* Step 1: Upload */}
 				<Card className='relative overflow-hidden border-(--app-color-border) shadow-sm h-full flex flex-col'>
 					<div className='p-6 flex-1 flex flex-col'>
 						<div className='mb-4 flex items-center gap-3'>
@@ -251,12 +332,10 @@ export default function CreatorHomePage() {
 					</div>
 				</Card>
 
-				{/* Connector */}
 				<div className='hidden md:flex h-full items-center justify-center'>
 					<ChevronRight size={24} className='text-slate-300' />
 				</div>
 
-				{/* Step 2: Scan */}
 				<Card className={`relative overflow-hidden border-(--app-color-border) shadow-sm h-full flex flex-col transition-opacity ${!hasAssets ? 'opacity-50 grayscale select-none' : ''}`}>
 					<div className='p-6 flex-1 flex flex-col'>
 						<div className='mb-4 flex items-center gap-3'>
@@ -268,7 +347,7 @@ export default function CreatorHomePage() {
 						</p>
 
 						<div className='flex flex-wrap gap-2 mb-6'>
-							{['YouTube', 'Twitter / X', 'Telegram', 'Web Domains'].map(platform => (
+							{['YouTube', 'Twitter / X', 'Telegram', 'Web Domains'].map((platform) => (
 								<Badge key={platform} variant='secondary' size='xs' className='bg-slate-100 text-slate-600 border-slate-200'>{platform}</Badge>
 							))}
 						</div>
@@ -284,8 +363,8 @@ export default function CreatorHomePage() {
 								</div>
 							</div>
 						) : (
-							<Button 
-								onClick={handleStartScan} 
+							<Button
+								onClick={handleStartScan}
 								disabled={!hasAssets || isScanning}
 								className='w-full h-12 flex items-center justify-center gap-2 font-bold text-sm shadow-md'
 							>
@@ -296,7 +375,6 @@ export default function CreatorHomePage() {
 				</Card>
 			</div>
 
-			{/* Step 3: Findings */}
 			<div className='pt-4'>
 				<div className='mb-4 flex items-center justify-between'>
 					<div className='flex items-center gap-3'>
@@ -343,7 +421,7 @@ export default function CreatorHomePage() {
 									<p className='text-sm font-bold text-(--app-color-text) truncate'>{violation.assetId?.title || 'Unknown Work'}</p>
 									<p className='text-xs text-(--app-color-text-muted) mt-1 flex items-center gap-1.5'>
 										<Zap size={10} className='text-amber-500' />
-										Similarity: {Math.round(violation.confidenceScore * 100)}%
+										Similarity: {violation.matchConfidence ?? 0}%
 									</p>
 								</div>
 								<div className='flex items-center shrink-0'>
@@ -357,57 +435,134 @@ export default function CreatorHomePage() {
 				)}
 			</div>
 
-            {/* DMCA Guide Modal */}
-            <Modal isOpen={isDMCAModalOpen} onClose={() => setIsDMCAModalOpen(false)} title="Remove Unauthorized Use">
-                <div className='space-y-6'>
-                    <div className='bg-blue-50 border border-blue-100 rounded-xl p-4 flex gap-3 text-sm text-blue-800'>
-                        <Info size={18} className='shrink-0 mt-0.5' />
-                        <p>As the original creator, you have the right to issue a DMCA takedown notice. Follow these 3 steps to get the content removed.</p>
-                    </div>
+			<Modal isOpen={isDMCAModalOpen} onClose={handleCloseModal} title='Remove Unauthorized Use'>
+				<div className='space-y-5'>
+					<div className='flex items-center gap-2'>
+						{[1, 2, 3].map((s) => (
+							<div key={s} className='flex items-center gap-2'>
+								<div
+									className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-black transition-all ${
+										dmcaStep === s
+											? 'bg-(--app-color-primary) text-white'
+											: dmcaStep > s
+											? 'bg-emerald-500 text-white'
+											: 'bg-slate-100 text-slate-400'
+									}`}
+								>
+									{dmcaStep > s ? <CheckCircle2 size={14} /> : s}
+								</div>
+								{s < 3 && <div className={`h-px w-8 ${dmcaStep > s ? 'bg-emerald-400' : 'bg-slate-200'}`} />}
+							</div>
+						))}
+						<p className='ml-2 text-xs font-semibold text-(--app-color-text-muted)'>Step {dmcaStep} of 3</p>
+					</div>
 
-                    <div className='space-y-4'>
-                        <div className='flex gap-4'>
-                            <div className='flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 font-black'>1</div>
-                            <div>
-                                <h4 className='font-bold text-(--app-color-text) mb-1'>Download Evidence</h4>
-                                <p className='text-xs text-(--app-color-text-muted) mb-3'>Save the AI match report to attach to your claim.</p>
-                                <Button size='sm' variant='outline' className='flex items-center gap-2 text-xs'>
-                                    <Download size={14} /> Download PDF Report
-                                </Button>
-                            </div>
-                        </div>
-                        
-                        <div className='flex gap-4'>
-                            <div className='flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 font-black'>2</div>
-                            <div>
-                                <h4 className='font-bold text-(--app-color-text) mb-1'>Go to Platform Portal</h4>
-                                <p className='text-xs text-(--app-color-text-muted) mb-3'>Open the official copyright claim form for {selectedViolation?.platform || 'this platform'}.</p>
-                                <Button size='sm' variant='outline' className='flex items-center gap-2 text-xs'>
-                                    <ExternalLink size={14} /> Open Copyright Portal
-                                </Button>
-                            </div>
-                        </div>
+					{dmcaStep === 1 && (
+						<div className='space-y-4'>
+							<div>
+								<h3 className='text-lg font-black text-(--app-color-text)'>Your Evidence is Ready</h3>
+								<p className='text-sm text-(--app-color-text-muted) mt-1'>Review your case details and download the evidence package.</p>
+							</div>
 
-                        <div className='flex gap-4'>
-                            <div className='flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 font-black'>3</div>
-                            <div className='w-full'>
-                                <h4 className='font-bold text-(--app-color-text) mb-1'>Copy Notice Template</h4>
-                                <p className='text-xs text-(--app-color-text-muted) mb-3'>Paste this into the description field.</p>
-                                <div className='bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs font-mono text-slate-600 whitespace-pre-wrap'>
-{`I am the copyright owner of the original work "${selectedViolation?.assetId?.title || 'Unknown Work'}". 
-An unauthorized copy was detected on your platform on ${new Date(selectedViolation?.detectedAt || Date.now()).toLocaleDateString()}. 
-I have a good faith belief that this use is not authorized by the copyright owner, its agent, or the law. 
-Please remove this content immediately under the DMCA.`}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+							<div className='rounded-xl border border-(--app-color-border) bg-slate-50 p-4 space-y-2 text-sm'>
+								<div className='flex justify-between'>
+									<span className='text-(--app-color-text-muted) font-semibold'>Asset</span>
+									<span className='font-bold text-(--app-color-text)'>{selectedViolation?.assetId?.title || 'Unknown Work'}</span>
+								</div>
+								<div className='flex justify-between'>
+									<span className='text-(--app-color-text-muted) font-semibold'>Platform</span>
+									<span className='font-bold capitalize text-(--app-color-text)'>{selectedViolation?.platform}</span>
+								</div>
+								<div className='flex justify-between'>
+									<span className='text-(--app-color-text-muted) font-semibold'>Detected</span>
+									<span className='font-bold text-(--app-color-text)'>{new Date(selectedViolation?.detectedAt).toLocaleDateString([], { dateStyle: 'medium' })}</span>
+								</div>
+								<div className='flex justify-between'>
+									<span className='text-(--app-color-text-muted) font-semibold'>Similarity</span>
+									<span className='font-bold text-amber-600'>{selectedViolation?.matchConfidence ?? 0}%</span>
+								</div>
+								{selectedViolation?.evidenceBundle?.orbVerified && (
+									<div className='flex justify-between'>
+										<span className='text-(--app-color-text-muted) font-semibold'>Verification</span>
+										<span className='font-bold text-emerald-600'>ORB Verified ✓</span>
+									</div>
+								)}
+							</div>
 
-                    <div className='flex justify-end border-t border-(--app-color-border) pt-4 mt-6'>
-                        <Button onClick={() => setIsDMCAModalOpen(false)}>Done</Button>
-                    </div>
-                </div>
-            </Modal>
+							<Button variant='outline' onClick={handleDownloadEvidence} className='flex items-center gap-2 w-full justify-center'>
+								<Download size={15} /> Download Evidence Package
+							</Button>
+
+							<div className='flex justify-end pt-2'>
+								<Button onClick={() => setDmcaStep(2)}>Next: File Your Claim →</Button>
+							</div>
+						</div>
+					)}
+
+					{dmcaStep === 2 && (
+						<div className='space-y-4'>
+							<div>
+								<h3 className='text-lg font-black text-(--app-color-text)'>File Your Claim</h3>
+								<p className='text-sm text-(--app-color-text-muted) mt-1'>Follow the platform-specific steps below.</p>
+							</div>
+
+							<div className='rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-800'>
+								{PLATFORM_INSTRUCTIONS[selectedViolation?.platform] || PLATFORM_INSTRUCTIONS.web}
+							</div>
+
+							<Button
+								onClick={() => window.open(PORTAL_URLS[selectedViolation?.platform] || PORTAL_URLS.web, '_blank', 'noopener,noreferrer')}
+								variant='outline'
+								className='flex items-center gap-2 w-full justify-center capitalize'
+							>
+								<ExternalLink size={15} /> Open {selectedViolation?.platform || 'Platform'} Copyright Portal
+							</Button>
+
+							<div className='flex justify-between pt-2'>
+								<Button variant='outline' onClick={() => setDmcaStep(1)}>← Back</Button>
+								<Button onClick={() => setDmcaStep(3)}>Next: Copy Your Notice →</Button>
+							</div>
+						</div>
+					)}
+
+					{dmcaStep === 3 && (
+						<div className='space-y-4'>
+							<div>
+								<h3 className='text-lg font-black text-(--app-color-text)'>Copy Your Notice</h3>
+								<p className='text-sm text-(--app-color-text-muted) mt-1'>Paste this into the claim form's description field.</p>
+							</div>
+
+							{isGenerating ? (
+								<div className='flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600'>
+									<Spinner size='sm' />
+									Generating your DMCA notice...
+								</div>
+							) : (
+								<pre className='max-h-56 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs font-mono text-slate-700 whitespace-pre-wrap'>
+									{dmcaText}
+								</pre>
+							)}
+
+							<div className='flex flex-wrap gap-2'>
+								<Button variant='outline' size='sm' onClick={handleCopyDMCA} disabled={isGenerating}>
+									Copy Notice
+								</Button>
+								<a
+									href={`mailto:?subject=DMCA%20Takedown%20Request%20for%20${encodeURIComponent(selectedViolation?.assetId?.title || 'Work')}&body=${encodeURIComponent(dmcaText || '')}`}
+									className='inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50'
+								>
+									Send via Email
+								</a>
+							</div>
+
+							<div className='flex justify-between pt-2 border-t border-(--app-color-border)'>
+								<Button variant='outline' onClick={() => setDmcaStep(2)}>← Back</Button>
+								<Button onClick={handleCloseModal}>Done</Button>
+							</div>
+						</div>
+					)}
+				</div>
+			</Modal>
 		</div>
 	);
 }

@@ -324,10 +324,10 @@ export default function DashboardAssetsPage() {
 					<div className="flex items-center justify-between">
 						<div className="space-y-1">
 							<p className='text-[10px] font-black uppercase tracking-[0.2em] text-(--app-color-text-muted)'>System status</p>
-							<p className='text-xs font-bold text-(--app-color-success) flex items-center gap-1.5'>
-								<div className="w-1.5 h-1.5 rounded-full bg-(--app-color-success) animate-pulse" />
-								Active Discovery
-							</p>
+						<div className='text-xs font-bold text-(--app-color-success) flex items-center gap-1.5'>
+							<div className="w-1.5 h-1.5 rounded-full bg-(--app-color-success) animate-pulse" />
+							<span>Active Discovery</span>
+						</div>
 						</div>
 						<div className="h-12 w-12 rounded-2xl bg-(--app-color-primary-soft) flex items-center justify-center text-(--app-color-primary) group-hover:scale-110 transition-transform">
 							<FileCheck size={22} />
