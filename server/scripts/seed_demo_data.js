@@ -94,7 +94,7 @@ async function seedBroadcaster() {
   }
   console.log(`✅ Created ${createdAssets.length} Broadcaster Assets`);
 
-  const totalViolations = 450;
+  const totalViolations = 30;
   const now = new Date();
   const violations = [];
 

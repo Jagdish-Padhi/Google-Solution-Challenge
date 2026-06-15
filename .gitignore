@@ -99,3 +99,10 @@ uploads/
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+# ===============================
+# Scratch / Debug Files
+# ===============================
+scratch/
+server/scratch/
+weekly_digest_preview.html

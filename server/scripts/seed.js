@@ -213,7 +213,7 @@ const seedData = async () => {
 		// 4. Create Historical Scan Jobs
 		console.log('Seeding 30-day historical scan jobs...');
 		const scanJobsData = [];
-		for (let i = 0; i < 40; i++) {
+		for (let i = 0; i < 10; i++) {
 			const asset = randomElement(assets);
 			const startedAt = randomDate(1, 30);
 			const durationMins = randomInt(2, 15);
@@ -225,7 +225,7 @@ const seedData = async () => {
 				status: 'completed',
 				platforms: [randomElement(platforms), randomElement(platforms)],
 				keywords: [`${asset.title.split(' ')[0]} live`, `watch ${asset.title.split(' ')[1]} free`],
-				resultsCount: randomInt(10, 150),
+				resultsCount: randomInt(10, 50),
 				violationsCount: 0, // Will update later
 				startedAt,
 				completedAt
@@ -233,13 +233,13 @@ const seedData = async () => {
 		}
 		const scanJobs = await ScanJob.insertMany(scanJobsData);
 
-		// 5. Create Realistic Violations (100+ over 30 days)
-		console.log('Seeding 100+ realistic violations across all cases...');
+		// 5. Create Realistic Violations (25 over 30 days)
+		console.log('Seeding 25 realistic violations across all cases...');
 		const violationData = [];
 		const assetViolationCounts = {};
 		const scanViolationCounts = {};
 
-		for (let i = 0; i < 120; i++) {
+		for (let i = 0; i < 25; i++) {
 			const scanJob = randomElement(scanJobs);
 			const asset = assets.find(a => a._id.toString() === scanJob.assetId.toString());
 			
@@ -383,7 +383,7 @@ const seedData = async () => {
 		const scanResultData = [];
 		for (const job of scanJobs) {
 			const asset = assets.find(a => a._id.toString() === job.assetId.toString());
-			const resultCount = randomInt(4, 12);
+			const resultCount = randomInt(1, 2);
 			for (let r = 0; r < resultCount; r++) {
 				const platform = randomElement(Object.keys(realViolationUrls));
 				const urlPool = realViolationUrls[platform];
@@ -414,7 +414,7 @@ const seedData = async () => {
 		// 7. Create Alerts (Spikes and High Confidence)
 		console.log('Seeding strategic alerts...');
 		const alertData = [];
-		const highConfViolations = violations.filter(v => v.matchConfidence >= 90 && v.status === 'open').slice(0, 15);
+		const highConfViolations = violations.filter(v => v.matchConfidence >= 90 && v.status === 'open').slice(0, 5);
 		
 		for (const v of highConfViolations) {
 			alertData.push({
