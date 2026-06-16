@@ -10,7 +10,7 @@
 
 | 🚀 Live Demo | 🎥 Video Walkthrough | 📊 Presentation |
 |:------------:|:-------------------:|:---------------:|
-| [**Launch App**](https://gdg-vesit.web.app) | [**Watch Demo**](https://www.youtube.com/watch?v=LNHvwYCQkd8) | [**View PPT**](https://canva.link/wcxppf1vd2k979i) |
+| [**Launch App**](https://gdg-vesit.web.app) | [**Watch Demo**](https://youtu.be/cCq9Nstpw8o) | [**View PPT**](https://canva.link/wcxppf1vd2k979i) |
 
 ---
 
