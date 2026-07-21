@@ -6,6 +6,8 @@
 
 Designed for sports broadcasters, leagues, and digital creators to detect, verify, and resolve media copyright infringements in seconds.
 
+**[🚀 Launch Live Demo](https://sportshield.jdecodes.tech) • [🎥 Watch Video Walkthrough](https://youtu.be/cCq9Nstpw8o) • [📊 View Presentation](https://canva.link/wcxppf1vd2k979i)**
+
 <p>
   <img src="https://img.shields.io/badge/License-MIT-black?style=flat-square" alt="License" />
   <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=white" alt="React" />
