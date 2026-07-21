@@ -1,156 +1,191 @@
-# 🛡️ SportShield : AI-Powered Rights Protection & Intelligence
+<div align="center">
 
-**Hackathon:** Google Solution Challenge 2026 | **Team:** Esc(Reality); | **Track:** Digital Asset Protection
+# **SportShield : AI-Powered Rights Protection & Intelligence**
 
-> Transforming reactive piracy monitoring into proactive, AI-driven legal enforcement through real-time fingerprinting and automated DMCA resolution.
+### **Transforming reactive piracy monitoring into proactive, AI-driven legal enforcement.**
 
----
+Designed for sports broadcasters, leagues, and digital creators to detect, verify, and resolve media copyright infringements in seconds.
 
-## 🔗 Quick Links (For Real experience)
+<p>
+  <img src="https://img.shields.io/badge/License-MIT-black?style=flat-square" alt="License" />
+  <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=white" alt="React" />
+  <img src="https://img.shields.io/badge/Node.js-Express-339933?style=flat-square&logo=node.js&logoColor=white" alt="Node.js" />
+  <img src="https://img.shields.io/badge/Python-FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/MongoDB-Mongoose-47A248?style=flat-square&logo=mongodb&logoColor=white" alt="MongoDB" />
+  <img src="https://img.shields.io/badge/Google_Cloud-Run-4285F4?style=flat-square&logo=googlecloud&logoColor=white" alt="Google Cloud Run" />
+</p>
 
-| 🚀 Live Demo | 🎥 Video Walkthrough | 📊 Presentation |
-|:------------:|:-------------------:|:---------------:|
-| [**Launch App**](https://gdg-vesit.web.app) | [**Watch Demo**](https://youtu.be/cCq9Nstpw8o) | [**View PPT**](https://canva.link/wcxppf1vd2k979i) |
+[Overview](#-overview) • [Why SportShield](#-why-sportshield) • [Features](#-features) • [Quick Start](#-quick-start) • [Environment Variables](#-environment-variables) • [Contributing](#-contributing) • [License](#-license)
 
----
-
-## 🎯 Problem Statement
-Digital piracy in live sports and premium content costs broadcasters billions annually. Current detection methods are fragmented, often failing to track content across diverse platforms like Telegram and Twitter. Even when detected, the legal enforcement process (DMCA filing) is manual, slow, and lacks the hard technical evidence needed for rapid takedowns.
-
-## 💡 Solution
-SportShield is an end-to-end intelligence suite that protects digital assets using **AI Video DNA Fingerprinting**. It monitors major social platforms and the open web in real-time, provides deep technical evidence (Hamming distance, frame similarity), and bridges the gap to enforcement with **AI-powered DMCA drafting**, allowing rights holders to go from "detection" to "takedown" in seconds.
-
----
-
-## ✨ What's New in Round 2
-SportShield has been significantly upgraded for Round 2, shifting from a prototype to a production-grade rights protection engine:
-- **Expanded Platform Coverage**: Now monitors 6 platforms (YouTube, X, Telegram, Web, Twitch, Kick).
-- **Real-Time Livestream Dashboard**: Supports custom HLS/RTMP streams with active scan status and live telemetry.
-- **Creator Portal & Role-Based Access**: Specialized views and navigation workflows for Admin, Analyst, and Legal roles.
-- **Upgraded ML Pipeline**: Mirror-aware fingerprinting, ORB+RANSAC tie-breakers, and Google Cloud Vision AI integration for semantic validation.
-- **Sports-Specific DMCA Notices**: Automated platform-specific filing guides, evidence packaging, and ICC/BCCI rights citations.
-- **Smart Licensed Content Detection**: Domain and partner matching to filter out false-positive violations.
+</div>
 
 ---
 
-## 🚀 Key Features
+## 🧭 Overview
 
-### ✅ AI Asset Library
-- **Video DNA Ingestion**: Upload match highlights or images to generate a unique digital fingerprint.
-- **Asset Intelligence**: View similarity metrics and tracking history for every protected file.
-- **Cloud Management**: Secure storage and metadata management for corporate rights holders.
-- **Smart Licensed Content Detection**: Employs `licensedDomains` and `licensedPartners` in the data model to auto-mark matches as "licensed" and reduce false positives.
+Digital piracy costs live sports broadcasters and premium content creators billions of dollars annually. When matches are streamed live on platforms like Telegram, Twitch, or Kick, every minute of delay in taking them down leads to irreversible revenue loss. Traditional methods of finding these streams are fragmented, enforcement (DMCA notices) is slow and manual, and rights holders struggle to collect verifiable evidence.
 
-### ✅ Intelligent Scan Discovery
-- **Expanded Platform Coverage (6 Platforms)**: Simultaneously scans YouTube, X (Twitter), Telegram, the open web, Twitch, and Kick.com.
-- **AI Auto-Suggest**: Automatically generates search keywords and metadata based on asset context.
-- **Confidence Scoring**: Prioritizes results based on AI-calculated match probability.
-
-### ✅ Real-Time Livestream Monitoring
-- **Streams Dashboard**: A dedicated dashboard to track active livestream scan jobs for custom HLS/RTMP, Twitch, and Kick channels.
-- **Real-Time Telemetry**: Immediate scan feedback and telemetry powered by Socket.io events.
-- **Real-Time Ingestion Feed**: Discovery ingestion log rendered dynamically on the overview page via Firestore `onSnapshot`.
-
-### ✅ Creator Portal & Role-Based Access
-- **Role-Based Workflows**: Custom workflows and navigation paths for Admin, Analyst, and Legal users.
-- **Independent Creators**: Tailored account types for Photographers and Independent Creators.
-- **Auto-Redirects**: Seamless login page that auto-redirects based on the user's role.
-
-### ✅ Upgraded ML Pipeline
-- **Mirror-Aware Fingerprinting**: Generates both pHash and flipped pHash to automatically identify horizontally mirrored reposts.
-- **Thumbnail → Frame Bonus**: Matches scraped thumbnails against reference frames, recovering a full 15% frame-weight signal.
-- **ORB + RANSAC Tie-Breaker**: Employs keypoint matching and homography on borderline cases, boosting verified matches to 95–99% confidence.
-- **Google Cloud Vision AI Verification**: Uses label-overlap checking (stadium, jersey, broadcast logo) and appends a detailed reasoning field to the evidence bundle.
-
-### ✅ Violation Command Center (USP)
-- **Evidence Audit**: Deep-dive into match explainability (Color similarity, Hamming distance, Frame match count).
-- **One-Click DMCA Draft**: Instantly generates legally-compliant, platform-specific takedown notices.
-- **Resolution Workflow**: Track cases through `OPEN` → `REPORTED` → `RESOLVED` statuses.
-- **Deep Linking**: Direct navigation from email alerts to specific evidence records.
-
-### ✅ Sports-Specific DMCA Notices & Evidence Packaging
-- **Broadcasting Rights Citations**: Generated DMCA notices cite specific broadcast rights (e.g., BCCI & ICC).
-- **Enhanced Evidence Packaging**: High-fidelity sport-specific screenshots (cricket, football, generic) and a visual Confidence Score Breakdown panel (detailing contributions from pHash, Color, Frame, ORB, Mirror, and Vision API).
-- **ZIP Downloads**: Direct evidence ZIP downloads packaged with platform-specific step-by-step filing guides.
-
-### ✅ Organization Settings & Team Management
-- **Team Invites**: Invite and remove team members with granular role assignments.
-- **Manual Digest Triggers**: Manually trigger the weekly email digest directly from the settings panel.
-- **Notification Preferences**: Highly customizable preferences for high-confidence alerts, in-app updates, and digests.
-- **Real-Time Webhooks**: Support webhooks for instant external broadcast alerts.
-
-### ✅ Advanced Violations Filtering
-- **Date-Based Filtering**: Search and filter violations by specific dates.
-- **Status Badges**: Easily inspect attributes like `isMirrored`, `orbVerified`, and `visionAvailable` per violation.
-
-### ✅ Intelligence Analytics
-- **Professional Reporting**: Generate high-fidelity PDF reports with embedded SVG charts.
-- **Background Ops**: Start complex report generation and continue working; the service follows you globally.
-- **Risk Assessment**: Automated AI insights into piracy hotspots and distribution trends.
-
-### ✅ Real-Time Alerts
-- **High-Confidence Notifications**: Instant email alerts for matches >85% similarity.
-- **Piracy Surge Alerts**: Automated warnings for coordinated sharing (e.g., 5+ links in 1 hour).
-- **Direct Enforcement Links**: "View Evidence" buttons in emails take you straight to the action.
+**SportShield** replaces that scattered flow with an intelligent, end-to-end asset protection engine. It generates unique digital video fingerprints (Content DNA), continuously monitors six major platforms in real-time, validates matches using a hybrid ML pipeline, and automates legal DMCA filing in seconds. 
 
 ---
 
-## 🛠️ Tech Stack
+## ⚡ Why SportShield
 
-| Layer         | Technology |
-|---------------|------------|
-| Frontend      | React 18, Vite, Vanilla CSS, Lucide Icons, Chart.js, Socket.io client |
-| Backend       | Node.js, Express.js, MongoDB Atlas, deployed on Google Cloud Run |
-| ML/Scraping   | Python, FastAPI, Mirror-aware fingerprinting, ORB+RANSAC, OpenCV perceptual hashing, 6-platform scraping (YouTube, X, Telegram, Web, Twitch, Kick), deployed on Google Cloud Run |
-| AI/Google     | Gemini 1.5 Flash, Cloud Vision API, Cloud Translation API, Firebase Auth, Firebase Firestore, Firebase Hosting, YouTube Data API v3, Google CSE API, Google Fonts |
-| Emails        | Brevo (transactional alerts + weekly digest) |
-| Asset Storage | Cloudinary (fallback CDN) |
-| Real-time     | Socket.io (livestream telemetry), Firebase Firestore (onSnapshot) |
-| PDF Reports   | Puppeteer (headless Chrome) |
+SportShield transitions piracy monitoring from a reactive, manual effort into an automated, proactive system:
+
+- **6-Platform Aggregated Scan Feed** — Stops rights holders from manual checking; scans YouTube, X (Twitter), Telegram, the open web, Twitch, and Kick.com simultaneously.
+- **Accurate DNA Fingerprinting** — Handles mirroring and color shift using OpenCV perceptual hashing (pHash) and keypoint tie-breakers.
+- **AI-Powered Validation** — Integrates Google Cloud Vision AI to perform semantic verification (logos, stadiums, jersey matching) to confirm illegal broadcasts.
+- **Instant DMCA Enforcement** — Automatically packages court-ready ZIP evidence bundles and drafts legally compliant notices citing BCCI/ICC broadcast rights.
 
 ---
 
-## 🌐 Google Technologies Used
+## 🧩 Features
 
-| Google Technology | Implementation | Status |
-|---|---|---|
-| Gemini 1.5 Flash | Adversarial piracy keyword generation + sports-specific DMCA legal drafting | 🚀 Active |
-| Google Cloud Vision API | Semantic label-overlap verification, AI tie-breaker for borderline matches (+22 confidence boost) | 🚀 Active |
-| Google Cloud Translation API | Multilingual keyword expansion across 10+ languages for global piracy detection | 🚀 Active |
-| Firebase Authentication | Google One-Tap SSO + email/password; Firebase Admin SDK for server-side token verification | 🚀 Active |
-| Firebase Firestore | Real-time violation event feed via onSnapshot; user profile sync | 🚀 Active |
-| Firebase Hosting | Frontend deployment at gdg-vesit.web.app | 🚀 Active |
-| Google Cloud Run | All 3 services deployed serverless (client, server, ml-service) on asia-south1 | 🚀 Active |
-| YouTube Data API v3 | Cross-platform piracy scanning on YouTube | 🚀 Active |
-| Google Custom Search Engine | Web-wide image search for pirated content discovery | 🚀 Active |
-| Google Fonts | UI typography (Outfit, Orbitron, IBM Plex) + PDF report fonts (Inter) | 🚀 Active |
-| Chrome DevTools (Puppeteer) | High-fidelity PDF violation intelligence report generation | 🚀 Active |
+### 📂 AI Asset Library
+- **Video DNA Ingestion**: Upload reference video highlights or promotional images to generate unique pHash and flipped-pHash DNA footprints.
+- **Smart Licensed Content Filtering**: Allows configuring `licensedDomains` and `licensedPartners` on assets so authorized streams are automatically ignored, reducing false-positive overhead.
+
+### 🔍 Intelligent Scan Discovery
+- **Platform Connectors**: Scans 6 platforms simultaneously (YouTube, X, Telegram, Web, Twitch, Kick).
+- **Keyword Suggestion**: Uses Gemini 1.5 Flash to automatically generate search keywords and query patterns based on asset metadata.
+
+### 📹 Real-Time Livestream Dashboard
+- **Livestream Telemetry**: Dedicated live interface tracking scan jobs for custom RTMP/HLS streams, Twitch, and Kick channels.
+- **Real-Time Feeds**: Active scan logs and status events updated instantly using Socket.io and Firebase Firestore `onSnapshot`.
+
+### 👥 Creator Portal & Role-Based Access (RBAC)
+- **Role Workflows**: Tailored workflows and navigation layouts for **Admin**, **Analyst**, and **Legal** roles, plus independent developer/creator account types.
+- **Role Auto-Redirects**: Unified login page that redirects users automatically to their workspace based on permissions.
+
+### 🧠 Upgraded ML Pipeline
+- **Mirror-Aware Matcher**: Automatically catches horizontally mirrored reposts by evaluating both standard and flipped pHash DNA.
+- **ORB + RANSAC Tie-Breaker**: Uses homographic keypoint matching on borderline matches, boosting confidence rates to 95–99% precision.
+- **Cloud Vision Verification**: Matches broadcast logos, stadium visual cues, and player jerseys to add semantic proof to violation files.
+
+### 🛡️ Violation Command Center (USP)
+- **Interactive Evidence Audit**: Deep-dive metrics panel displaying similarity percentages (color, Hamming distance, frame matches, ORB verify indicators).
+- **One-Click DMCA Draft**: Generates legally valid, platform-specific takedown notices citing BCCI/ICC broadcasting rights.
+- **Evidence Packages**: Downloads a ZIP bundle containing the Gemini-drafted notice, Puppeteer screenshot PDF report, and raw metadata.
 
 ---
 
-## 🚀 Live Deployment (Google Cloud Run — asia-south1)
+## 🛠️ Technology Stack
 
-| Service | URL |
+- **Frontend**: React 18, Vite, Vanilla CSS, Socket.io client, Chart.js
+- **Backend**: Node.js, Express, MongoDB Atlas, Mongoose
+- **ML / Scraper Service**: Python, FastAPI, OpenCV, ORB Keypoint matching, PyTest
+- **Google Cloud & AI Integration**: 
+  - Gemini 1.5 Flash (keyword suggestion, legal DMCA drafting)
+  - Google Cloud Vision API (visual verification check)
+  - Google Cloud Translation API (multilingual search keyword expansion)
+  - Firebase (Auth, Firestore real-time snapshots, Hosting)
+  - Google Cloud Run (Serverless hosting for client, server, and ml-service)
+  - YouTube Data API v3 & Google Custom Search Engine (CSE)
+- **Notifications**: Brevo (SMTP for weekly digests and high-confidence alerts)
+- **Asset Storage**: Cloudinary CDN
+
+---
+
+## 🚀 Quick Start
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/your-org/Google-Solution-Challenge.git
+cd Google-Solution-Challenge
+```
+
+### 2. Configure Environment Files
+Set up the `.env` configuration files in all three sub-directories based on their `.env.example` templates:
+- [Backend Config File](file:///Ubuntu/home/jagdish/coding/hacks/Google-Solution-Challenge/server/.env.example)
+- [ML Service Config File](file:///Ubuntu/home/jagdish/coding/hacks/Google-Solution-Challenge/ml-service/.env.example)
+- [Client Config Details](file:///Ubuntu/home/jagdish/coding/hacks/Google-Solution-Challenge/client/.env)
+
+### 3. Run the ML Service (FastAPI)
+```bash
+cd ml-service
+python -m venv .venv
+source .venv/bin/activate  # On Windows use: .venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+```
+
+### 4. Run the Express Backend API
+```bash
+cd server
+npm install
+npm run dev
+```
+
+### 5. Run the React Client
+```bash
+cd client
+npm install
+npm run dev
+```
+
+---
+
+## ⚙️ Environment Variables
+
+### Backend API — `server/.env`
+
+| Variable | Description |
 |---|---|
-| Client | https://gdg-vesit.web.app (Firebase Hosting) |
-| Server API | https://sportshield-api-660444655892.asia-south1.run.app/api |
-| ML Service | https://sportshield-ml-660444655892.asia-south1.run.app |
+| `PORT` | Listening port for the API server (e.g. `5000`) |
+| `MONGO_URI` | MongoDB connection URL |
+| `JWT_SECRET` | Secret key used for signing authentication tokens |
+| `CLIENT_URL` | Base URL of the client dashboard (for CORS verification) |
+| `ML_SERVICE_URL` | Connection URL for the FastAPI ML service |
+| `GEMINI_API_KEY` | Google Gemini API key for keyword generation and legal drafting |
+| `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` | Credentials for video/image asset uploads |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` | SMTP configuration for email alerts and digests |
+| `DIGEST_CRON_SECRET` | Secret key used to verify manual digest trigger runs |
 
-### Demo Credentials
-- **Admin**: `demo@sportshield.com` / `SportShield@123`
-- **Creator**: `twi123@gmail.com` / `password123`
+### ML service — `ml-service/.env`
 
-> [!NOTE]
-> Free tier servers may need 3-4 attempts on initial startup due to cold start sleep. All features work once all 3 servers are up.
+| Variable | Description |
+|---|---|
+| `GEMINI_API_KEY` | Google Gemini API key |
+| `GOOGLE_VISION_API_KEY` | Google Cloud Vision API key for logo/label verification |
+| `YOUTUBE_API_KEY` | YouTube API key for video scraping |
+| `GOOGLE_CSE_API_KEY` / `GOOGLE_CSE_CX` | Google Custom Search credentials for web search |
+| `YOUTUBE_MAX_RESULTS` / `WEB_MAX_RESULTS` | Limits for scraping queries |
+
+### Client Portal — `client/.env`
+
+| Variable | Description |
+|---|---|
+| `VITE_API_BASE_URL` | Base API URL of the SportShield Express backend |
+| `VITE_SOCKET_URL` | WebSocket URL of the Express server |
+| `VITE_FIREBASE_API_KEY` / `VITE_FIREBASE_PROJECT_ID` | Firebase frontend configurations for credentials and auth |
 
 ---
 
-## 🔮 Future Scope
-- **IoT Live Stream Integration**: Direct ingestion from broadcast feeds.
-- **Blockchain Evidence Anchoring**: Immutably record proof of infringement for court cases.
-- **Automated Takedown API**: Direct integration with platform copyright APIs for zero-click resolution.
-- **Predictive Piracy Heatmaps**: AI forecasting of where leaks are likely to occur based on match popularity.
+## 📜 Scripts
+
+### Backend Server (`server`)
+- `npm run dev`: Start the API gateway in development watch mode.
+- `npm run start`: Run the Node.js production server.
+- `npm run lint`: Run ESLint to review code quality.
+
+### React Client (`client`)
+- `npm run dev`: Start the Vite development hot-reload server.
+- `npm run build`: Compile and build the static frontend.
+- `npm run preview`: Run a local preview server for the compiled build.
+
+### ML Service (`ml-service`)
+- `uvicorn app.main:app --reload --port 8000`: Start the FastAPI server locally.
+- `pytest`: Execute unit and integration tests.
 
 ---
 
-**Built with ❤️ by Team Esc(Reality);**
+## 🤝 Contributing
+
+We welcome contributions to SportShield! Please review our [Contributing Guidelines](CONTRIBUTING.md) and [Security Policy](SECURITY.md) before submitting pull requests.
+
+---
+
+## 📄 License
+
+Distributed under the MIT License. See [LICENSE](LICENSE) for details.
