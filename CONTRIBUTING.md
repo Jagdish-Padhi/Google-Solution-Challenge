@@ -1,5 +1,14 @@
 # Contributing Guidelines
 
+## Navigation
+
+- [Security](SECURITY.md)
+- [Changelog](CHANGELOG.md)
+- [Architecture](docs/Architecture.md)
+- [API Reference](docs/API.md)
+
+---
+
 This project follows consistent, review-friendly engineering practices so collaboration stays fast and safe.
 
 ## 1) Branching Rules
@@ -30,13 +39,13 @@ Branch naming examples:
 
 ### Commit format
 
-<type>(<scope>): <short present-tense summary>
+`<type>(<scope>): <short present-tense summary>`
 
 Examples:
 
-- feat(auth): add refresh token rotation endpoint
-- fix(scans): handle null platform field in results
-- docs(readme): update local setup steps for ml-service
+- `feat(auth): add refresh token rotation endpoint`
+- `fix(scans): handle null platform field in results`
+- `docs(readme): update local setup steps for ml-service`
 
 ### Commit type table
 
@@ -67,15 +76,12 @@ Examples:
 ### Optional body template for non-trivial commits
 
 Why:
-
 - What problem is solved?
 
 What:
-
 - What changed technically?
 
 Risk:
-
 - Any side effects, migration steps, or rollout notes?
 
 ## 3) Clean Pull Request Standards
@@ -153,11 +159,9 @@ Risk:
 ### Issue examples
 
 Good bug issue title:
-
 - Bug: GET /api/scans/:id/status never reaches completed for failed scraper retries
 
 Good feature issue title:
-
 - Feature: Add confidence explainability panel in violations evidence modal
 
 ## 5) Review and Merge Policy
@@ -178,23 +182,3 @@ Good feature issue title:
 | Keep lock files committed | Preserve reproducible installs |
 | Keep .gitignore updated | Prevent accidental generated file commits |
 | Validate before PR | Run lint/build/tests relevant to your change |
-
-## 7) Quick Real-World Examples
-
-Example A: Add docs only
-
-- Branch: docs/contributing-standards
-- Commit: docs(contributing): add commit, PR, and issue best practices tables
-- PR title: docs(contributing): formalize team workflow standards
-
-Example B: Fix runtime bug
-
-- Branch: bugfix/client-router-dependency
-- Commit: fix(client): install missing react-router-dom dependency
-- PR title: fix(client): resolve production build failure from unresolved router import
-
-Example C: Maintenance cleanup
-
-- Branch: chore/server-model-cleanup
-- Commit: chore(server): remove duplicate user model file
-- PR title: chore(server): keep organization model as canonical source
