@@ -10,6 +10,7 @@ import api from '../../services/api.js';
 import useAuthStore from '../../store/auth.store.js';
 import SignInwithGoogle from './GoogleSignIn.jsx';
 import GlobalLoader from '../../components/loaders/GlobalLoader.jsx';
+import useServerWarmup from '../../hooks/useServerWarmup.js';
 
 const initialFormState = {
   email: '',
@@ -36,6 +37,8 @@ export default function LoginPage() {
   const setTransitioning = useAuthStore((state) => state.setTransitioning);
   const getIsCreator = useAuthStore((state) => state.getIsCreator);
 
+  const { isReady, statusMessage } = useServerWarmup();
+
   const handleChange = (event) => {
     const { name, value } = event.target;
     setFormData((current) => ({ ...current, [name]: value }));
@@ -45,6 +48,11 @@ export default function LoginPage() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (!isReady) {
+      toast.error('Please wait for production servers to finish warming up.');
+      return;
+    }
 
     const email = formData.email.trim().toLowerCase();
 
@@ -131,7 +139,7 @@ export default function LoginPage() {
           {/* Right Login Form Section */}
           <section className='auth-form-slide flex flex-col justify-center p-8 lg:p-12' style={{ backgroundColor: 'var(--app-color-surface-glass)' }}>
             <div className='mx-auto w-full max-w-sm'>
-              <div className='mb-8 text-center lg:text-left'>
+              <div className='mb-6 text-center lg:text-left'>
                 <h2 className='text-3xl font-bold tracking-tight text-(--app-color-text)'>
                   Welcome back
                 </h2>
@@ -139,6 +147,16 @@ export default function LoginPage() {
                   Sign in to your organization dashboard
                 </p>
               </div>
+
+              {!isReady && (
+                <div className='mb-5 flex items-center justify-center gap-2 rounded-xl bg-amber-500/10 border border-amber-500/20 p-2.5 text-xs font-semibold text-amber-600 dark:text-amber-400 animate-pulse'>
+                  <span className='relative flex h-2 w-2'>
+                    <span className='animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75'></span>
+                    <span className='relative inline-flex rounded-full h-2 w-2 bg-amber-500'></span>
+                  </span>
+                  <span>{statusMessage}</span>
+                </div>
+              )}
 
               <form className='space-y-4' onSubmit={handleSubmit}>
                 <Input
@@ -168,8 +186,13 @@ export default function LoginPage() {
                 </div>
 
                 <div className='pt-1'>
-                  <Button type='submit' className='h-11 w-full rounded-xl text-sm font-bold shadow-lg shadow-(--app-color-primary)/20 transition-all hover:scale-[1.01] active:scale-[0.99]' loading={isSubmitting} disabled={isSubmitting}>
-                    Access Secure Portal
+                  <Button
+                    type='submit'
+                    className='h-11 w-full rounded-xl text-sm font-bold shadow-lg shadow-(--app-color-primary)/20 transition-all hover:scale-[1.01] active:scale-[0.99]'
+                    loading={isSubmitting}
+                    disabled={isSubmitting || !isReady}
+                  >
+                    {!isReady ? 'Pinging Production Server...' : 'Access Secure Portal'}
                   </Button>
                 </div>
 
@@ -179,7 +202,7 @@ export default function LoginPage() {
                 </div>
 
                 <div className='flex justify-center'>
-                  <SignInwithGoogle />
+                  <SignInwithGoogle disabled={!isReady} serverWarmingText='Waking Up Production Server...' />
                 </div>
 
                 <p className='mt-8 text-center text-xs text-(--app-color-text-muted)'>
@@ -196,3 +219,4 @@ export default function LoginPage() {
     </Container>
   );
 }
+
