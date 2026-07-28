@@ -9,7 +9,7 @@ import api from '../../services/api.js';
 import useAuthStore from '../../store/auth.store.js';
 import { auth, db } from './firebase';
 
-function SignInwithGoogle() {
+function SignInwithGoogle({ disabled = false, serverWarmingText = '' }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);
@@ -90,22 +90,35 @@ function SignInwithGoogle() {
     }
   }
 
+  const isButtonDisabled = isSubmitting || disabled;
+
   return (
-    <div>
+    <div className='w-full'>
       <button
         type='button'
         onClick={googleLogin}
-        disabled={isSubmitting}
-        className='flex w-full items-center justify-center gap-3 rounded-xl border border-(--app-color-border) bg-white px-4 py-3 text-sm font-bold text-gray-700 shadow-sm transition-all hover:bg-gray-50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70'
+        disabled={isButtonDisabled}
+        className='flex w-full items-center justify-center gap-3 rounded-xl border border-(--app-color-border) bg-white px-4 py-3 text-sm font-bold text-gray-700 shadow-sm transition-all hover:bg-gray-50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-75'
       >
-        <img
-          src='https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg'
-          alt='Google'
-          className='h-5 w-5'
-        />
-        {isSubmitting ? 'Signing in...' : 'Continue with Google'}
+        {disabled && !isSubmitting ? (
+          <span className='h-4 w-4 animate-spin rounded-full border-2 border-amber-500 border-t-transparent' />
+        ) : (
+          <img
+            src='https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg'
+            alt='Google'
+            className='h-5 w-5'
+          />
+        )}
+        <span>
+          {isSubmitting
+            ? 'Signing in...'
+            : disabled
+            ? serverWarmingText || 'Waking Up Production Server...'
+            : 'Continue with Google'}
+        </span>
       </button>
     </div>
   );
 }
 export default SignInwithGoogle;
+
